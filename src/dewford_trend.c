@@ -1,15 +1,14 @@
 #include "global.h"
 #include "dewford_trend.h"
-#include "asm.h"
 #include "easy_chat.h"
+#include "constants/easy_chat.h"
 #include "event_data.h"
 #include "link.h"
-#include "rng.h"
+#include "random.h"
 #include "text.h"
+#include "ewram.h"
 
-extern u8 unk_2000000[];
-
-extern u16 gScriptResult;
+extern u16 gSpecialVar_Result;
 extern u16 gSpecialVar_0x8004;
 
 static void sub_80FA46C(struct EasyChatPair *s, u16 b, u8 c);
@@ -102,10 +101,10 @@ bool8 sub_80FA364(u16 *a)
 
     if (!SB1ContainsWords(a))
     {
-        if (!FlagGet(SYS_POPWORD_INPUT))
+        if (!FlagGet(FLAG_SYS_POPWORD_INPUT))
         {
-            FlagSet(SYS_POPWORD_INPUT);
-            if (!FlagGet(SYS_MIX_RECORD))
+            FlagSet(FLAG_SYS_POPWORD_INPUT);
+            if (!FlagGet(FLAG_SYS_MIX_RECORD))
             {
                 gSaveBlock1.easyChatPairs[0].words[0] = a[0];
                 gSaveBlock1.easyChatPairs[0].words[1] = a[1];
@@ -203,14 +202,14 @@ void sub_80FA4E4(void *a, u32 b, u8 unused)
         *(dst++) = *(src++);
 }
 
-void sub_80FA5BC(void)
+void BufferTrendyPhraseString(void)
 {
     struct EasyChatPair *s = &gSaveBlock1.easyChatPairs[gSpecialVar_0x8004];
 
     ConvertEasyChatWordsToString(gStringVar1, s->words, 2, 1);
 }
 
-void sub_80FA5E4(void)
+void TrendyPhraseIsOld(void)
 {
     u16 result = 0;
 
@@ -220,12 +219,12 @@ void sub_80FA5E4(void)
         if (!gSaveBlock1.easyChatPairs[0].unk1_6 && gSaveBlock1.easyChatPairs[1].unk1_6)
             result = 1;
     }
-    gScriptResult = result;
+    gSpecialVar_Result = result;
 }
 
-void sub_80FA648(void)
+void GetDewfordHallPaintingNameIndex(void)
 {
-    gScriptResult = (gSaveBlock1.easyChatPairs[0].words[0] + gSaveBlock1.easyChatPairs[0].words[1]) & 7;
+    gSpecialVar_Result = (gSaveBlock1.easyChatPairs[0].words[0] + gSaveBlock1.easyChatPairs[0].words[1]) & 7;
 }
 
 static bool8 sub_80FA670(struct EasyChatPair *a, struct EasyChatPair *b, u8 c)

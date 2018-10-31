@@ -186,7 +186,7 @@ extern const u8 gEggNickname[];
 extern const u8 gOtherText_HatchedFromEgg[];
 extern const u8 gOtherText_NickHatchPrompt[];
 
-// learn_move
+// move_tutor_menu
 extern const u8 OtherText_Battle[];
 extern const u8 OtherText_Contest[];
 
@@ -194,7 +194,7 @@ extern const u8 OtherText_Contest[];
 extern const u8 OtherText_Type[];
 extern const u8 OtherText_PP[];
 
-// learn_move
+// move_tutor_menu
 extern const u8 OtherText_Power[];
 extern const u8 OtherText_Accuracy[];
 extern const u8 OtherText_Appeal[];
@@ -318,5 +318,9 @@ extern const u8 gOtherText_OK[];
 
 // wallclock
 extern const u8 gOtherText_CorrectTimePrompt[];
+
+#if GERMAN
+extern const u8 deuOtherText_ForgotAndLearned[];
+#endif
 
 #endif // GUARD_STRINGS2_H

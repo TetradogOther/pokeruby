@@ -150,7 +150,7 @@ extern const u8 OtherText_CheckTag[];
 extern const u8 OtherText_Confirm[];
 extern const u8 gOtherText_Walk[];
 
-extern const u8 gUnknownText_Exit[];
+extern const u8 gOtherText_Exit[];
 extern const u8 gOtherText_CancelNoTerminator[];
 extern const u8 gOtherText_CancelWithTerminator[];
 
@@ -164,13 +164,15 @@ extern const u8 gOtherText_None[];
 
 extern const u8 gOtherText_ThreeQuestions2[];
 
-extern const u8 gOtherText_FiveQuestionsAndSlash[];
+extern const u8 gOtherText_FiveQuestions[];
+extern const u8 gOtherText_Slash[];
 
 extern const u8 gOtherText_OneDash[];
 extern const u8 gOtherText_TwoDashes[];
 extern const u8 gOtherText_ThreeDashes2[];
 extern const u8 gOtherText_MaleSymbol2[];
-extern const u8 gOtherText_FemaleSymbolAndLv[];
+extern const u8 gOtherText_FemaleSymbol2[];
+extern const u8 gOtherText_Lv[];
 extern const u8 gOtherText_TallPlusAndRightArrow[];
 extern const u8 gMenuText_GoBackToPrev[];
 extern const u8 gOtherText_WhatWillYouDo[];
@@ -188,7 +190,7 @@ extern const u8 OtherText_TheField[];
 extern const u8 OtherText_TheField2[];
 extern const u8 OtherText_ThePC[];
 
-extern const struct TextStruct gUnknown_0840E740[];
+extern const u8 *const gUnknown_0840E740[7];
 
 extern const u8 gOtherText_ReturnTo[];
 extern const u8 gOtherText_WhatWillYouDo2[];
@@ -250,6 +252,7 @@ extern const u8 gContestStatsText_Dry[];
 extern const u8 gContestStatsText_Sweet[];
 extern const u8 gContestStatsText_Bitter[];
 extern const u8 gContestStatsText_Sour[];
+extern const u8 gContestStatsText_Tasty[];
 
 extern const u8 gContestStatsText_StowCase[];
 extern const u8 gContestStatsText_ThrowAwayPrompt[];

@@ -1,13 +1,13 @@
 #include "global.h"
 #include "decompress.h"
-#include "asm.h"
 #include "data2.h"
-#include "species.h"
+#include "constants/species.h"
 #include "text.h"
+#include "ewram.h"
 
-#define WRAM 0x02000000
+#define WRAM ewram_addr // using gSharedMem doesn't match
 
-void sub_800D238(const void *src, void *dest)
+void LZDecompressWram(const void *src, void *dest)
 {
     LZ77UnCompWram(src, dest);
 }
@@ -17,57 +17,57 @@ void LZDecompressVram(const void *src, void *dest)
     LZ77UnCompVram(src, dest);
 }
 
-void LoadCompressedObjectPic(const struct SpriteSheet *a)
+void LoadCompressedObjectPic(const struct CompressedSpriteSheet *src)
 {
-    struct SpriteSheet spriteSheet;
+    struct SpriteSheet dest;
 
-    LZ77UnCompWram(a->data, (void *)WRAM);
-    spriteSheet.data = (void *)WRAM;
-    spriteSheet.size = a->size;
-    spriteSheet.tag = a->tag;
-    LoadSpriteSheet(&spriteSheet);
+    LZ77UnCompWram(src->data, (void *)WRAM);
+    dest.data = (void *)WRAM;
+    dest.size = src->size;
+    dest.tag = src->tag;
+    LoadSpriteSheet(&dest);
 }
 
-void LoadCompressedObjectPicOverrideBuffer(const struct SpriteSheet *a, void *buffer)
+void LoadCompressedObjectPicOverrideBuffer(const struct CompressedSpriteSheet *src, void *buffer)
 {
-    struct SpriteSheet spriteSheet;
+    struct SpriteSheet dest;
 
-    LZ77UnCompWram(a->data, buffer);
-    spriteSheet.data = buffer;
-    spriteSheet.size = a->size;
-    spriteSheet.tag = a->tag;
-    LoadSpriteSheet(&spriteSheet);
+    LZ77UnCompWram(src->data, buffer);
+    dest.data = buffer;
+    dest.size = src->size;
+    dest.tag = src->tag;
+    LoadSpriteSheet(&dest);
 }
 
-void LoadCompressedObjectPalette(const struct SpritePalette *a)
+void LoadCompressedObjectPalette(const struct CompressedSpritePalette *src)
 {
-    struct SpritePalette spritePalette;
+    struct SpritePalette dest;
 
-    LZ77UnCompWram(a->data, (void *)WRAM);
-    spritePalette.data = (void *)WRAM;
-    spritePalette.tag = a->tag;
-    LoadSpritePalette(&spritePalette);
+    LZ77UnCompWram(src->data, (void *)WRAM);
+    dest.data = (void *)WRAM;
+    dest.tag = src->tag;
+    LoadSpritePalette(&dest);
 }
 
-void LoadCompressedObjectPaletteOverrideBuffer(const struct SpritePalette *a, void *buffer)
+void LoadCompressedObjectPaletteOverrideBuffer(const struct CompressedSpritePalette *src, void *buffer)
 {
-    struct SpritePalette spritePalette;
+    struct SpritePalette dest;
 
-    LZ77UnCompWram(a->data, buffer);
-    spritePalette.data = buffer;
-    spritePalette.tag = a->tag;
-    LoadSpritePalette(&spritePalette);
+    LZ77UnCompWram(src->data, buffer);
+    dest.data = buffer;
+    dest.tag = src->tag;
+    LoadSpritePalette(&dest);
 }
 
-void DecompressPicFromTable_2(const struct SpriteSheet *a, u8 b, u8 c, void *d, void *e, s32 species)
+void DecompressPicFromTable_2(const struct CompressedSpriteSheet *src, u8 coords, u8 y_offset, void *d, void *dest, s32 species)
 {
     if (species > SPECIES_EGG)
-        LZ77UnCompWram(gMonFrontPicTable[0].data, e);
+        LZ77UnCompWram(gMonFrontPicTable[0].data, dest);
     else
-        LZ77UnCompWram(a->data, e);
+        LZ77UnCompWram(src->data, dest);
 }
 
-void HandleLoadSpecialPokePic(const struct SpriteSheet *spriteSheet, u32 b, u32 c, u32 d, void *dest, s32 species, u32 g)
+void HandleLoadSpecialPokePic(const struct CompressedSpriteSheet *src, u32 coords, u32 y_offset, u32 d, void *dest, s32 species, u32 pid)
 {
     u32 frontOrBack;
 
@@ -77,16 +77,16 @@ void HandleLoadSpecialPokePic(const struct SpriteSheet *spriteSheet, u32 b, u32 
     else
         frontOrBack = 1; // frontPic
 
-    LoadSpecialPokePic(spriteSheet, b, c, d, dest, species, g, frontOrBack);
+    LoadSpecialPokePic(src, coords, y_offset, d, dest, species, pid, frontOrBack);
 }
 
-void LoadSpecialPokePic(const struct SpriteSheet *spriteSheet, u32 b, u32 c, u32 d, void *dest, s32 species, u32 g, u32 frontOrBack)
+void LoadSpecialPokePic(const struct CompressedSpriteSheet *src, u32 b, u32 c, u32 d, void *dest, s32 species, u32 pid, u32 frontOrBack)
 {
     u8 frontOrBack8 = frontOrBack;
 
     if (species == SPECIES_UNOWN)
     {
-        u16 i = (((g & 0x3000000) >> 18) | ((g & 0x30000) >> 12) | ((g & 0x300) >> 6) | (g & 3)) % 0x1C;
+        u16 i = (((pid & 0x3000000) >> 18) | ((pid & 0x30000) >> 12) | ((pid & 0x300) >> 6) | (pid & 3)) % 0x1C;
 
         // The other Unowns are separate from Unown A.
         if (i == 0)
@@ -102,9 +102,9 @@ void LoadSpecialPokePic(const struct SpriteSheet *spriteSheet, u32 b, u32 c, u32
     else if (species > SPECIES_EGG) // is species unknown? draw the ? icon
         LZ77UnCompWram(gMonFrontPicTable[0].data, dest);
     else
-        LZ77UnCompWram(spriteSheet->data, dest);
+        LZ77UnCompWram(src->data, dest);
 
-    DrawSpindaSpots(species, g, dest, frontOrBack8);
+    DrawSpindaSpots(species, pid, dest, frontOrBack8);
 }
 
 void Unused_LZDecompressWramIndirect(const void **src, void *dest)

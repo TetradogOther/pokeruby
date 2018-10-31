@@ -1,7 +1,20 @@
-	.include "asm/macros.inc"
-	.include "asm/macros/event.inc"
+#include "constants/decorations.h"
+#include "constants/field_effects.h"
+#include "constants/flags.h"
+#include "constants/game_stat.h"
+#include "constants/items.h"
+#include "constants/event_objects.h"
+#include "constants/maps.h"
+#include "constants/moves.h"
+#include "constants/opponents.h"
+#include "constants/songs.h"
+#include "constants/species.h"
+#include "constants/weather.h"
+#include "constants/heal_locations.h"
+#include "constants/vars.h"
+	.include "include/macros.inc"
+	.include "include/macros/event.inc"
 	.include "constants/constants.inc"
-	.include "constants/variables.inc"
 
 	.section script_data, "aw", %progbits
 
@@ -22,12 +35,12 @@ gSpecialVars::
 	.4byte gSpecialVar_0x8009
 	.4byte gSpecialVar_0x800A
 	.4byte gSpecialVar_0x800B
-	.4byte gScriptFacing
-	.4byte gScriptResult
-	.4byte gScriptItemId
-	.4byte gScriptLastTalked
-	.4byte gScriptContestRank
-	.4byte gScriptContestCategory
+	.4byte gSpecialVar_Facing
+	.4byte gSpecialVar_Result
+	.4byte gSpecialVar_ItemId
+	.4byte gSpecialVar_LastTalked
+	.4byte gSpecialVar_ContestRank
+	.4byte gSpecialVar_ContestCategory
 
 	.include "data/specials.inc"
 
@@ -43,370 +56,369 @@ gStdScripts::
 	.4byte Std_ObtainDecoration
 gStdScripts_End::
 
-	.include "data/scripts/maps/PetalburgCity.inc"
-	.include "data/scripts/maps/SlateportCity.inc"
-	.include "data/scripts/maps/MauvilleCity.inc"
-	.include "data/scripts/maps/RustboroCity.inc"
-	.include "data/scripts/maps/FortreeCity.inc"
-	.include "data/scripts/maps/LilycoveCity.inc"
-	.include "data/scripts/maps/MossdeepCity.inc"
-	.include "data/scripts/maps/SootopolisCity.inc"
-	.include "data/scripts/maps/EverGrandeCity.inc"
-	.include "data/scripts/maps/LittlerootTown.inc"
-	.include "data/scripts/maps/OldaleTown.inc"
-	.include "data/scripts/maps/DewfordTown.inc"
-	.include "data/scripts/maps/LavaridgeTown.inc"
-	.include "data/scripts/maps/FallarborTown.inc"
-	.include "data/scripts/maps/VerdanturfTown.inc"
-	.include "data/scripts/maps/PacifidlogTown.inc"
-	.include "data/scripts/maps/Route101.inc"
-	.include "data/scripts/maps/Route102.inc"
-	.include "data/scripts/maps/Route103.inc"
-	.include "data/scripts/maps/Route104.inc"
-	.include "data/scripts/maps/Route105.inc"
-	.include "data/scripts/maps/Route106.inc"
-	.include "data/scripts/maps/Route107.inc"
-	.include "data/scripts/maps/Route108.inc"
-	.include "data/scripts/maps/Route109.inc"
-	.include "data/scripts/maps/Route110.inc"
-	.include "data/scripts/maps/Route111.inc"
-	.include "data/scripts/maps/Route112.inc"
-	.include "data/scripts/maps/Route113.inc"
-	.include "data/scripts/maps/Route114.inc"
-	.include "data/scripts/maps/Route115.inc"
-	.include "data/scripts/maps/Route116.inc"
-	.include "data/scripts/maps/Route117.inc"
-	.include "data/scripts/maps/Route118.inc"
-	.include "data/scripts/maps/Route119.inc"
-	.include "data/scripts/maps/Route120.inc"
-	.include "data/scripts/maps/Route121.inc"
-	.include "data/scripts/maps/Route122.inc"
-	.include "data/scripts/maps/Route123.inc"
-	.include "data/scripts/maps/Route124.inc"
-	.include "data/scripts/maps/Route125.inc"
-	.include "data/scripts/maps/Route126.inc"
-	.include "data/scripts/maps/Route127.inc"
-	.include "data/scripts/maps/Route128.inc"
-	.include "data/scripts/maps/Route129.inc"
-	.include "data/scripts/maps/Route130.inc"
-	.include "data/scripts/maps/Route131.inc"
-	.include "data/scripts/maps/Route132.inc"
-	.include "data/scripts/maps/Route133.inc"
-	.include "data/scripts/maps/Route134.inc"
-	.include "data/scripts/maps/Underwater1.inc"
-	.include "data/scripts/maps/Underwater2.inc"
-	.include "data/scripts/maps/Underwater3.inc"
-	.include "data/scripts/maps/Underwater4.inc"
-	.include "data/scripts/maps/LittlerootTown_BrendansHouse_1F.inc"
-	.include "data/scripts/maps/LittlerootTown_BrendansHouse_2F.inc"
-	.include "data/scripts/maps/LittlerootTown_MaysHouse_1F.inc"
-	.include "data/scripts/maps/LittlerootTown_MaysHouse_2F.inc"
-	.include "data/scripts/maps/LittlerootTown_ProfessorBirchsLab.inc"
-	.include "data/scripts/maps/OldaleTown_House1.inc"
-	.include "data/scripts/maps/OldaleTown_House2.inc"
-	.include "data/scripts/maps/OldaleTown_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/OldaleTown_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/OldaleTown_Mart.inc"
-	.include "data/scripts/maps/DewfordTown_House1.inc"
-	.include "data/scripts/maps/DewfordTown_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/DewfordTown_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/DewfordTown_Gym.inc"
-	.include "data/scripts/maps/DewfordTown_Hall.inc"
-	.include "data/scripts/maps/DewfordTown_House2.inc"
-	.include "data/scripts/maps/LavaridgeTown_HerbShop.inc"
-	.include "data/scripts/maps/LavaridgeTown_Gym_1F.inc"
-	.include "data/scripts/maps/LavaridgeTown_Gym_B1F.inc"
-	.include "data/scripts/maps/LavaridgeTown_House.inc"
-	.include "data/scripts/maps/LavaridgeTown_Mart.inc"
-	.include "data/scripts/maps/LavaridgeTown_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/LavaridgeTown_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/FallarborTown_Mart.inc"
-	.include "data/scripts/maps/FallarborTown_ContestLobby.inc"
-	.include "data/scripts/maps/FallarborTown_ContestHall.inc"
-	.include "data/scripts/maps/FallarborTown_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/FallarborTown_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/FallarborTown_House1.inc"
-	.include "data/scripts/maps/FallarborTown_House2.inc"
-	.include "data/scripts/maps/VerdanturfTown_ContestLobby.inc"
-	.include "data/scripts/maps/VerdanturfTown_ContestHall.inc"
-	.include "data/scripts/maps/VerdanturfTown_Mart.inc"
-	.include "data/scripts/maps/VerdanturfTown_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/VerdanturfTown_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/VerdanturfTown_WandasHouse.inc"
-	.include "data/scripts/maps/VerdanturfTown_FriendshipRatersHouse.inc"
-	.include "data/scripts/maps/VerdanturfTown_House.inc"
-	.include "data/scripts/maps/PacifidlogTown_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/PacifidlogTown_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/PacifidlogTown_House1.inc"
-	.include "data/scripts/maps/PacifidlogTown_House2.inc"
-	.include "data/scripts/maps/PacifidlogTown_House3.inc"
-	.include "data/scripts/maps/PacifidlogTown_House4.inc"
-	.include "data/scripts/maps/PacifidlogTown_House5.inc"
-	.include "data/scripts/maps/PetalburgCity_WallysHouse.inc"
-	.include "data/scripts/maps/PetalburgCity_Gym.inc"
-	.include "data/scripts/maps/PetalburgCity_House1.inc"
-	.include "data/scripts/maps/PetalburgCity_House2.inc"
-	.include "data/scripts/maps/PetalburgCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/PetalburgCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/PetalburgCity_Mart.inc"
-	.include "data/scripts/maps/SlateportCity_SternsShipyard_1F.inc"
-	.include "data/scripts/maps/SlateportCity_SternsShipyard_2F.inc"
-	.include "data/scripts/maps/SlateportCity_ContestLobby.inc"
-	.include "data/scripts/maps/SlateportCity_ContestHall.inc"
-	.include "data/scripts/maps/SlateportCity_House1.inc"
-	.include "data/scripts/maps/SlateportCity_PokemonFanClub.inc"
-	.include "data/scripts/maps/SlateportCity_OceanicMuseum_1F.inc"
-	.include "data/scripts/maps/SlateportCity_OceanicMuseum_2F.inc"
-	.include "data/scripts/maps/SlateportCity_Harbor.inc"
-	.include "data/scripts/maps/SlateportCity_House2.inc"
-	.include "data/scripts/maps/SlateportCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/SlateportCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/SlateportCity_Mart.inc"
-	.include "data/scripts/maps/MauvilleCity_Gym.inc"
-	.include "data/scripts/maps/MauvilleCity_BikeShop.inc"
-	.include "data/scripts/maps/MauvilleCity_House1.inc"
-	.include "data/scripts/maps/MauvilleCity_GameCorner.inc"
-	.include "data/scripts/maps/MauvilleCity_House2.inc"
-	.include "data/scripts/maps/MauvilleCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/MauvilleCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/MauvilleCity_Mart.inc"
-	.include "data/scripts/maps/RustboroCity_DevonCorp_1F.inc"
-	.include "data/scripts/maps/RustboroCity_DevonCorp_2F.inc"
-	.include "data/scripts/maps/RustboroCity_DevonCorp_3F.inc"
-	.include "data/scripts/maps/RustboroCity_Gym.inc"
-	.include "data/scripts/maps/RustboroCity_PokemonSchool.inc"
-	.include "data/scripts/maps/RustboroCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/RustboroCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/RustboroCity_Mart.inc"
-	.include "data/scripts/maps/RustboroCity_Flat1_1F.inc"
-	.include "data/scripts/maps/RustboroCity_Flat1_2F.inc"
-	.include "data/scripts/maps/RustboroCity_House1.inc"
-	.include "data/scripts/maps/RustboroCity_CuttersHouse.inc"
-	.include "data/scripts/maps/RustboroCity_House2.inc"
-	.include "data/scripts/maps/RustboroCity_Flat2_1F.inc"
-	.include "data/scripts/maps/RustboroCity_Flat2_2F.inc"
-	.include "data/scripts/maps/RustboroCity_Flat2_3F.inc"
-	.include "data/scripts/maps/RustboroCity_House3.inc"
-	.include "data/scripts/maps/FortreeCity_House1.inc"
-	.include "data/scripts/maps/FortreeCity_Gym.inc"
-	.include "data/scripts/maps/FortreeCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/FortreeCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/FortreeCity_Mart.inc"
-	.include "data/scripts/maps/FortreeCity_House2.inc"
-	.include "data/scripts/maps/FortreeCity_House3.inc"
-	.include "data/scripts/maps/FortreeCity_House4.inc"
-	.include "data/scripts/maps/FortreeCity_House5.inc"
-	.include "data/scripts/maps/FortreeCity_DecorationShop.inc"
-	.include "data/scripts/maps/LilycoveCity_CoveLilyMotel_1F.inc"
-	.include "data/scripts/maps/LilycoveCity_CoveLilyMotel_2F.inc"
-	.include "data/scripts/maps/LilycoveCity_LilycoveMuseum_1F.inc"
-	.include "data/scripts/maps/LilycoveCity_LilycoveMuseum_2F.inc"
-	.include "data/scripts/maps/LilycoveCity_ContestLobby.inc"
-	.include "data/scripts/maps/LilycoveCity_ContestHall.inc"
-	.include "data/scripts/maps/LilycoveCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/LilycoveCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/LilycoveCity_UnusedMart.inc"
-	.include "data/scripts/maps/LilycoveCity_PokemonTrainerFanClub.inc"
-	.include "data/scripts/maps/LilycoveCity_Harbor.inc"
-	.include "data/scripts/maps/LilycoveCity_EmptyMap.inc"
-	.include "data/scripts/maps/LilycoveCity_MoveDeletersHouse.inc"
-	.include "data/scripts/maps/LilycoveCity_House1.inc"
-	.include "data/scripts/maps/LilycoveCity_House2.inc"
-	.include "data/scripts/maps/LilycoveCity_House3.inc"
-	.include "data/scripts/maps/LilycoveCity_House4.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStore_1F.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStore_2F.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStore_3F.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStore_4F.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStore_5F.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStoreRooftop.inc"
-	.include "data/scripts/maps/LilycoveCity_DepartmentStoreElevator.inc"
-	.include "data/scripts/maps/MossdeepCity_Gym.inc"
-	.include "data/scripts/maps/MossdeepCity_House1.inc"
-	.include "data/scripts/maps/MossdeepCity_House2.inc"
-	.include "data/scripts/maps/MossdeepCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/MossdeepCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/MossdeepCity_Mart.inc"
-	.include "data/scripts/maps/MossdeepCity_House3.inc"
-	.include "data/scripts/maps/MossdeepCity_StevensHouse.inc"
-	.include "data/scripts/maps/MossdeepCity_House4.inc"
-	.include "data/scripts/maps/MossdeepCity_SpaceCenter_1F.inc"
-	.include "data/scripts/maps/MossdeepCity_SpaceCenter_2F.inc"
-	.include "data/scripts/maps/MossdeepCity_GameCorner_1F.inc"
-	.include "data/scripts/maps/MossdeepCity_GameCorner_B1F.inc"
-	.include "data/scripts/maps/SootopolisCity_Gym_1F.inc"
-	.include "data/scripts/maps/SootopolisCity_Gym_B1F.inc"
-	.include "data/scripts/maps/SootopolisCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/SootopolisCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/SootopolisCity_Mart.inc"
-	.include "data/scripts/maps/SootopolisCity_House1.inc"
-	.include "data/scripts/maps/SootopolisCity_House2.inc"
-	.include "data/scripts/maps/SootopolisCity_House3.inc"
-	.include "data/scripts/maps/SootopolisCity_House4.inc"
-	.include "data/scripts/maps/SootopolisCity_House5.inc"
-	.include "data/scripts/maps/SootopolisCity_House6.inc"
-	.include "data/scripts/maps/SootopolisCity_House7.inc"
-	.include "data/scripts/maps/SootopolisCity_House8.inc"
-	.include "data/scripts/maps/EverGrandeCity_SidneysRoom.inc"
-	.include "data/scripts/maps/EverGrandeCity_PhoebesRoom.inc"
-	.include "data/scripts/maps/EverGrandeCity_GlaciasRoom.inc"
-	.include "data/scripts/maps/EverGrandeCity_DrakesRoom.inc"
-	.include "data/scripts/maps/EverGrandeCity_ChampionsRoom.inc"
-	.include "data/scripts/maps/EverGrandeCity_Corridor1.inc"
-	.include "data/scripts/maps/EverGrandeCity_Corridor2.inc"
-	.include "data/scripts/maps/EverGrandeCity_Corridor3.inc"
-	.include "data/scripts/maps/EverGrandeCity_Corridor4.inc"
-	.include "data/scripts/maps/EverGrandeCity_Corridor5.inc"
-	.include "data/scripts/maps/EverGrandeCity_PokemonLeague.inc"
-	.include "data/scripts/maps/EverGrandeCity_HallOfFame.inc"
-	.include "data/scripts/maps/EverGrandeCity_PokemonCenter_1F.inc"
-	.include "data/scripts/maps/EverGrandeCity_PokemonCenter_2F.inc"
-	.include "data/scripts/maps/Route104_MrBrineysHouse.inc"
-	.include "data/scripts/maps/Route104_PrettyPetalFlowerShop.inc"
-	.include "data/scripts/maps/Route111_WinstrateFamilysHouse.inc"
-	.include "data/scripts/maps/Route111_OldLadysRestStop.inc"
-	.include "data/scripts/maps/Route112_CableCarStation.inc"
-	.include "data/scripts/maps/MtChimney_CableCarStation.inc"
-	.include "data/scripts/maps/Route114_FossilManiacsHouse.inc"
-	.include "data/scripts/maps/Route114_FossilManiacsTunnel.inc"
-	.include "data/scripts/maps/Route114_LanettesHouse.inc"
-	.include "data/scripts/maps/Route116_TunnelersRestHouse.inc"
-	.include "data/scripts/maps/Route117_PokemonDayCare.inc"
-	.include "data/scripts/maps/Route121_SafariZoneEntrance.inc"
-	.include "data/scripts/maps/MeteorFalls_1F_1R.inc"
-	.include "data/scripts/maps/MeteorFalls_1F_2R.inc"
-	.include "data/scripts/maps/MeteorFalls_B1F_1R.inc"
-	.include "data/scripts/maps/MeteorFalls_B1F_2R.inc"
-	.include "data/scripts/maps/RusturfTunnel.inc"
-	.include "data/scripts/maps/Underwater_SootopolisCity.inc"
-	.include "data/scripts/maps/DesertRuins.inc"
-	.include "data/scripts/maps/GraniteCave_1F.inc"
-	.include "data/scripts/maps/GraniteCave_B1F.inc"
-	.include "data/scripts/maps/GraniteCave_B2F.inc"
-	.include "data/scripts/maps/GraniteCave_StevensRoom.inc"
-	.include "data/scripts/maps/PetalburgWoods.inc"
-	.include "data/scripts/maps/MtChimney.inc"
-	.include "data/scripts/maps/JaggedPass.inc"
-	.include "data/scripts/maps/FieryPath.inc"
-	.include "data/scripts/maps/MtPyre_1F.inc"
-	.include "data/scripts/maps/MtPyre_2F.inc"
-	.include "data/scripts/maps/MtPyre_3F.inc"
-	.include "data/scripts/maps/MtPyre_4F.inc"
-	.include "data/scripts/maps/MtPyre_5F.inc"
-	.include "data/scripts/maps/MtPyre_6F.inc"
-	.include "data/scripts/maps/MtPyre_Exterior.inc"
-	.include "data/scripts/maps/MtPyre_Summit.inc"
-	.include "data/scripts/maps/AquaHideout_1F.inc"
-	.include "data/scripts/maps/AquaHideout_B1F.inc"
-	.include "data/scripts/maps/AquaHideout_B2F.inc"
-	.include "data/scripts/maps/Underwater_SeafloorCavern.inc"
-	.include "data/scripts/maps/SeafloorCavern_Entrance.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room1.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room2.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room3.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room4.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room5.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room6.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room7.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room8.inc"
-	.include "data/scripts/maps/SeafloorCavern_Room9.inc"
-	.include "data/scripts/maps/CaveOfOrigin_Entrance.inc"
-	.include "data/scripts/maps/CaveOfOrigin_1F.inc"
-	.include "data/scripts/maps/CaveOfOrigin_B1F.inc"
-	.include "data/scripts/maps/CaveOfOrigin_B2F.inc"
-	.include "data/scripts/maps/CaveOfOrigin_B3F.inc"
-	.include "data/scripts/maps/CaveOfOrigin_B4F.inc"
-	.include "data/scripts/maps/VictoryRoad_1F.inc"
-	.include "data/scripts/maps/VictoryRoad_B1F.inc"
-	.include "data/scripts/maps/VictoryRoad_B2F.inc"
-	.include "data/scripts/maps/ShoalCave_LowTideEntranceRoom.inc"
-	.include "data/scripts/maps/ShoalCave_LowTideInnerRoom.inc"
-	.include "data/scripts/maps/ShoalCave_LowTideStairsRoom.inc"
-	.include "data/scripts/maps/ShoalCave_LowTideLowerRoom.inc"
-	.include "data/scripts/maps/ShoalCave_HighTideEntranceRoom.inc"
-	.include "data/scripts/maps/ShoalCave_HighTideInnerRoom.inc"
-	.include "data/scripts/maps/NewMauville_Entrance.inc"
-	.include "data/scripts/maps/NewMauville_Inside.inc"
-	.include "data/scripts/maps/AbandonedShip_Deck.inc"
-	.include "data/scripts/maps/AbandonedShip_Corridors_1F.inc"
-	.include "data/scripts/maps/AbandonedShip_Rooms_1F.inc"
-	.include "data/scripts/maps/AbandonedShip_Corridors_B1F.inc"
-	.include "data/scripts/maps/AbandonedShip_Rooms_B1F.inc"
-	.include "data/scripts/maps/AbandonedShip_Rooms2_B1F.inc"
-	.include "data/scripts/maps/AbandonedShip_Underwater1.inc"
-	.include "data/scripts/maps/AbandonedShip_Room_B1F.inc"
-	.include "data/scripts/maps/AbandonedShip_Rooms2_1F.inc"
-	.include "data/scripts/maps/AbandonedShip_CaptainsOffice.inc"
-	.include "data/scripts/maps/AbandonedShip_Underwater2.inc"
-	.include "data/scripts/maps/AbandonedShip_HiddenFloorCorridors.inc"
-	.include "data/scripts/maps/AbandonedShip_HiddenFloorRooms.inc"
-	.include "data/scripts/maps/IslandCave.inc"
-	.include "data/scripts/maps/AncientTomb.inc"
-	.include "data/scripts/maps/Underwater_Route134.inc"
-	.include "data/scripts/maps/Underwater_SealedChamber.inc"
-	.include "data/scripts/maps/SealedChamber_OuterRoom.inc"
-	.include "data/scripts/maps/SealedChamber_InnerRoom.inc"
-	.include "data/scripts/maps/ScorchedSlab.inc"
-	.include "data/scripts/maps/MagmaHideout_1F.inc"
-	.include "data/scripts/maps/MagmaHideout_B1F.inc"
-	.include "data/scripts/maps/MagmaHideout_B2F.inc"
-	.include "data/scripts/maps/SkyPillar_Entrance.inc"
-	.include "data/scripts/maps/SkyPillar_Outside.inc"
-	.include "data/scripts/maps/SkyPillar_1F.inc"
-	.include "data/scripts/maps/SkyPillar_2F.inc"
-	.include "data/scripts/maps/SkyPillar_3F.inc"
-	.include "data/scripts/maps/SkyPillar_4F.inc"
-	.include "data/scripts/maps/ShoalCave_LowTideIceRoom.inc"
-	.include "data/scripts/maps/SkyPillar_5F.inc"
-	.include "data/scripts/maps/SkyPillar_Top.inc"
-	.include "data/scripts/maps/SecretBase_BlueCave1.inc"
-	.include "data/scripts/maps/SecretBase_BlueCave2.inc"
-	.include "data/scripts/maps/SecretBase_BlueCave3.inc"
-	.include "data/scripts/maps/SecretBase_BlueCave4.inc"
-	.include "data/scripts/maps/SecretBase_BrownCave1.inc"
-	.include "data/scripts/maps/SecretBase_BrownCave2.inc"
-	.include "data/scripts/maps/SecretBase_BrownCave3.inc"
-	.include "data/scripts/maps/SecretBase_BrownCave4.inc"
-	.include "data/scripts/maps/SecretBase_RedCave1.inc"
-	.include "data/scripts/maps/SecretBase_RedCave2.inc"
-	.include "data/scripts/maps/SecretBase_RedCave3.inc"
-	.include "data/scripts/maps/SecretBase_RedCave4.inc"
-	.include "data/scripts/maps/SecretBase_Shrub1.inc"
-	.include "data/scripts/maps/SecretBase_Shrub2.inc"
-	.include "data/scripts/maps/SecretBase_Shrub3.inc"
-	.include "data/scripts/maps/SecretBase_Shrub4.inc"
-	.include "data/scripts/maps/SecretBase_Tree1.inc"
-	.include "data/scripts/maps/SecretBase_Tree2.inc"
-	.include "data/scripts/maps/SecretBase_Tree3.inc"
-	.include "data/scripts/maps/SecretBase_Tree4.inc"
-	.include "data/scripts/maps/SecretBase_YellowCave1.inc"
-	.include "data/scripts/maps/SecretBase_YellowCave2.inc"
-	.include "data/scripts/maps/SecretBase_YellowCave3.inc"
-	.include "data/scripts/maps/SecretBase_YellowCave4.inc"
+	.include "data/maps/PetalburgCity/scripts.inc"
+	.include "data/maps/SlateportCity/scripts.inc"
+	.include "data/maps/MauvilleCity/scripts.inc"
+	.include "data/maps/RustboroCity/scripts.inc"
+	.include "data/maps/FortreeCity/scripts.inc"
+	.include "data/maps/LilycoveCity/scripts.inc"
+	.include "data/maps/MossdeepCity/scripts.inc"
+	.include "data/maps/SootopolisCity/scripts.inc"
+	.include "data/maps/EverGrandeCity/scripts.inc"
+	.include "data/maps/LittlerootTown/scripts.inc"
+	.include "data/maps/OldaleTown/scripts.inc"
+	.include "data/maps/DewfordTown/scripts.inc"
+	.include "data/maps/LavaridgeTown/scripts.inc"
+	.include "data/maps/FallarborTown/scripts.inc"
+	.include "data/maps/VerdanturfTown/scripts.inc"
+	.include "data/maps/PacifidlogTown/scripts.inc"
+	.include "data/maps/Route101/scripts.inc"
+	.include "data/maps/Route102/scripts.inc"
+	.include "data/maps/Route103/scripts.inc"
+	.include "data/maps/Route104/scripts.inc"
+	.include "data/maps/Route105/scripts.inc"
+	.include "data/maps/Route106/scripts.inc"
+	.include "data/maps/Route107/scripts.inc"
+	.include "data/maps/Route108/scripts.inc"
+	.include "data/maps/Route109/scripts.inc"
+	.include "data/maps/Route110/scripts.inc"
+	.include "data/maps/Route111/scripts.inc"
+	.include "data/maps/Route112/scripts.inc"
+	.include "data/maps/Route113/scripts.inc"
+	.include "data/maps/Route114/scripts.inc"
+	.include "data/maps/Route115/scripts.inc"
+	.include "data/maps/Route116/scripts.inc"
+	.include "data/maps/Route117/scripts.inc"
+	.include "data/maps/Route118/scripts.inc"
+	.include "data/maps/Route119/scripts.inc"
+	.include "data/maps/Route120/scripts.inc"
+	.include "data/maps/Route121/scripts.inc"
+	.include "data/maps/Route122/scripts.inc"
+	.include "data/maps/Route123/scripts.inc"
+	.include "data/maps/Route124/scripts.inc"
+	.include "data/maps/Route125/scripts.inc"
+	.include "data/maps/Route126/scripts.inc"
+	.include "data/maps/Route127/scripts.inc"
+	.include "data/maps/Route128/scripts.inc"
+	.include "data/maps/Route129/scripts.inc"
+	.include "data/maps/Route130/scripts.inc"
+	.include "data/maps/Route131/scripts.inc"
+	.include "data/maps/Route132/scripts.inc"
+	.include "data/maps/Route133/scripts.inc"
+	.include "data/maps/Route134/scripts.inc"
+	.include "data/maps/Underwater1/scripts.inc"
+	.include "data/maps/Underwater2/scripts.inc"
+	.include "data/maps/Underwater3/scripts.inc"
+	.include "data/maps/Underwater4/scripts.inc"
+	.include "data/maps/LittlerootTown_BrendansHouse_1F/scripts.inc"
+	.include "data/maps/LittlerootTown_BrendansHouse_2F/scripts.inc"
+	.include "data/maps/LittlerootTown_MaysHouse_1F/scripts.inc"
+	.include "data/maps/LittlerootTown_MaysHouse_2F/scripts.inc"
+	.include "data/maps/LittlerootTown_ProfessorBirchsLab/scripts.inc"
+	.include "data/maps/OldaleTown_House1/scripts.inc"
+	.include "data/maps/OldaleTown_House2/scripts.inc"
+	.include "data/maps/OldaleTown_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/OldaleTown_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/OldaleTown_Mart/scripts.inc"
+	.include "data/maps/DewfordTown_House1/scripts.inc"
+	.include "data/maps/DewfordTown_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/DewfordTown_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/DewfordTown_Gym/scripts.inc"
+	.include "data/maps/DewfordTown_Hall/scripts.inc"
+	.include "data/maps/DewfordTown_House2/scripts.inc"
+	.include "data/maps/LavaridgeTown_HerbShop/scripts.inc"
+	.include "data/maps/LavaridgeTown_Gym_1F/scripts.inc"
+	.include "data/maps/LavaridgeTown_Gym_B1F/scripts.inc"
+	.include "data/maps/LavaridgeTown_House/scripts.inc"
+	.include "data/maps/LavaridgeTown_Mart/scripts.inc"
+	.include "data/maps/LavaridgeTown_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/LavaridgeTown_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/FallarborTown_Mart/scripts.inc"
+	.include "data/maps/FallarborTown_ContestLobby/scripts.inc"
+	.include "data/maps/FallarborTown_ContestHall/scripts.inc"
+	.include "data/maps/FallarborTown_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/FallarborTown_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/FallarborTown_House1/scripts.inc"
+	.include "data/maps/FallarborTown_House2/scripts.inc"
+	.include "data/maps/VerdanturfTown_ContestLobby/scripts.inc"
+	.include "data/maps/VerdanturfTown_ContestHall/scripts.inc"
+	.include "data/maps/VerdanturfTown_Mart/scripts.inc"
+	.include "data/maps/VerdanturfTown_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/VerdanturfTown_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/VerdanturfTown_WandasHouse/scripts.inc"
+	.include "data/maps/VerdanturfTown_FriendshipRatersHouse/scripts.inc"
+	.include "data/maps/VerdanturfTown_House/scripts.inc"
+	.include "data/maps/PacifidlogTown_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/PacifidlogTown_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/PacifidlogTown_House1/scripts.inc"
+	.include "data/maps/PacifidlogTown_House2/scripts.inc"
+	.include "data/maps/PacifidlogTown_House3/scripts.inc"
+	.include "data/maps/PacifidlogTown_House4/scripts.inc"
+	.include "data/maps/PacifidlogTown_House5/scripts.inc"
+	.include "data/maps/PetalburgCity_WallysHouse/scripts.inc"
+	.include "data/maps/PetalburgCity_Gym/scripts.inc"
+	.include "data/maps/PetalburgCity_House1/scripts.inc"
+	.include "data/maps/PetalburgCity_House2/scripts.inc"
+	.include "data/maps/PetalburgCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/PetalburgCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/PetalburgCity_Mart/scripts.inc"
+	.include "data/maps/SlateportCity_SternsShipyard_1F/scripts.inc"
+	.include "data/maps/SlateportCity_SternsShipyard_2F/scripts.inc"
+	.include "data/maps/SlateportCity_ContestLobby/scripts.inc"
+	.include "data/maps/SlateportCity_ContestHall/scripts.inc"
+	.include "data/maps/SlateportCity_House1/scripts.inc"
+	.include "data/maps/SlateportCity_PokemonFanClub/scripts.inc"
+	.include "data/maps/SlateportCity_OceanicMuseum_1F/scripts.inc"
+	.include "data/maps/SlateportCity_OceanicMuseum_2F/scripts.inc"
+	.include "data/maps/SlateportCity_Harbor/scripts.inc"
+	.include "data/maps/SlateportCity_House2/scripts.inc"
+	.include "data/maps/SlateportCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/SlateportCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/SlateportCity_Mart/scripts.inc"
+	.include "data/maps/MauvilleCity_Gym/scripts.inc"
+	.include "data/maps/MauvilleCity_BikeShop/scripts.inc"
+	.include "data/maps/MauvilleCity_House1/scripts.inc"
+	.include "data/maps/MauvilleCity_GameCorner/scripts.inc"
+	.include "data/maps/MauvilleCity_House2/scripts.inc"
+	.include "data/maps/MauvilleCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/MauvilleCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/MauvilleCity_Mart/scripts.inc"
+	.include "data/maps/RustboroCity_DevonCorp_1F/scripts.inc"
+	.include "data/maps/RustboroCity_DevonCorp_2F/scripts.inc"
+	.include "data/maps/RustboroCity_DevonCorp_3F/scripts.inc"
+	.include "data/maps/RustboroCity_Gym/scripts.inc"
+	.include "data/maps/RustboroCity_PokemonSchool/scripts.inc"
+	.include "data/maps/RustboroCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/RustboroCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/RustboroCity_Mart/scripts.inc"
+	.include "data/maps/RustboroCity_Flat1_1F/scripts.inc"
+	.include "data/maps/RustboroCity_Flat1_2F/scripts.inc"
+	.include "data/maps/RustboroCity_House1/scripts.inc"
+	.include "data/maps/RustboroCity_CuttersHouse/scripts.inc"
+	.include "data/maps/RustboroCity_House2/scripts.inc"
+	.include "data/maps/RustboroCity_Flat2_1F/scripts.inc"
+	.include "data/maps/RustboroCity_Flat2_2F/scripts.inc"
+	.include "data/maps/RustboroCity_Flat2_3F/scripts.inc"
+	.include "data/maps/RustboroCity_House3/scripts.inc"
+	.include "data/maps/FortreeCity_House1/scripts.inc"
+	.include "data/maps/FortreeCity_Gym/scripts.inc"
+	.include "data/maps/FortreeCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/FortreeCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/FortreeCity_Mart/scripts.inc"
+	.include "data/maps/FortreeCity_House2/scripts.inc"
+	.include "data/maps/FortreeCity_House3/scripts.inc"
+	.include "data/maps/FortreeCity_House4/scripts.inc"
+	.include "data/maps/FortreeCity_House5/scripts.inc"
+	.include "data/maps/FortreeCity_DecorationShop/scripts.inc"
+	.include "data/maps/LilycoveCity_CoveLilyMotel_1F/scripts.inc"
+	.include "data/maps/LilycoveCity_CoveLilyMotel_2F/scripts.inc"
+	.include "data/maps/LilycoveCity_LilycoveMuseum_1F/scripts.inc"
+	.include "data/maps/LilycoveCity_LilycoveMuseum_2F/scripts.inc"
+	.include "data/maps/LilycoveCity_ContestLobby/scripts.inc"
+	.include "data/maps/LilycoveCity_ContestHall/scripts.inc"
+	.include "data/maps/LilycoveCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/LilycoveCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/LilycoveCity_UnusedMart/scripts.inc"
+	.include "data/maps/LilycoveCity_PokemonTrainerFanClub/scripts.inc"
+	.include "data/maps/LilycoveCity_Harbor/scripts.inc"
+	.include "data/maps/LilycoveCity_EmptyMap/scripts.inc"
+	.include "data/maps/LilycoveCity_MoveDeletersHouse/scripts.inc"
+	.include "data/maps/LilycoveCity_House1/scripts.inc"
+	.include "data/maps/LilycoveCity_House2/scripts.inc"
+	.include "data/maps/LilycoveCity_House3/scripts.inc"
+	.include "data/maps/LilycoveCity_House4/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_1F/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_2F/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_3F/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_4F/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_5F/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStoreRooftop/scripts.inc"
+	.include "data/maps/LilycoveCity_DepartmentStoreElevator/scripts.inc"
+	.include "data/maps/MossdeepCity_Gym/scripts.inc"
+	.include "data/maps/MossdeepCity_House1/scripts.inc"
+	.include "data/maps/MossdeepCity_House2/scripts.inc"
+	.include "data/maps/MossdeepCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/MossdeepCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/MossdeepCity_Mart/scripts.inc"
+	.include "data/maps/MossdeepCity_House3/scripts.inc"
+	.include "data/maps/MossdeepCity_StevensHouse/scripts.inc"
+	.include "data/maps/MossdeepCity_House4/scripts.inc"
+	.include "data/maps/MossdeepCity_SpaceCenter_1F/scripts.inc"
+	.include "data/maps/MossdeepCity_SpaceCenter_2F/scripts.inc"
+	.include "data/maps/MossdeepCity_GameCorner_1F/scripts.inc"
+	.include "data/maps/MossdeepCity_GameCorner_B1F/scripts.inc"
+	.include "data/maps/SootopolisCity_Gym_1F/scripts.inc"
+	.include "data/maps/SootopolisCity_Gym_B1F/scripts.inc"
+	.include "data/maps/SootopolisCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/SootopolisCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/SootopolisCity_Mart/scripts.inc"
+	.include "data/maps/SootopolisCity_House1/scripts.inc"
+	.include "data/maps/SootopolisCity_House2/scripts.inc"
+	.include "data/maps/SootopolisCity_House3/scripts.inc"
+	.include "data/maps/SootopolisCity_House4/scripts.inc"
+	.include "data/maps/SootopolisCity_House5/scripts.inc"
+	.include "data/maps/SootopolisCity_House6/scripts.inc"
+	.include "data/maps/SootopolisCity_House7/scripts.inc"
+	.include "data/maps/SootopolisCity_House8/scripts.inc"
+	.include "data/maps/EverGrandeCity_SidneysRoom/scripts.inc"
+	.include "data/maps/EverGrandeCity_PhoebesRoom/scripts.inc"
+	.include "data/maps/EverGrandeCity_GlaciasRoom/scripts.inc"
+	.include "data/maps/EverGrandeCity_DrakesRoom/scripts.inc"
+	.include "data/maps/EverGrandeCity_ChampionsRoom/scripts.inc"
+	.include "data/maps/EverGrandeCity_Corridor1/scripts.inc"
+	.include "data/maps/EverGrandeCity_Corridor2/scripts.inc"
+	.include "data/maps/EverGrandeCity_Corridor3/scripts.inc"
+	.include "data/maps/EverGrandeCity_Corridor4/scripts.inc"
+	.include "data/maps/EverGrandeCity_Corridor5/scripts.inc"
+	.include "data/maps/EverGrandeCity_PokemonLeague/scripts.inc"
+	.include "data/maps/EverGrandeCity_HallOfFame/scripts.inc"
+	.include "data/maps/EverGrandeCity_PokemonCenter_1F/scripts.inc"
+	.include "data/maps/EverGrandeCity_PokemonCenter_2F/scripts.inc"
+	.include "data/maps/Route104_MrBrineysHouse/scripts.inc"
+	.include "data/maps/Route104_PrettyPetalFlowerShop/scripts.inc"
+	.include "data/maps/Route111_WinstrateFamilysHouse/scripts.inc"
+	.include "data/maps/Route111_OldLadysRestStop/scripts.inc"
+	.include "data/maps/Route112_CableCarStation/scripts.inc"
+	.include "data/maps/MtChimney_CableCarStation/scripts.inc"
+	.include "data/maps/Route114_FossilManiacsHouse/scripts.inc"
+	.include "data/maps/Route114_FossilManiacsTunnel/scripts.inc"
+	.include "data/maps/Route114_LanettesHouse/scripts.inc"
+	.include "data/maps/Route116_TunnelersRestHouse/scripts.inc"
+	.include "data/maps/Route117_PokemonDayCare/scripts.inc"
+	.include "data/maps/Route121_SafariZoneEntrance/scripts.inc"
+	.include "data/maps/MeteorFalls_1F_1R/scripts.inc"
+	.include "data/maps/MeteorFalls_1F_2R/scripts.inc"
+	.include "data/maps/MeteorFalls_B1F_1R/scripts.inc"
+	.include "data/maps/MeteorFalls_B1F_2R/scripts.inc"
+	.include "data/maps/RusturfTunnel/scripts.inc"
+	.include "data/maps/Underwater_SootopolisCity/scripts.inc"
+	.include "data/maps/DesertRuins/scripts.inc"
+	.include "data/maps/GraniteCave_1F/scripts.inc"
+	.include "data/maps/GraniteCave_B1F/scripts.inc"
+	.include "data/maps/GraniteCave_B2F/scripts.inc"
+	.include "data/maps/GraniteCave_StevensRoom/scripts.inc"
+	.include "data/maps/PetalburgWoods/scripts.inc"
+	.include "data/maps/MtChimney/scripts.inc"
+	.include "data/maps/JaggedPass/scripts.inc"
+	.include "data/maps/FieryPath/scripts.inc"
+	.include "data/maps/MtPyre_1F/scripts.inc"
+	.include "data/maps/MtPyre_2F/scripts.inc"
+	.include "data/maps/MtPyre_3F/scripts.inc"
+	.include "data/maps/MtPyre_4F/scripts.inc"
+	.include "data/maps/MtPyre_5F/scripts.inc"
+	.include "data/maps/MtPyre_6F/scripts.inc"
+	.include "data/maps/MtPyre_Exterior/scripts.inc"
+	.include "data/maps/MtPyre_Summit/scripts.inc"
+	.include "data/maps/AquaHideout_1F/scripts.inc"
+	.include "data/maps/AquaHideout_B1F/scripts.inc"
+	.include "data/maps/AquaHideout_B2F/scripts.inc"
+	.include "data/maps/Underwater_SeafloorCavern/scripts.inc"
+	.include "data/maps/SeafloorCavern_Entrance/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room1/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room2/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room3/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room4/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room5/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room6/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room7/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room8/scripts.inc"
+	.include "data/maps/SeafloorCavern_Room9/scripts.inc"
+	.include "data/maps/CaveOfOrigin_Entrance/scripts.inc"
+	.include "data/maps/CaveOfOrigin_1F/scripts.inc"
+	.include "data/maps/CaveOfOrigin_B1F/scripts.inc"
+	.include "data/maps/CaveOfOrigin_B2F/scripts.inc"
+	.include "data/maps/CaveOfOrigin_B3F/scripts.inc"
+	.include "data/maps/CaveOfOrigin_B4F/scripts.inc"
+	.include "data/maps/VictoryRoad_1F/scripts.inc"
+	.include "data/maps/VictoryRoad_B1F/scripts.inc"
+	.include "data/maps/VictoryRoad_B2F/scripts.inc"
+	.include "data/maps/ShoalCave_LowTideEntranceRoom/scripts.inc"
+	.include "data/maps/ShoalCave_LowTideInnerRoom/scripts.inc"
+	.include "data/maps/ShoalCave_LowTideStairsRoom/scripts.inc"
+	.include "data/maps/ShoalCave_LowTideLowerRoom/scripts.inc"
+	.include "data/maps/ShoalCave_HighTideEntranceRoom/scripts.inc"
+	.include "data/maps/ShoalCave_HighTideInnerRoom/scripts.inc"
+	.include "data/maps/NewMauville_Entrance/scripts.inc"
+	.include "data/maps/NewMauville_Inside/scripts.inc"
+	.include "data/maps/AbandonedShip_Deck/scripts.inc"
+	.include "data/maps/AbandonedShip_Corridors_1F/scripts.inc"
+	.include "data/maps/AbandonedShip_Rooms_1F/scripts.inc"
+	.include "data/maps/AbandonedShip_Corridors_B1F/scripts.inc"
+	.include "data/maps/AbandonedShip_Rooms_B1F/scripts.inc"
+	.include "data/maps/AbandonedShip_Rooms2_B1F/scripts.inc"
+	.include "data/maps/AbandonedShip_Underwater1/scripts.inc"
+	.include "data/maps/AbandonedShip_Room_B1F/scripts.inc"
+	.include "data/maps/AbandonedShip_Rooms2_1F/scripts.inc"
+	.include "data/maps/AbandonedShip_CaptainsOffice/scripts.inc"
+	.include "data/maps/AbandonedShip_Underwater2/scripts.inc"
+	.include "data/maps/AbandonedShip_HiddenFloorCorridors/scripts.inc"
+	.include "data/maps/AbandonedShip_HiddenFloorRooms/scripts.inc"
+	.include "data/maps/IslandCave/scripts.inc"
+	.include "data/maps/AncientTomb/scripts.inc"
+	.include "data/maps/Underwater_Route134/scripts.inc"
+	.include "data/maps/Underwater_SealedChamber/scripts.inc"
+	.include "data/maps/SealedChamber_OuterRoom/scripts.inc"
+	.include "data/maps/SealedChamber_InnerRoom/scripts.inc"
+	.include "data/maps/ScorchedSlab/scripts.inc"
+	.include "data/maps/MagmaHideout_1F/scripts.inc"
+	.include "data/maps/MagmaHideout_B1F/scripts.inc"
+	.include "data/maps/MagmaHideout_B2F/scripts.inc"
+	.include "data/maps/SkyPillar_Entrance/scripts.inc"
+	.include "data/maps/SkyPillar_Outside/scripts.inc"
+	.include "data/maps/SkyPillar_1F/scripts.inc"
+	.include "data/maps/SkyPillar_2F/scripts.inc"
+	.include "data/maps/SkyPillar_3F/scripts.inc"
+	.include "data/maps/SkyPillar_4F/scripts.inc"
+	.include "data/maps/ShoalCave_LowTideIceRoom/scripts.inc"
+	.include "data/maps/SkyPillar_5F/scripts.inc"
+	.include "data/maps/SkyPillar_Top/scripts.inc"
+	.include "data/maps/SecretBase_BlueCave1/scripts.inc"
+	.include "data/maps/SecretBase_BlueCave2/scripts.inc"
+	.include "data/maps/SecretBase_BlueCave3/scripts.inc"
+	.include "data/maps/SecretBase_BlueCave4/scripts.inc"
+	.include "data/maps/SecretBase_BrownCave1/scripts.inc"
+	.include "data/maps/SecretBase_BrownCave2/scripts.inc"
+	.include "data/maps/SecretBase_BrownCave3/scripts.inc"
+	.include "data/maps/SecretBase_BrownCave4/scripts.inc"
+	.include "data/maps/SecretBase_RedCave1/scripts.inc"
+	.include "data/maps/SecretBase_RedCave2/scripts.inc"
+	.include "data/maps/SecretBase_RedCave3/scripts.inc"
+	.include "data/maps/SecretBase_RedCave4/scripts.inc"
+	.include "data/maps/SecretBase_Shrub1/scripts.inc"
+	.include "data/maps/SecretBase_Shrub2/scripts.inc"
+	.include "data/maps/SecretBase_Shrub3/scripts.inc"
+	.include "data/maps/SecretBase_Shrub4/scripts.inc"
+	.include "data/maps/SecretBase_Tree1/scripts.inc"
+	.include "data/maps/SecretBase_Tree2/scripts.inc"
+	.include "data/maps/SecretBase_Tree3/scripts.inc"
+	.include "data/maps/SecretBase_Tree4/scripts.inc"
+	.include "data/maps/SecretBase_YellowCave1/scripts.inc"
+	.include "data/maps/SecretBase_YellowCave2/scripts.inc"
+	.include "data/maps/SecretBase_YellowCave3/scripts.inc"
+	.include "data/maps/SecretBase_YellowCave4/scripts.inc"
 
 gUnknown_0815F36C:: @ 815F36C
 	lockall
-	playsfx 2
+	playse SE_PC_LOGON
 	message UnknownString_81A3A72
-	doanimation 61
+	dofieldeffect FLDEFF_SECRET_BASE_PC_TURN_ON
 	waitstate
-	waittext
-	waitbutton
-	playsfx 5
-	jump EventScript_15F384
+	waitmessage
+	waitbuttonpress
+	playse SE_SELECT
+	goto EventScript_15F384
 	end
 
 EventScript_15F384:
 	message UnknownString_81A3A87
-	waittext
-	checkflag 268
-	jumpeq EventScript_15F3A0
-	jump EventScript_15F3E2
+	waitmessage
+	goto_if_set FLAG_DECORATION_16, EventScript_15F3A0
+	goto EventScript_15F3E2
 	end
 
 gUnknown_0815F399:: @ 815F399
 	lockall
-	jump EventScript_15F384
+	goto EventScript_15F384
 	end
 
 EventScript_15F3A0:
@@ -429,37 +441,37 @@ EventScript_15F3E2:
 	end
 
 EventScript_15F419:
-	msgbox UnknownString_81A38FB, 5
-	compare RESULT, 0
-	jumpeq EventScript_15F384
-	closebutton
-	special 10
+	msgbox UnknownString_81A38FB, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_15F384
+	closemessage
+	special SecretBasePC_PackUp
 	releaseall
 	end
 
 EventScript_15F432:
-	special 14
+	special SecretBasePC_Decoration
 	end
 
 EventScript_15F436:
-	special 15
+	special SecretBasePC_Registry
 	end
 
 gUnknown_0815F43A:: @ 815F43A
 	lockall
 	message UnknownString_81A3A72
-	playsfx 2
-	doanimation 61
+	playse SE_PC_LOGON
+	dofieldeffect FLDEFF_SECRET_BASE_PC_TURN_ON
 	waitstate
-	waittext
-	waitbutton
-	playsfx 5
-	jump EventScript_15F452
+	waitmessage
+	waitbuttonpress
+	playse SE_SELECT
+	goto EventScript_15F452
 	end
 
 EventScript_15F452:
 	message UnknownString_81A3A87
-	waittext
+	waitmessage
 	multichoice 0, 0, 7, 0
 	switch RESULT
 	case 0, EventScript_15F4A1
@@ -471,69 +483,69 @@ EventScript_15F452:
 
 gUnknown_0815F49A:: @ 815F49A
 	lockall
-	jump EventScript_15F452
+	goto EventScript_15F452
 	end
 
 EventScript_15F4A1:
-	special 12
+	special sub_80BC56C
 	compare RESULT, 1
-	jumpeq EventScript_15F4E0
+	goto_if_eq EventScript_15F4E0
 	compare RESULT, 2
-	jumpeq EventScript_15F503
-	special 303
-	msgbox UnknownString_81A3958, 5
-	compare RESULT, 0
-	jumpeq EventScript_15F452
+	goto_if_eq EventScript_15F503
+	special BufferSecretBaseOwnerName
+	msgbox UnknownString_81A3958, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_15F452
 	msgbox UnknownString_81A3A22, 3
-	special 13
-	special 26
+	special sub_80BC5BC
+	special DoSecretBasePCTurnOffEffect
 	releaseall
 	end
 
 EventScript_15F4E0:
-	msgbox UnknownString_81A3982, 5
-	compare RESULT, 0
-	jumpeq EventScript_15F452
+	msgbox UnknownString_81A3982, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_15F452
 	msgbox UnknownString_81A3A3A, 3
-	special 13
-	special 26
+	special sub_80BC5BC
+	special DoSecretBasePCTurnOffEffect
 	releaseall
 	end
 
 EventScript_15F503:
 	msgbox UnknownString_81A39C0, 3
-	special 26
-	closebutton
+	special DoSecretBasePCTurnOffEffect
+	closemessage
 	releaseall
 	end
 
 EventScript_15F511:
 	message UnknownString_81A3AA2
-	waittext
-	jump EventScript_15F452
+	waitmessage
+	goto EventScript_15F452
 	end
 
 EventScript_15F51D:
-	special 26
-	closebutton
+	special DoSecretBasePCTurnOffEffect
+	closemessage
 	releaseall
 	end
 
 gUnknown_0815F523:: @ 815F523
-	doanimation 52
+	dofieldeffect FLDEFF_SAND_PILLAR
 	waitstate
 	end
 
 gUnknown_0815F528:: @ 815F528
-	special 307
+	special GetShieldToyTVDecorationInfo
 	compare RESULT, 0
-	jumpeq EventScript_15F558
+	goto_if_eq EventScript_15F558
 	compare RESULT, 1
-	jumpeq EventScript_15F561
+	goto_if_eq EventScript_15F561
 	compare RESULT, 2
-	jumpeq EventScript_15F56A
+	goto_if_eq EventScript_15F56A
 	compare RESULT, 3
-	jumpeq EventScript_15F573
+	goto_if_eq EventScript_15F573
 	end
 
 EventScript_15F558:
@@ -552,305 +564,305 @@ EventScript_15F573:
 	msgbox UnknownString_81A3C31, 3
 	end
 
-	.include "data/scripts/maps/SingleBattleColosseum.inc"
-	.include "data/scripts/maps/TradeCenter.inc"
-	.include "data/scripts/maps/RecordCorner.inc"
-	.include "data/scripts/maps/DoubleBattleColosseum.inc"
-	.include "data/scripts/maps/LinkContestRoom1.inc"
-	.include "data/scripts/maps/LinkContestRoom2.inc"
-	.include "data/scripts/maps/LinkContestRoom3.inc"
-	.include "data/scripts/maps/LinkContestRoom4.inc"
-	.include "data/scripts/maps/LinkContestRoom5.inc"
-	.include "data/scripts/maps/LinkContestRoom6.inc"
-	.include "data/scripts/maps/UnknownMap_25_29.inc"
-	.include "data/scripts/maps/UnknownMap_25_30.inc"
-	.include "data/scripts/maps/UnknownMap_25_31.inc"
-	.include "data/scripts/maps/UnknownMap_25_32.inc"
-	.include "data/scripts/maps/UnknownMap_25_33.inc"
-	.include "data/scripts/maps/UnknownMap_25_34.inc"
-	.include "data/scripts/maps/InsideOfTruck.inc"
-	.include "data/scripts/maps/SSTidalCorridor.inc"
-	.include "data/scripts/maps/SSTidalLowerDeck.inc"
-	.include "data/scripts/maps/SSTidalRooms.inc"
-	.include "data/scripts/maps/SafariZone_Northwest.inc"
-	.include "data/scripts/maps/SafariZone_Northeast.inc"
-	.include "data/scripts/maps/SafariZone_Southwest.inc"
-	.include "data/scripts/maps/SafariZone_Southeast.inc"
-	.include "data/scripts/maps/BattleTower_Outside.inc"
-	.include "data/scripts/maps/BattleTower_Lobby.inc"
-	.include "data/scripts/maps/BattleTower_Elevator.inc"
-	.include "data/scripts/maps/BattleTower_Corridor.inc"
-	.include "data/scripts/maps/BattleTower_BattleRoom.inc"
-	.include "data/scripts/maps/SouthernIsland_Exterior.inc"
-	.include "data/scripts/maps/SouthernIsland_Interior.inc"
-	.include "data/scripts/maps/SafariZone_RestHouse.inc"
-	.include "data/scripts/maps/Route104_Prototype.inc"
-	.include "data/scripts/maps/Route104_PrototypePrettyPetalFlowerShop.inc"
-	.include "data/scripts/maps/Route109_SeashoreHouse.inc"
-	.include "data/scripts/maps/Route110_TrickHouseEntrance.inc"
-	.include "data/scripts/maps/Route110_TrickHouseEnd.inc"
-	.include "data/scripts/maps/Route110_TrickHouseCorridor.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle1.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle2.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle3.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle4.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle5.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle6.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle7.inc"
-	.include "data/scripts/maps/Route110_TrickHousePuzzle8.inc"
-	.include "data/scripts/maps/Route110_SeasideCyclingRoadSouthEntrance.inc"
-	.include "data/scripts/maps/Route110_SeasideCyclingRoadNorthEntrance.inc"
-	.include "data/scripts/maps/Route113_GlassWorkshop.inc"
-	.include "data/scripts/maps/Route123_BerryMastersHouse.inc"
-	.include "data/scripts/maps/Route119_WeatherInstitute_1F.inc"
-	.include "data/scripts/maps/Route119_WeatherInstitute_2F.inc"
-	.include "data/scripts/maps/Route119_House.inc"
-	.include "data/scripts/maps/Route124_DivingTreasureHuntersHouse.inc"
+	.include "data/maps/SingleBattleColosseum/scripts.inc"
+	.include "data/maps/TradeCenter/scripts.inc"
+	.include "data/maps/RecordCorner/scripts.inc"
+	.include "data/maps/DoubleBattleColosseum/scripts.inc"
+	.include "data/maps/LinkContestRoom1/scripts.inc"
+	.include "data/maps/LinkContestRoom2/scripts.inc"
+	.include "data/maps/LinkContestRoom3/scripts.inc"
+	.include "data/maps/LinkContestRoom4/scripts.inc"
+	.include "data/maps/LinkContestRoom5/scripts.inc"
+	.include "data/maps/LinkContestRoom6/scripts.inc"
+	.include "data/maps/UnknownMap_25_29/scripts.inc"
+	.include "data/maps/UnknownMap_25_30/scripts.inc"
+	.include "data/maps/UnknownMap_25_31/scripts.inc"
+	.include "data/maps/UnknownMap_25_32/scripts.inc"
+	.include "data/maps/UnknownMap_25_33/scripts.inc"
+	.include "data/maps/UnknownMap_25_34/scripts.inc"
+	.include "data/maps/InsideOfTruck/scripts.inc"
+	.include "data/maps/SSTidalCorridor/scripts.inc"
+	.include "data/maps/SSTidalLowerDeck/scripts.inc"
+	.include "data/maps/SSTidalRooms/scripts.inc"
+	.include "data/maps/SafariZone_Northwest/scripts.inc"
+	.include "data/maps/SafariZone_Northeast/scripts.inc"
+	.include "data/maps/SafariZone_Southwest/scripts.inc"
+	.include "data/maps/SafariZone_Southeast/scripts.inc"
+	.include "data/maps/BattleTower_Outside/scripts.inc"
+	.include "data/maps/BattleTower_Lobby/scripts.inc"
+	.include "data/maps/BattleTower_Elevator/scripts.inc"
+	.include "data/maps/BattleTower_Corridor/scripts.inc"
+	.include "data/maps/BattleTower_BattleRoom/scripts.inc"
+	.include "data/maps/SouthernIsland_Exterior/scripts.inc"
+	.include "data/maps/SouthernIsland_Interior/scripts.inc"
+	.include "data/maps/SafariZone_RestHouse/scripts.inc"
+	.include "data/maps/Route104_Prototype/scripts.inc"
+	.include "data/maps/Route104_PrototypePrettyPetalFlowerShop/scripts.inc"
+	.include "data/maps/Route109_SeashoreHouse/scripts.inc"
+	.include "data/maps/Route110_TrickHouseEntrance/scripts.inc"
+	.include "data/maps/Route110_TrickHouseEnd/scripts.inc"
+	.include "data/maps/Route110_TrickHouseCorridor/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle1/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle2/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle3/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle4/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle5/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle6/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle7/scripts.inc"
+	.include "data/maps/Route110_TrickHousePuzzle8/scripts.inc"
+	.include "data/maps/Route110_SeasideCyclingRoadSouthEntrance/scripts.inc"
+	.include "data/maps/Route110_SeasideCyclingRoadNorthEntrance/scripts.inc"
+	.include "data/maps/Route113_GlassWorkshop/scripts.inc"
+	.include "data/maps/Route123_BerryMastersHouse/scripts.inc"
+	.include "data/maps/Route119_WeatherInstitute_1F/scripts.inc"
+	.include "data/maps/Route119_WeatherInstitute_2F/scripts.inc"
+	.include "data/maps/Route119_House/scripts.inc"
+	.include "data/maps/Route124_DivingTreasureHuntersHouse/scripts.inc"
 
-	.include "data/text/maps/PetalburgCity.inc"
-	.include "data/text/maps/SlateportCity.inc"
-	.include "data/text/maps/MauvilleCity.inc"
-	.include "data/text/maps/RustboroCity.inc"
-	.include "data/text/maps/FortreeCity.inc"
-	.include "data/text/maps/LilycoveCity.inc"
-	.include "data/text/maps/MossdeepCity.inc"
-	.include "data/text/maps/SootopolisCity.inc"
-	.include "data/text/maps/EverGrandeCity.inc"
-	.include "data/text/maps/LittlerootTown.inc"
-	.include "data/text/maps/OldaleTown.inc"
-	.include "data/text/maps/DewfordTown.inc"
-	.include "data/text/maps/LavaridgeTown.inc"
-	.include "data/text/maps/FallarborTown.inc"
-	.include "data/text/maps/VerdanturfTown.inc"
-	.include "data/text/maps/PacifidlogTown.inc"
-	.include "data/text/maps/Route101.inc"
-	.include "data/text/maps/Route102.inc"
-	.include "data/text/maps/Route103.inc"
-	.include "data/text/maps/Route104.inc"
-	.include "data/text/maps/Route105.inc"
-	.include "data/text/maps/Route106.inc"
-	.include "data/text/maps/Route107.inc"
-	.include "data/text/maps/Route108.inc"
-	.include "data/text/maps/Route109.inc"
-	.include "data/text/maps/Route110.inc"
-	.include "data/text/maps/Route111.inc"
-	.include "data/text/maps/Route112.inc"
-	.include "data/text/maps/Route113.inc"
-	.include "data/text/maps/Route114.inc"
-	.include "data/text/maps/Route115.inc"
-	.include "data/text/maps/Route116.inc"
-	.include "data/text/maps/Route117.inc"
-	.include "data/text/maps/Route118.inc"
-	.include "data/text/maps/Route119.inc"
-	.include "data/text/maps/Route120.inc"
-	.include "data/text/maps/Route121.inc"
-	.include "data/text/maps/Route123.inc"
-	.include "data/text/maps/Route124.inc"
-	.include "data/text/maps/Route128.inc"
-	.include "data/text/maps/LittlerootTown_BrendansHouse_1F.inc"
-	.include "data/text/maps/LittlerootTown_BrendansHouse_2F.inc"
-	.include "data/text/maps/LittlerootTown_MaysHouse_1F.inc"
-	.include "data/text/maps/LittlerootTown_MaysHouse_2F.inc"
-	.include "data/text/maps/LittlerootTown_ProfessorBirchsLab.inc"
-	.include "data/text/maps/OldaleTown_House1.inc"
-	.include "data/text/maps/OldaleTown_House2.inc"
-	.include "data/text/maps/OldaleTown_PokemonCenter_1F.inc"
-	.include "data/text/maps/OldaleTown_Mart.inc"
-	.include "data/text/maps/DewfordTown_House1.inc"
-	.include "data/text/maps/DewfordTown_PokemonCenter_1F.inc"
-	.include "data/text/maps/DewfordTown_Gym.inc"
-	.include "data/text/maps/DewfordTown_Hall.inc"
-	.include "data/text/maps/DewfordTown_House2.inc"
-	.include "data/text/maps/LavaridgeTown_HerbShop.inc"
-	.include "data/text/maps/LavaridgeTown_Gym_1F.inc"
-	.include "data/text/maps/LavaridgeTown_House.inc"
-	.include "data/text/maps/LavaridgeTown_Mart.inc"
-	.include "data/text/maps/LavaridgeTown_PokemonCenter_1F.inc"
-	.include "data/text/maps/FallarborTown_Mart.inc"
-	.include "data/text/maps/FallarborTown_ContestLobby.inc"
-	.include "data/text/maps/FallarborTown_ContestHall.inc"
-	.include "data/text/maps/FallarborTown_PokemonCenter_1F.inc"
-	.include "data/text/maps/FallarborTown_House1.inc"
-	.include "data/text/maps/FallarborTown_House2.inc"
-	.include "data/text/maps/VerdanturfTown_ContestLobby.inc"
-	.include "data/text/maps/VerdanturfTown_ContestHall.inc"
-	.include "data/text/maps/VerdanturfTown_Mart.inc"
-	.include "data/text/maps/VerdanturfTown_PokemonCenter_1F.inc"
-	.include "data/text/maps/VerdanturfTown_WandasHouse.inc"
-	.include "data/text/maps/VerdanturfTown_FriendshipRatersHouse.inc"
-	.include "data/text/maps/VerdanturfTown_House.inc"
-	.include "data/text/maps/PacifidlogTown_PokemonCenter_1F.inc"
-	.include "data/text/maps/PacifidlogTown_House1.inc"
-	.include "data/text/maps/PacifidlogTown_House2.inc"
-	.include "data/text/maps/PacifidlogTown_House3.inc"
-	.include "data/text/maps/PacifidlogTown_House4.inc"
-	.include "data/text/maps/PacifidlogTown_House5.inc"
-	.include "data/text/maps/PetalburgCity_WallysHouse.inc"
-	.include "data/text/maps/PetalburgCity_Gym.inc"
-	.include "data/text/maps/PetalburgCity_House1.inc"
-	.include "data/text/maps/PetalburgCity_House2.inc"
-	.include "data/text/maps/PetalburgCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/PetalburgCity_Mart.inc"
-	.include "data/text/maps/SlateportCity_SternsShipyard_1F.inc"
-	.include "data/text/maps/SlateportCity_SternsShipyard_2F.inc"
-	.include "data/text/maps/SlateportCity_ContestLobby.inc"
-	.include "data/text/maps/SlateportCity_ContestHall.inc"
-	.include "data/text/maps/SlateportCity_House1.inc"
-	.include "data/text/maps/SlateportCity_PokemonFanClub.inc"
-	.include "data/text/maps/SlateportCity_OceanicMuseum_1F.inc"
-	.include "data/text/maps/SlateportCity_OceanicMuseum_2F.inc"
-	.include "data/text/maps/SlateportCity_Harbor.inc"
-	.include "data/text/maps/SlateportCity_House2.inc"
-	.include "data/text/maps/SlateportCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/SlateportCity_Mart.inc"
-	.include "data/text/maps/MauvilleCity_Gym.inc"
-	.include "data/text/maps/MauvilleCity_BikeShop.inc"
-	.include "data/text/maps/MauvilleCity_House1.inc"
-	.include "data/text/maps/MauvilleCity_GameCorner.inc"
-	.include "data/text/maps/MauvilleCity_House2.inc"
-	.include "data/text/maps/MauvilleCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/MauvilleCity_PokemonCenter_2F.inc"
-	.include "data/text/maps/MauvilleCity_Mart.inc"
-	.include "data/text/maps/RustboroCity_DevonCorp_1F.inc"
-	.include "data/text/maps/RustboroCity_DevonCorp_2F.inc"
-	.include "data/text/maps/RustboroCity_DevonCorp_3F.inc"
-	.include "data/text/maps/RustboroCity_Gym.inc"
-	.include "data/text/maps/RustboroCity_PokemonSchool.inc"
-	.include "data/text/maps/RustboroCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/RustboroCity_Mart.inc"
-	.include "data/text/maps/RustboroCity_Flat1_1F.inc"
-	.include "data/text/maps/RustboroCity_Flat1_2F.inc"
-	.include "data/text/maps/RustboroCity_House1.inc"
-	.include "data/text/maps/RustboroCity_CuttersHouse.inc"
-	.include "data/text/maps/RustboroCity_House2.inc"
-	.include "data/text/maps/RustboroCity_Flat2_1F.inc"
-	.include "data/text/maps/RustboroCity_Flat2_2F.inc"
-	.include "data/text/maps/RustboroCity_Flat2_3F.inc"
-	.include "data/text/maps/RustboroCity_House3.inc"
-	.include "data/text/maps/FortreeCity_House1.inc"
-	.include "data/text/maps/FortreeCity_Gym.inc"
-	.include "data/text/maps/FortreeCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/FortreeCity_Mart.inc"
-	.include "data/text/maps/FortreeCity_House2.inc"
-	.include "data/text/maps/FortreeCity_House3.inc"
-	.include "data/text/maps/FortreeCity_House4.inc"
-	.include "data/text/maps/FortreeCity_House5.inc"
-	.include "data/text/maps/FortreeCity_DecorationShop.inc"
-	.include "data/text/maps/LilycoveCity_CoveLilyMotel_1F.inc"
-	.include "data/text/maps/LilycoveCity_CoveLilyMotel_2F.inc"
-	.include "data/text/maps/LilycoveCity_LilycoveMuseum_1F.inc"
-	.include "data/text/maps/LilycoveCity_LilycoveMuseum_2F.inc"
-	.include "data/text/maps/LilycoveCity_ContestLobby.inc"
-	.include "data/text/maps/LilycoveCity_ContestHall.inc"
-	.include "data/text/maps/LilycoveCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/LilycoveCity_PokemonTrainerFanClub.inc"
-	.include "data/text/maps/LilycoveCity_Harbor.inc"
-	.include "data/text/maps/LilycoveCity_MoveDeletersHouse.inc"
-	.include "data/text/maps/LilycoveCity_House1.inc"
-	.include "data/text/maps/LilycoveCity_House2.inc"
-	.include "data/text/maps/LilycoveCity_House3.inc"
-	.include "data/text/maps/LilycoveCity_House4.inc"
-	.include "data/text/maps/LilycoveCity_DepartmentStore_1F.inc"
-	.include "data/text/maps/LilycoveCity_DepartmentStore_2F.inc"
-	.include "data/text/maps/LilycoveCity_DepartmentStore_3F.inc"
-	.include "data/text/maps/LilycoveCity_DepartmentStore_4F.inc"
-	.include "data/text/maps/LilycoveCity_DepartmentStore_5F.inc"
-	.include "data/text/maps/LilycoveCity_DepartmentStoreRooftop.inc"
-	.include "data/text/maps/MossdeepCity_Gym.inc"
-	.include "data/text/maps/MossdeepCity_House1.inc"
-	.include "data/text/maps/MossdeepCity_House2.inc"
-	.include "data/text/maps/MossdeepCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/MossdeepCity_PokemonCenter_2F.inc"
-	.include "data/text/maps/MossdeepCity_Mart.inc"
-	.include "data/text/maps/MossdeepCity_House3.inc"
-	.include "data/text/maps/MossdeepCity_StevensHouse.inc"
-	.include "data/text/maps/MossdeepCity_House4.inc"
-	.include "data/text/maps/MossdeepCity_SpaceCenter_1F.inc"
-	.include "data/text/maps/MossdeepCity_SpaceCenter_2F.inc"
-	.include "data/text/maps/MossdeepCity_GameCorner_1F.inc"
-	.include "data/text/maps/MossdeepCity_GameCorner_B1F.inc"
-	.include "data/text/maps/SootopolisCity_Gym_1F.inc"
-	.include "data/text/maps/SootopolisCity_Gym_B1F.inc"
-	.include "data/text/maps/SootopolisCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/SootopolisCity_Mart.inc"
-	.include "data/text/maps/SootopolisCity_House1.inc"
-	.include "data/text/maps/SootopolisCity_House2.inc"
-	.include "data/text/maps/SootopolisCity_House3.inc"
-	.include "data/text/maps/SootopolisCity_House4.inc"
-	.include "data/text/maps/SootopolisCity_House5.inc"
-	.include "data/text/maps/SootopolisCity_House6.inc"
-	.include "data/text/maps/SootopolisCity_House7.inc"
-	.include "data/text/maps/SootopolisCity_House8.inc"
-	.include "data/text/maps/EverGrandeCity_SidneysRoom.inc"
-	.include "data/text/maps/EverGrandeCity_PhoebesRoom.inc"
-	.include "data/text/maps/EverGrandeCity_GlaciasRoom.inc"
-	.include "data/text/maps/EverGrandeCity_DrakesRoom.inc"
-	.include "data/text/maps/EverGrandeCity_ChampionsRoom.inc"
-	.include "data/text/maps/EverGrandeCity_PokemonLeague.inc"
-	.include "data/text/maps/EverGrandeCity_HallOfFame.inc"
-	.include "data/text/maps/EverGrandeCity_PokemonCenter_1F.inc"
-	.include "data/text/maps/Route104_MrBrineysHouse.inc"
-	.include "data/text/maps/Route111_WinstrateFamilysHouse.inc"
-	.include "data/text/maps/Route111_OldLadysRestStop.inc"
-	.include "data/text/maps/Route112_CableCarStation.inc"
-	.include "data/text/maps/MtChimney_CableCarStation.inc"
-	.include "data/text/maps/Route114_FossilManiacsHouse.inc"
-	.include "data/text/maps/Route114_FossilManiacsTunnel.inc"
-	.include "data/text/maps/Route114_LanettesHouse.inc"
-	.include "data/text/maps/Route116_TunnelersRestHouse.inc"
-	.include "data/text/maps/MeteorFalls_1F_1R.inc"
-	.include "data/text/maps/MeteorFalls_1F_2R.inc"
-	.include "data/text/maps/RusturfTunnel.inc"
-	.include "data/text/maps/GraniteCave_1F.inc"
-	.include "data/text/maps/GraniteCave_StevensRoom.inc"
-	.include "data/text/maps/PetalburgWoods.inc"
-	.include "data/text/maps/MtChimney.inc"
-	.include "data/text/maps/JaggedPass.inc"
-	.include "data/text/maps/MtPyre_1F.inc"
-	.include "data/text/maps/MtPyre_2F.inc"
-	.include "data/text/maps/MtPyre_3F.inc"
-	.include "data/text/maps/MtPyre_4F.inc"
-	.include "data/text/maps/MtPyre_5F.inc"
-	.include "data/text/maps/MtPyre_6F.inc"
-	.include "data/text/maps/AquaHideout_1F.inc"
-	.include "data/text/maps/AquaHideout_B1F.inc"
-	.include "data/text/maps/AquaHideout_B2F.inc"
-	.include "data/text/maps/Underwater_SeafloorCavern.inc"
-	.include "data/text/maps/SeafloorCavern_Room1.inc"
-	.include "data/text/maps/SeafloorCavern_Room3.inc"
-	.include "data/text/maps/SeafloorCavern_Room4.inc"
-	.include "data/text/maps/VictoryRoad_1F.inc"
-	.include "data/text/maps/VictoryRoad_B1F.inc"
-	.include "data/text/maps/VictoryRoad_B2F.inc"
-	.include "data/text/maps/ShoalCave_LowTideEntranceRoom.inc"
-	.include "data/text/maps/ShoalCave_LowTideInnerRoom.inc"
-	.include "data/text/maps/ShoalCave_LowTideStairsRoom.inc"
-	.include "data/text/maps/ShoalCave_LowTideLowerRoom.inc"
-	.include "data/text/maps/NewMauville_Entrance.inc"
-	.include "data/text/maps/NewMauville_Inside.inc"
-	.include "data/text/maps/AbandonedShip_Corridors_1F.inc"
-	.include "data/text/maps/AbandonedShip_Rooms_1F.inc"
-	.include "data/text/maps/AbandonedShip_Corridors_B1F.inc"
-	.include "data/text/maps/AbandonedShip_HiddenFloorCorridors.inc"
-	.include "data/text/maps/AbandonedShip_Rooms_B1F.inc"
-	.include "data/text/maps/AbandonedShip_Rooms2_B1F.inc"
-	.include "data/text/maps/AbandonedShip_Rooms2_1F.inc"
-	.include "data/text/maps/AbandonedShip_CaptainsOffice.inc"
-	.include "data/text/maps/AbandonedShip_HiddenFloorRooms.inc"
-	.include "data/text/maps/SecretBase_RedCave1.inc"
-	.include "data/text/maps/InsideOfTruck.inc"
-	.include "data/text/maps/SSTidalCorridor.inc"
-	.include "data/text/maps/SSTidalLowerDeck.inc"
-	.include "data/text/maps/SSTidalRooms.inc"
-	.include "data/text/maps/BattleTower_Outside.inc"
-	.include "data/text/maps/BattleTower_Lobby.inc"
-	.include "data/text/maps/BattleTower_BattleRoom.inc"
-	.include "data/text/maps/SouthernIsland_Exterior.inc"
-	.include "data/text/maps/SouthernIsland_Interior.inc"
-	.include "data/text/maps/Route104_Prototype.inc"
-	.include "data/text/maps/Route104_PrototypePrettyPetalFlowerShop.inc"
-	.include "data/text/maps/Route109_SeashoreHouse.inc"
-	.include "data/text/maps/Route110_TrickHouseEntrance.inc"
+	.include "data/maps/PetalburgCity/text.inc"
+	.include "data/maps/SlateportCity/text.inc"
+	.include "data/maps/MauvilleCity/text.inc"
+	.include "data/maps/RustboroCity/text.inc"
+	.include "data/maps/FortreeCity/text.inc"
+	.include "data/maps/LilycoveCity/text.inc"
+	.include "data/maps/MossdeepCity/text.inc"
+	.include "data/maps/SootopolisCity/text.inc"
+	.include "data/maps/EverGrandeCity/text.inc"
+	.include "data/maps/LittlerootTown/text.inc"
+	.include "data/maps/OldaleTown/text.inc"
+	.include "data/maps/DewfordTown/text.inc"
+	.include "data/maps/LavaridgeTown/text.inc"
+	.include "data/maps/FallarborTown/text.inc"
+	.include "data/maps/VerdanturfTown/text.inc"
+	.include "data/maps/PacifidlogTown/text.inc"
+	.include "data/maps/Route101/text.inc"
+	.include "data/maps/Route102/text.inc"
+	.include "data/maps/Route103/text.inc"
+	.include "data/maps/Route104/text.inc"
+	.include "data/maps/Route105/text.inc"
+	.include "data/maps/Route106/text.inc"
+	.include "data/maps/Route107/text.inc"
+	.include "data/maps/Route108/text.inc"
+	.include "data/maps/Route109/text.inc"
+	.include "data/maps/Route110/text.inc"
+	.include "data/maps/Route111/text.inc"
+	.include "data/maps/Route112/text.inc"
+	.include "data/maps/Route113/text.inc"
+	.include "data/maps/Route114/text.inc"
+	.include "data/maps/Route115/text.inc"
+	.include "data/maps/Route116/text.inc"
+	.include "data/maps/Route117/text.inc"
+	.include "data/maps/Route118/text.inc"
+	.include "data/maps/Route119/text.inc"
+	.include "data/maps/Route120/text.inc"
+	.include "data/maps/Route121/text.inc"
+	.include "data/maps/Route123/text.inc"
+	.include "data/maps/Route124/text.inc"
+	.include "data/maps/Route128/text.inc"
+	.include "data/maps/LittlerootTown_BrendansHouse_1F/text.inc"
+	.include "data/maps/LittlerootTown_BrendansHouse_2F/text.inc"
+	.include "data/maps/LittlerootTown_MaysHouse_1F/text.inc"
+	.include "data/maps/LittlerootTown_MaysHouse_2F/text.inc"
+	.include "data/maps/LittlerootTown_ProfessorBirchsLab/text.inc"
+	.include "data/maps/OldaleTown_House1/text.inc"
+	.include "data/maps/OldaleTown_House2/text.inc"
+	.include "data/maps/OldaleTown_PokemonCenter_1F/text.inc"
+	.include "data/maps/OldaleTown_Mart/text.inc"
+	.include "data/maps/DewfordTown_House1/text.inc"
+	.include "data/maps/DewfordTown_PokemonCenter_1F/text.inc"
+	.include "data/maps/DewfordTown_Gym/text.inc"
+	.include "data/maps/DewfordTown_Hall/text.inc"
+	.include "data/maps/DewfordTown_House2/text.inc"
+	.include "data/maps/LavaridgeTown_HerbShop/text.inc"
+	.include "data/maps/LavaridgeTown_Gym_1F/text.inc"
+	.include "data/maps/LavaridgeTown_House/text.inc"
+	.include "data/maps/LavaridgeTown_Mart/text.inc"
+	.include "data/maps/LavaridgeTown_PokemonCenter_1F/text.inc"
+	.include "data/maps/FallarborTown_Mart/text.inc"
+	.include "data/maps/FallarborTown_ContestLobby/text.inc"
+	.include "data/maps/FallarborTown_ContestHall/text.inc"
+	.include "data/maps/FallarborTown_PokemonCenter_1F/text.inc"
+	.include "data/maps/FallarborTown_House1/text.inc"
+	.include "data/maps/FallarborTown_House2/text.inc"
+	.include "data/maps/VerdanturfTown_ContestLobby/text.inc"
+	.include "data/maps/VerdanturfTown_ContestHall/text.inc"
+	.include "data/maps/VerdanturfTown_Mart/text.inc"
+	.include "data/maps/VerdanturfTown_PokemonCenter_1F/text.inc"
+	.include "data/maps/VerdanturfTown_WandasHouse/text.inc"
+	.include "data/maps/VerdanturfTown_FriendshipRatersHouse/text.inc"
+	.include "data/maps/VerdanturfTown_House/text.inc"
+	.include "data/maps/PacifidlogTown_PokemonCenter_1F/text.inc"
+	.include "data/maps/PacifidlogTown_House1/text.inc"
+	.include "data/maps/PacifidlogTown_House2/text.inc"
+	.include "data/maps/PacifidlogTown_House3/text.inc"
+	.include "data/maps/PacifidlogTown_House4/text.inc"
+	.include "data/maps/PacifidlogTown_House5/text.inc"
+	.include "data/maps/PetalburgCity_WallysHouse/text.inc"
+	.include "data/maps/PetalburgCity_Gym/text.inc"
+	.include "data/maps/PetalburgCity_House1/text.inc"
+	.include "data/maps/PetalburgCity_House2/text.inc"
+	.include "data/maps/PetalburgCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/PetalburgCity_Mart/text.inc"
+	.include "data/maps/SlateportCity_SternsShipyard_1F/text.inc"
+	.include "data/maps/SlateportCity_SternsShipyard_2F/text.inc"
+	.include "data/maps/SlateportCity_ContestLobby/text.inc"
+	.include "data/maps/SlateportCity_ContestHall/text.inc"
+	.include "data/maps/SlateportCity_House1/text.inc"
+	.include "data/maps/SlateportCity_PokemonFanClub/text.inc"
+	.include "data/maps/SlateportCity_OceanicMuseum_1F/text.inc"
+	.include "data/maps/SlateportCity_OceanicMuseum_2F/text.inc"
+	.include "data/maps/SlateportCity_Harbor/text.inc"
+	.include "data/maps/SlateportCity_House2/text.inc"
+	.include "data/maps/SlateportCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/SlateportCity_Mart/text.inc"
+	.include "data/maps/MauvilleCity_Gym/text.inc"
+	.include "data/maps/MauvilleCity_BikeShop/text.inc"
+	.include "data/maps/MauvilleCity_House1/text.inc"
+	.include "data/maps/MauvilleCity_GameCorner/text.inc"
+	.include "data/maps/MauvilleCity_House2/text.inc"
+	.include "data/maps/MauvilleCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/MauvilleCity_PokemonCenter_2F/text.inc"
+	.include "data/maps/MauvilleCity_Mart/text.inc"
+	.include "data/maps/RustboroCity_DevonCorp_1F/text.inc"
+	.include "data/maps/RustboroCity_DevonCorp_2F/text.inc"
+	.include "data/maps/RustboroCity_DevonCorp_3F/text.inc"
+	.include "data/maps/RustboroCity_Gym/text.inc"
+	.include "data/maps/RustboroCity_PokemonSchool/text.inc"
+	.include "data/maps/RustboroCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/RustboroCity_Mart/text.inc"
+	.include "data/maps/RustboroCity_Flat1_1F/text.inc"
+	.include "data/maps/RustboroCity_Flat1_2F/text.inc"
+	.include "data/maps/RustboroCity_House1/text.inc"
+	.include "data/maps/RustboroCity_CuttersHouse/text.inc"
+	.include "data/maps/RustboroCity_House2/text.inc"
+	.include "data/maps/RustboroCity_Flat2_1F/text.inc"
+	.include "data/maps/RustboroCity_Flat2_2F/text.inc"
+	.include "data/maps/RustboroCity_Flat2_3F/text.inc"
+	.include "data/maps/RustboroCity_House3/text.inc"
+	.include "data/maps/FortreeCity_House1/text.inc"
+	.include "data/maps/FortreeCity_Gym/text.inc"
+	.include "data/maps/FortreeCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/FortreeCity_Mart/text.inc"
+	.include "data/maps/FortreeCity_House2/text.inc"
+	.include "data/maps/FortreeCity_House3/text.inc"
+	.include "data/maps/FortreeCity_House4/text.inc"
+	.include "data/maps/FortreeCity_House5/text.inc"
+	.include "data/maps/FortreeCity_DecorationShop/text.inc"
+	.include "data/maps/LilycoveCity_CoveLilyMotel_1F/text.inc"
+	.include "data/maps/LilycoveCity_CoveLilyMotel_2F/text.inc"
+	.include "data/maps/LilycoveCity_LilycoveMuseum_1F/text.inc"
+	.include "data/maps/LilycoveCity_LilycoveMuseum_2F/text.inc"
+	.include "data/maps/LilycoveCity_ContestLobby/text.inc"
+	.include "data/maps/LilycoveCity_ContestHall/text.inc"
+	.include "data/maps/LilycoveCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/LilycoveCity_PokemonTrainerFanClub/text.inc"
+	.include "data/maps/LilycoveCity_Harbor/text.inc"
+	.include "data/maps/LilycoveCity_MoveDeletersHouse/text.inc"
+	.include "data/maps/LilycoveCity_House1/text.inc"
+	.include "data/maps/LilycoveCity_House2/text.inc"
+	.include "data/maps/LilycoveCity_House3/text.inc"
+	.include "data/maps/LilycoveCity_House4/text.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_1F/text.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_2F/text.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_3F/text.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_4F/text.inc"
+	.include "data/maps/LilycoveCity_DepartmentStore_5F/text.inc"
+	.include "data/maps/LilycoveCity_DepartmentStoreRooftop/text.inc"
+	.include "data/maps/MossdeepCity_Gym/text.inc"
+	.include "data/maps/MossdeepCity_House1/text.inc"
+	.include "data/maps/MossdeepCity_House2/text.inc"
+	.include "data/maps/MossdeepCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/MossdeepCity_PokemonCenter_2F/text.inc"
+	.include "data/maps/MossdeepCity_Mart/text.inc"
+	.include "data/maps/MossdeepCity_House3/text.inc"
+	.include "data/maps/MossdeepCity_StevensHouse/text.inc"
+	.include "data/maps/MossdeepCity_House4/text.inc"
+	.include "data/maps/MossdeepCity_SpaceCenter_1F/text.inc"
+	.include "data/maps/MossdeepCity_SpaceCenter_2F/text.inc"
+	.include "data/maps/MossdeepCity_GameCorner_1F/text.inc"
+	.include "data/maps/MossdeepCity_GameCorner_B1F/text.inc"
+	.include "data/maps/SootopolisCity_Gym_1F/text.inc"
+	.include "data/maps/SootopolisCity_Gym_B1F/text.inc"
+	.include "data/maps/SootopolisCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/SootopolisCity_Mart/text.inc"
+	.include "data/maps/SootopolisCity_House1/text.inc"
+	.include "data/maps/SootopolisCity_House2/text.inc"
+	.include "data/maps/SootopolisCity_House3/text.inc"
+	.include "data/maps/SootopolisCity_House4/text.inc"
+	.include "data/maps/SootopolisCity_House5/text.inc"
+	.include "data/maps/SootopolisCity_House6/text.inc"
+	.include "data/maps/SootopolisCity_House7/text.inc"
+	.include "data/maps/SootopolisCity_House8/text.inc"
+	.include "data/maps/EverGrandeCity_SidneysRoom/text.inc"
+	.include "data/maps/EverGrandeCity_PhoebesRoom/text.inc"
+	.include "data/maps/EverGrandeCity_GlaciasRoom/text.inc"
+	.include "data/maps/EverGrandeCity_DrakesRoom/text.inc"
+	.include "data/maps/EverGrandeCity_ChampionsRoom/text.inc"
+	.include "data/maps/EverGrandeCity_PokemonLeague/text.inc"
+	.include "data/maps/EverGrandeCity_HallOfFame/text.inc"
+	.include "data/maps/EverGrandeCity_PokemonCenter_1F/text.inc"
+	.include "data/maps/Route104_MrBrineysHouse/text.inc"
+	.include "data/maps/Route111_WinstrateFamilysHouse/text.inc"
+	.include "data/maps/Route111_OldLadysRestStop/text.inc"
+	.include "data/maps/Route112_CableCarStation/text.inc"
+	.include "data/maps/MtChimney_CableCarStation/text.inc"
+	.include "data/maps/Route114_FossilManiacsHouse/text.inc"
+	.include "data/maps/Route114_FossilManiacsTunnel/text.inc"
+	.include "data/maps/Route114_LanettesHouse/text.inc"
+	.include "data/maps/Route116_TunnelersRestHouse/text.inc"
+	.include "data/maps/MeteorFalls_1F_1R/text.inc"
+	.include "data/maps/MeteorFalls_1F_2R/text.inc"
+	.include "data/maps/RusturfTunnel/text.inc"
+	.include "data/maps/GraniteCave_1F/text.inc"
+	.include "data/maps/GraniteCave_StevensRoom/text.inc"
+	.include "data/maps/PetalburgWoods/text.inc"
+	.include "data/maps/MtChimney/text.inc"
+	.include "data/maps/JaggedPass/text.inc"
+	.include "data/maps/MtPyre_1F/text.inc"
+	.include "data/maps/MtPyre_2F/text.inc"
+	.include "data/maps/MtPyre_3F/text.inc"
+	.include "data/maps/MtPyre_4F/text.inc"
+	.include "data/maps/MtPyre_5F/text.inc"
+	.include "data/maps/MtPyre_6F/text.inc"
+	.include "data/maps/AquaHideout_1F/text.inc"
+	.include "data/maps/AquaHideout_B1F/text.inc"
+	.include "data/maps/AquaHideout_B2F/text.inc"
+	.include "data/maps/Underwater_SeafloorCavern/text.inc"
+	.include "data/maps/SeafloorCavern_Room1/text.inc"
+	.include "data/maps/SeafloorCavern_Room3/text.inc"
+	.include "data/maps/SeafloorCavern_Room4/text.inc"
+	.include "data/maps/VictoryRoad_1F/text.inc"
+	.include "data/maps/VictoryRoad_B1F/text.inc"
+	.include "data/maps/VictoryRoad_B2F/text.inc"
+	.include "data/maps/ShoalCave_LowTideEntranceRoom/text.inc"
+	.include "data/maps/ShoalCave_LowTideInnerRoom/text.inc"
+	.include "data/maps/ShoalCave_LowTideStairsRoom/text.inc"
+	.include "data/maps/ShoalCave_LowTideLowerRoom/text.inc"
+	.include "data/maps/NewMauville_Entrance/text.inc"
+	.include "data/maps/NewMauville_Inside/text.inc"
+	.include "data/maps/AbandonedShip_Corridors_1F/text.inc"
+	.include "data/maps/AbandonedShip_Rooms_1F/text.inc"
+	.include "data/maps/AbandonedShip_Corridors_B1F/text.inc"
+	.include "data/maps/AbandonedShip_HiddenFloorCorridors/text.inc"
+	.include "data/maps/AbandonedShip_Rooms_B1F/text.inc"
+	.include "data/maps/AbandonedShip_Rooms2_B1F/text.inc"
+	.include "data/maps/AbandonedShip_Rooms2_1F/text.inc"
+	.include "data/maps/AbandonedShip_CaptainsOffice/text.inc"
+	.include "data/maps/AbandonedShip_HiddenFloorRooms/text.inc"
+	.include "data/maps/SecretBase_RedCave1/text.inc"
+	.include "data/maps/InsideOfTruck/text.inc"
+	.include "data/maps/SSTidalCorridor/text.inc"
+	.include "data/maps/SSTidalLowerDeck/text.inc"
+	.include "data/maps/SSTidalRooms/text.inc"
+	.include "data/maps/BattleTower_Outside/text.inc"
+	.include "data/maps/BattleTower_Lobby/text.inc"
+	.include "data/maps/BattleTower_BattleRoom/text.inc"
+	.include "data/maps/SouthernIsland_Exterior/text.inc"
+	.include "data/maps/SouthernIsland_Interior/text.inc"
+	.include "data/maps/Route104_Prototype/text.inc"
+	.include "data/maps/Route104_PrototypePrettyPetalFlowerShop/text.inc"
+	.include "data/maps/Route109_SeashoreHouse/text.inc"
+	.include "data/maps/Route110_TrickHouseEntrance/text.inc"
 
 Route110_TrickHousePuzzle1_Text_19C1B8:: @ 819C1B8
 	.string "{PLAYER} found a scroll.$"
@@ -867,525 +879,514 @@ UnknownString_819C21F: @ 819C21F
 	.string "...On closer inspection, this is written\n"
 	.string "on it: “Write the secret code here.”$"
 
-	.include "data/text/maps/Route110_TrickHouseEnd.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle1.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle2.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle3.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle4.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle5.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle6.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle7.inc"
-	.include "data/text/maps/Route110_TrickHousePuzzle8.inc"
-	.include "data/text/maps/Route110_SeasideCyclingRoadSouthEntrance.inc"
-	.include "data/text/maps/Route110_SeasideCyclingRoadNorthEntrance.inc"
-	.include "data/text/maps/Route113_GlassWorkshop.inc"
-	.include "data/text/maps/Route123_BerryMastersHouse.inc"
-	.include "data/text/maps/Route119_WeatherInstitute_1F.inc"
-	.include "data/text/maps/Route119_WeatherInstitute_2F.inc"
-	.include "data/text/maps/Route119_House.inc"
-	.include "data/text/maps/Route124_DivingTreasureHuntersHouse.inc"
+	.include "data/maps/Route110_TrickHouseEnd/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle1/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle2/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle3/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle4/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle5/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle6/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle7/text.inc"
+	.include "data/maps/Route110_TrickHousePuzzle8/text.inc"
+	.include "data/maps/Route110_SeasideCyclingRoadSouthEntrance/text.inc"
+	.include "data/maps/Route110_SeasideCyclingRoadNorthEntrance/text.inc"
+	.include "data/maps/Route113_GlassWorkshop/text.inc"
+	.include "data/maps/Route123_BerryMastersHouse/text.inc"
+	.include "data/maps/Route119_WeatherInstitute_1F/text.inc"
+	.include "data/maps/Route119_WeatherInstitute_2F/text.inc"
+	.include "data/maps/Route119_House/text.inc"
+	.include "data/maps/Route124_DivingTreasureHuntersHouse/text.inc"
 
 
 Std_2:
 	lock
 	faceplayer
 	message 0x0
-	waittext
-	waitbutton
+	waitmessage
+	waitbuttonpress
 	release
 	return
 
 Std_3:
 	lockall
 	message 0x0
-	waittext
-	waitbutton
+	waitmessage
+	waitbuttonpress
 	releaseall
 	return
 
 Std_4:
 	message 0x0
-	waittext
-	waitbutton
+	waitmessage
+	waitbuttonpress
 	return
 
 Std_5:
 	message 0x0
-	waittext
+	waitmessage
 	yesnobox 20, 8
 	return
 
 @ 819F805
 	return
 
-BattleTower_Lobby_EventScript_19F806:: @ 819F806
-FallarborTown_ContestLobby_EventScript_19F806:: @ 819F806
-LilycoveCity_ContestLobby_EventScript_19F806:: @ 819F806
-MossdeepCity_GameCorner_1F_EventScript_19F806:: @ 819F806
-OldaleTown_PokemonCenter_2F_EventScript_19F806:: @ 819F806
-SecretBase_RedCave1_EventScript_19F806:: @ 819F806
-	special 93
+S_DoSaveDialog:: @ 819F806
+	special ScrSpecial_DoSaveDialog
 	waitstate
 	return
 
 gUnknown_0819F80B:: @ 819F80B
 	lock
-	special 56
-	special 55
+	special PlayTrainerEncounterMusic
+	special ScrSpecial_EndTrainerApproach
 	waitstate
-	jump EventScript_19F8F2
+	goto EventScript_19F8F2
 
 gUnknown_0819F818:: @ 819F818
 	lock
 	faceplayer
-	move LAST_TALKED, Movement_19F8F0
-	waitmove 0
-	specialval RESULT, 54
+	applymovement LAST_TALKED, Movement_19F8F0
+	waitmovement 0
+	specialvar RESULT, ScrSpecial_HasTrainerBeenFought
 	compare RESULT, 0
-	jumpif 5, EventScript_19F83F
-	special 56
-	special 314
-	jump EventScript_19F8F2
+	goto_if_ne EventScript_19F83F
+	special PlayTrainerEncounterMusic
+	special sub_8082524
+	goto EventScript_19F8F2
 
 EventScript_19F83F:
-	endtrainerbattle
+	gotopostbattlescript
 
 gUnknown_0819F840:: @ 819F840
 	lock
 	faceplayer
 	call EventScript_19F8E5
-	specialval RESULT, 54
+	specialvar RESULT, ScrSpecial_HasTrainerBeenFought
 	compare RESULT, 0
-	jumpif 5, EventScript_19F877
-	special 61
+	goto_if_ne EventScript_19F877
+	special CheckForAlivePartyMons
 	compare RESULT, 0
-	jumpif 5, EventScript_19F870
-	special 56
-	special 314
-	jump EventScript_19F8F2
+	goto_if_ne EventScript_19F870
+	special PlayTrainerEncounterMusic
+	special sub_8082524
+	goto EventScript_19F8F2
 
 EventScript_19F870:
-	special 53
-	waittext
-	waitbutton
+	special ScrSpecial_ShowTrainerNonBattlingSpeech
+	waitmessage
+	waitbuttonpress
 	release
 	end
 
 EventScript_19F877:
-	endtrainerbattle
+	gotopostbattlescript
 
 gUnknown_0819F878:: @ 819F878
-	move LAST_TALKED, Movement_19F8F0
-	waitmove 0
-	special 56
-	reptrainerbattle
-	endtrainerbattle
+	applymovement LAST_TALKED, Movement_19F8F0
+	waitmovement 0
+	special PlayTrainerEncounterMusic
+	trainerbattlebegin
+	gotopostbattlescript
 
 gUnknown_0819F887:: @ 819F887
 	call EventScript_19F8E5
-	specialval RESULT, 58
+	specialvar RESULT, ScrSpecial_GetTrainerEyeRematchFlag
 	compare RESULT, 0
-	jumpeq EventScript_19F8AD
-	special 56
-	special 314
-	special 52
-	waittext
-	waitbutton
-	special 59
+	goto_if_eq EventScript_19F8AD
+	special PlayTrainerEncounterMusic
+	special sub_8082524
+	special ScrSpecial_ShowTrainerIntroSpeech
+	waitmessage
+	waitbuttonpress
+	special ScrSpecial_StartTrainerEyeRematch
 	waitstate
 	releaseall
 	end
 
 EventScript_19F8AD:
-	endtrainerbattle
+	gotopostbattlescript
 
 gUnknown_0819F8AE:: @ 819F8AE
-	specialval RESULT, 58
+	specialvar RESULT, ScrSpecial_GetTrainerEyeRematchFlag
 	compare RESULT, 0
-	jumpeq EventScript_19F8DD
-	special 61
+	goto_if_eq EventScript_19F8DD
+	special CheckForAlivePartyMons
 	compare RESULT, 0
-	jumpif 5, EventScript_19F8DE
-	special 56
-	special 314
-	special 52
-	waittext
-	waitbutton
-	special 59
+	goto_if_ne EventScript_19F8DE
+	special PlayTrainerEncounterMusic
+	special sub_8082524
+	special ScrSpecial_ShowTrainerIntroSpeech
+	waitmessage
+	waitbuttonpress
+	special ScrSpecial_StartTrainerEyeRematch
 	waitstate
 	releaseall
 	end
 
 EventScript_19F8DD:
-	endtrainerbattle
+	gotopostbattlescript
 
 EventScript_19F8DE:
-	special 53
-	waittext
-	waitbutton
+	special ScrSpecial_ShowTrainerNonBattlingSpeech
+	waitmessage
+	waitbuttonpress
 	release
 	end
 
 EventScript_19F8E5:
-	move LAST_TALKED, Movement_19F8F0
-	waitmove 0
+	applymovement LAST_TALKED, Movement_19F8F0
+	waitmovement 0
 	return
 
 Movement_19F8F0::
-	step_59
-	step_end
+	reveal_trainer
+	end_movement
 
 EventScript_19F8F2:
-	special 52
-	waittext
-	waitbutton
-	reptrainerbattle
-	specialval RESULT, 51
+	special ScrSpecial_ShowTrainerIntroSpeech
+	waitmessage
+	waitbuttonpress
+	trainerbattlebegin
+	specialvar RESULT, ScrSpecial_GetTrainerBattleMode
 	compare RESULT, 0
-	jumpeq EventScript_19F934
+	goto_if_eq EventScript_19F934
 	compare RESULT, 2
-	jumpeq EventScript_19F936
+	goto_if_eq EventScript_19F936
 	compare RESULT, 1
-	jumpeq EventScript_19F936
+	goto_if_eq EventScript_19F936
 	compare RESULT, 6
-	jumpeq EventScript_19F936
+	goto_if_eq EventScript_19F936
 	compare RESULT, 8
-	jumpeq EventScript_19F936
+	goto_if_eq EventScript_19F936
 
 EventScript_19F934:
 	releaseall
 	end
 
 EventScript_19F936:
-	endtrainerbattle2
+	gotobeatenscript
 
 Std_6::
 	message 0x0
-	waittext
-	waitbutton
+	waitmessage
+	waitbuttonpress
 	release
 	return
 
 Event_ResetBerryTrees: @ 19F940
-	event_8a 2, 7, 5
-	event_8a 1, 3, 5
-	event_8a 11, 7, 5
-	event_8a 13, 3, 5
-	event_8a 4, 7, 5
-	event_8a 76, 1, 5
-	event_8a 8, 1, 5
-	event_8a 10, 6, 5
-	event_8a 25, 20, 5
-	event_8a 26, 2, 5
-	event_8a 66, 2, 5
-	event_8a 67, 20, 5
-	event_8a 69, 22, 5
-	event_8a 70, 22, 5
-	event_8a 71, 22, 5
-	event_8a 55, 17, 5
-	event_8a 56, 17, 5
-	event_8a 5, 1, 5
-	event_8a 6, 6, 5
-	event_8a 7, 1, 5
-	event_8a 16, 18, 5
-	event_8a 17, 18, 5
-	event_8a 18, 18, 5
-	event_8a 29, 19, 5
-	event_8a 28, 19, 5
-	event_8a 27, 19, 5
-	event_8a 24, 4, 5
-	event_8a 23, 3, 5
-	event_8a 22, 3, 5
-	event_8a 21, 4, 5
-	event_8a 19, 16, 5
-	event_8a 20, 16, 5
-	event_8a 80, 7, 5
-	event_8a 81, 7, 5
-	event_8a 77, 8, 5
-	event_8a 78, 8, 5
-	event_8a 68, 8, 5
-	event_8a 31, 10, 5
-	event_8a 33, 10, 5
-	event_8a 34, 21, 5
-	event_8a 35, 21, 5
-	event_8a 36, 21, 5
-	event_8a 83, 24, 5
-	event_8a 84, 24, 5
-	event_8a 85, 10, 5
-	event_8a 86, 6, 5
-	event_8a 37, 5, 5
-	event_8a 38, 5, 5
-	event_8a 39, 5, 5
-	event_8a 40, 3, 5
-	event_8a 41, 3, 5
-	event_8a 42, 3, 5
-	event_8a 46, 19, 5
-	event_8a 45, 20, 5
-	event_8a 44, 18, 5
-	event_8a 43, 16, 5
-	event_8a 47, 8, 5
-	event_8a 48, 5, 5
-	event_8a 49, 4, 5
-	event_8a 50, 2, 5
-	event_8a 52, 18, 5
-	event_8a 53, 18, 5
-	event_8a 62, 6, 5
-	event_8a 64, 6, 5
-	event_8a 58, 21, 5
-	event_8a 59, 21, 5
-	event_8a 60, 25, 5
-	event_8a 61, 25, 5
-	event_8a 79, 23, 5
-	event_8a 14, 23, 5
-	event_8a 15, 21, 5
-	event_8a 30, 21, 5
-	event_8a 65, 25, 5
-	event_8a 72, 25, 5
-	event_8a 73, 23, 5
-	event_8a 74, 23, 5
-	event_8a 87, 3, 5
-	event_8a 88, 10, 5
-	event_8a 89, 4, 5
-	event_8a 82, 36, 5
+	setberrytree 2, 7, 5
+	setberrytree 1, 3, 5
+	setberrytree 11, 7, 5
+	setberrytree 13, 3, 5
+	setberrytree 4, 7, 5
+	setberrytree 76, 1, 5
+	setberrytree 8, 1, 5
+	setberrytree 10, 6, 5
+	setberrytree 25, 20, 5
+	setberrytree 26, 2, 5
+	setberrytree 66, 2, 5
+	setberrytree 67, 20, 5
+	setberrytree 69, 22, 5
+	setberrytree 70, 22, 5
+	setberrytree 71, 22, 5
+	setberrytree 55, 17, 5
+	setberrytree 56, 17, 5
+	setberrytree 5, 1, 5
+	setberrytree 6, 6, 5
+	setberrytree 7, 1, 5
+	setberrytree 16, 18, 5
+	setberrytree 17, 18, 5
+	setberrytree 18, 18, 5
+	setberrytree 29, 19, 5
+	setberrytree 28, 19, 5
+	setberrytree 27, 19, 5
+	setberrytree 24, 4, 5
+	setberrytree 23, 3, 5
+	setberrytree 22, 3, 5
+	setberrytree 21, 4, 5
+	setberrytree 19, 16, 5
+	setberrytree 20, 16, 5
+	setberrytree 80, 7, 5
+	setberrytree 81, 7, 5
+	setberrytree 77, 8, 5
+	setberrytree 78, 8, 5
+	setberrytree 68, 8, 5
+	setberrytree 31, 10, 5
+	setberrytree 33, 10, 5
+	setberrytree 34, 21, 5
+	setberrytree 35, 21, 5
+	setberrytree 36, 21, 5
+	setberrytree 83, 24, 5
+	setberrytree 84, 24, 5
+	setberrytree 85, 10, 5
+	setberrytree 86, 6, 5
+	setberrytree 37, 5, 5
+	setberrytree 38, 5, 5
+	setberrytree 39, 5, 5
+	setberrytree 40, 3, 5
+	setberrytree 41, 3, 5
+	setberrytree 42, 3, 5
+	setberrytree 46, 19, 5
+	setberrytree 45, 20, 5
+	setberrytree 44, 18, 5
+	setberrytree 43, 16, 5
+	setberrytree 47, 8, 5
+	setberrytree 48, 5, 5
+	setberrytree 49, 4, 5
+	setberrytree 50, 2, 5
+	setberrytree 52, 18, 5
+	setberrytree 53, 18, 5
+	setberrytree 62, 6, 5
+	setberrytree 64, 6, 5
+	setberrytree 58, 21, 5
+	setberrytree 59, 21, 5
+	setberrytree 60, 25, 5
+	setberrytree 61, 25, 5
+	setberrytree 79, 23, 5
+	setberrytree 14, 23, 5
+	setberrytree 15, 21, 5
+	setberrytree 30, 21, 5
+	setberrytree 65, 25, 5
+	setberrytree 72, 25, 5
+	setberrytree 73, 23, 5
+	setberrytree 74, 23, 5
+	setberrytree 87, 3, 5
+	setberrytree 88, 10, 5
+	setberrytree 89, 4, 5
+	setberrytree 82, 36, 5
 	return
 
 gUnknown_0819FA81:: @ 819FA81
-	setflag 86
-	setflag 769
-	setflag 770
-	setflag 771
-	setflag 721
-	setflag 889
-	setflag 726
-	setflag 867
-	setflag 731
-	setflag 732
-	setflag 814
-	setflag 868
-	setflag 739
-	setflag 881
-	setflag 738
-	setflag 740
-	setflag 741
-	setflag 743
-	setflag 744
-	setflag 906
-	setflag 737
-	setflag 747
-	setflag 748
-	setflag 749
-	setflag 756
-	setflag 774
-	setflag 895
-	setflag 776
-	setflag 777
-	setflag 778
-	setflag 779
-	setflag 780
-	setflag 781
-	setflag 782
-	setflag 783
-	setflag 734
-	setflag 849
-	setflag 789
-	setflag 790
-	setflag 791
-	setflag 792
-	setflag 797
-	setflag 798
-	setflag 799
-	setflag 901
-	setflag 902
-	setflag 903
-	setflag 904
-	setflag 800
-	setflag 801
-	setflag 803
-	setflag 802
-	setflag 806
-	setflag 808
-	setflag 809
-	setflag 984
-	setflag 811
-	setflag 812
-	setflag 866
-	setflag 815
-	setflag 816
-	setflag 869
-	setflag 823
-	setflag 828
-	setflag 829
-	setflag 831
-	setflag 859
-	setflag 841
-	setflag 843
-	setflag 844
-	setflag 847
-	setflag 845
-	setflag 846
-	setflag 860
-	setflag 861
-	setflag 835
-	setflag 840
-	setflag 848
-	setflag 851
-	setflag 855
-	setflag 856
-	setflag 973
-	setflag 870
-	setflag 872
-	setflag 877
-	setflag 879
-	setflag 891
-	setflag 880
-	setflag 878
-	setflag 807
-	setflag 983
-	setflag 886
-	setflag 884
-	setflag 885
-	setflag 961
-	setflag 888
-	setflag 941
-	setflag 752
-	setflag 757
-	setflag 892
-	setflag 896
-	setflag 897
-	setflag 898
-	setflag 909
-	setflag 910
-	setflag 911
-	setflag 915
-	setflag 912
-	setflag 920
-	setflag 921
-	setflag 922
-	setflag 923
-	setflag 925
-	setflag 929
-	setflag 930
-	setflag 934
-	setflag 939
-	setflag 940
-	setflag 928
-	setflag 834
-	setflag 944
-	setflag 945
-	setflag 947
-	setflag 948
-	setflag 858
-	setflag 950
-	setflag 968
-	setflag 1133
-	setflag 727
-	setflag 979
-	setflag 751
-	setflag 991
+	setflag FLAG_LINK_CONTEST_ROOM_POKEBALL
+	setflag FLAG_HIDE_VICTORIA_WINSTRATE
+	setflag FLAG_HIDE_VIVI_WINSTRATE
+	setflag FLAG_HIDE_VICKI_WINSTRATE
+	setflag FLAG_HIDE_BIRCH_IN_LAB
+	setflag FLAG_HIDE_RIVAL_BIRCH_LAB
+	setflag FLAG_HIDE_WALLY_PETALBURG
+	setflag FLAG_UNKNOWN_363
+	setflag FLAG_HIDE_GRUNT_RUSTBORO
+	setflag FLAG_HIDE_DEVON_RUSTBORO
+	setflag FLAG_HIDE_RIVAL_RUSTBORO
+	setflag FLAG_HIDE_FAT_MAN_LITTLEROOT
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104_HOUSE
+	setflag FLAG_HIDE_PEEKO_BRINEY_HOUSE
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_DEWFORD_TOWN
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE109
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_DEWFORD
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE109
+	setflag FLAG_HIDE_FLOWER_SHOP_WORKER_OUTSIDE
+	setflag FLAG_UNKNOWN_2E1
+	setflag FLAG_UNKNOWN_2EB
+	setflag FLAG_UNKNOWN_2EC
+	setflag FLAG_UNKNOWN_2ED
+	setflag FLAG_UNKNOWN_2F4
+	setflag FLAG_HIDE_LILYCOVE_CONTEST_ATTENDENT_1
+	setflag FLAG_HIDE_ARTIST_LILCOVE_CONTEST
+	setflag FLAG_HIDE_LILYCOVE_MUSEUM_PAINTING_LADY
+	setflag FLAG_HIDE_LILYCOVE_MUSEUM_PAINTING_GIRL
+	setflag FLAG_HIDE_LILYCOVE_MUSEUM_PAINTING_MAN
+	setflag FLAG_HIDE_LILYCOVE_MUSEUM_PAINTER
+	setflag FLAG_HIDE_LILYCOVE_MUSEUM_VISITORS
+	setflag FLAG_HIDE_PETALBURG_GYM_GUIDE
+	setflag FLAG_UNKNOWN_30E
+	setflag FLAG_UNKNOWN_30F
+	setflag FLAG_HIDE_NORMAN_LITTLEROOT
+	setflag FLAG_HIDE_MAY_PICHU_DOLL
+	setflag FLAG_HIDE_FANCLUB_OLD_LADY
+	setflag FLAG_HIDE_FANCLUB_BOY
+	setflag FLAG_HIDE_FANCLUB_LITTLE_BOY
+	setflag FLAG_HIDE_FANCLUB_LADY
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE118_1
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE120_1
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE111_2
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE118_2
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE120_2
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE111_3
+	setflag FLAG_HIDE_GABBY_AND_TY_ROUTE118_3
+	setflag FLAG_HIDE_CONTEST_REPORTER_FALLARBOR
+	setflag FLAG_HIDE_CONTEST_REPORTER_VERDANTURF
+	setflag FLAG_HIDE_CONTEST_REPORTER_SLATEPORT
+	setflag FLAG_HIDE_CONTEST_REPORTER_LILYCOVE
+	setflag FLAG_HIDE_WALLY_WANDAS_HOUSE
+	setflag FLAG_HIDE_BOYFRIEND_WANDAS_HOUSE
+	setflag FLAG_HIDE_WALLY_FATHER_WANDAS_HOUSE
+	setflag FLAG_HIDE_GIRLFRIEND_WANDAS_HOUSE
+	setflag FLAG_HIDE_WALLY_FATHER_PETALBURG
+	setflag FLAG_HIDE_WALLY_MOTHER_PETALBURG
+	setflag FLAG_HIDE_WALLY_PETALBURG_GYM
+	setflag FLAG_HIDE_WALLACE_SOOTOPOLIS_GYM
+	setflag FLAG_HIDE_WALLACE_SOOTOPOLIS
+	setflag FLAG_HIDE_BRINEY_SLATEPORT_SHIPYARD
+	setflag FLAG_UNKNOWN_337
+	setflag FLAG_HIDE_EVIL_LEADER_SEAFLOOR_CAVERN
+	setflag FLAG_HIDE_OTHER_LEADER_SEAFLOOR_CAVERN
+	setflag FLAG_HIDE_OTHER_TEAM_GRUNTS_SEAFLOOR_CAVERN
+	setflag FLAG_HIDE_AWAKENED_MON_SEAFLOOR_CAVERN
+	setflag FLAG_HIDE_STERN_SLATEPORT_HARBOR
+	setflag FLAG_UNKNOWN_34B
+	setflag FLAG_UNKNOWN_34C
+	setflag FLAG_UNKNOWN_34F
+	setflag FLAG_HIDE_GRUNT_1_SLATEPORT_HARBOR
+	setflag FLAG_HIDE_GRUNT_2_SLATEPORT_HARBOR
+	setflag FLAG_HIDE_SS_TIDAL_SLATEPORT_HARBOR
+	setflag FLAG_HIDE_SS_TIDAL_LILYCOVE_HARBOR
+	setflag FLAG_HIDE_GABBY_AND_TY_SLATEPORT
+	setflag FLAG_HIDE_STERN_SLATEPORT
+	setflag FLAG_HIDE_SUBMARINE_SHADOW_SLATEPORT_HARBOR
+	setflag FLAG_HIDE_RIVAL_ROUTE119
+	setflag FLAG_HIDE_CAVE_OF_ORIGIN_ENTRANCE_WOMAN_1
+	setflag FLAG_HIDE_CAVE_OF_ORIGIN_ENTRANCE_WOMAN_2
+	setflag FLAG_HIDE_STEVEN_SOOTOPOLIS
+	setflag FLAG_HIDE_LANETTE
+	setflag FLAG_HIDE_TRICKMASTER_ENTRANCE
+	setflag FLAG_HIDE_MT_CHIMNEY_PEOPLE
+	setflag FLAG_HIDE_BRINEY_RUSTURF_TUNNEL
+	setflag FLAG_HIDE_BRINEY_ROUTE116
+	setflag FLAG_HIDE_PEEKO_RUSTURF_TUNNEL
+	setflag FLAG_HIDE_GRUNT_RUSTURF_TUNNEL
+	setflag FLAG_HIDE_BOYFRIEND_RUSTURF_TUNNEL
+	setflag FLAG_HIDE_GIRLFRIEND_RUSTURF_TUNNEL
+	setflag FLAG_HIDE_EVIL_TEAM_LEADER_OCEANIC_MUSEUM_2F
+	setflag FLAG_HIDE_GRUNT_1_OCEANIC_MUSEUM_2F
+	setflag FLAG_HIDE_GRUNT_2_OCEANIC_MUSEUM_2F
+	setflag FLAG_HIDE_OCEANIC_MUSEUM_VISITORS
+	setflag FLAG_HIDE_BATTLE_TOWER_OPPONENT
+	setflag FLAG_HIDE_AWARD_MAN_BATTLE_TOWER
+	setflag FLAG_HIDE_MOM_LITTLEROOT
+	setflag FLAG_HIDE_MOM_UPSTAIRS
+	setflag FLAG_HIDE_WEATHER_INSTITUTE_WORKERS_1F
+	setflag FLAG_UNKNOWN_BIRCH_380
+	setflag FLAG_HIDE_BIRCH_ROUTE101
+	setflag FLAG_HIDE_BIRCH_ROUTE103
+	setflag FLAG_HIDE_FERRY_SAILOR_LILYCOVE
+	setflag FLAG_HIDE_LATIOS_OR_LATIAS_FLYING
+	setflag FLAG_HIDE_LATIOS_OR_LATIAS_STATIONARY
+	setflag FLAG_UNKNOWN_393
+	setflag FLAG_HIDE_WATTSON_MAUVILLE
+	setflag FLAG_HIDE_RIVAL_CHAMPIONS_ROOM
+	setflag FLAG_HIDE_BIRCH_CHAMPIONS_ROOM
+	setflag FLAG_HIDE_RIVAL_ON_BIKE_ROUTE110
+	setflag FLAG_HIDE_RIVAL_ROUTE119_ON_BIKE
+	setflag FLAG_HIDE_LILYCOVE_MOTEL_PEOPLE
+	setflag FLAG_HIDE_RIVAL_LAVARIDGE_1
+	setflag FLAG_HIDE_RIVAL_LAVARIDGE_2
+	setflag FLAG_HIDE_WINGULL_MOSSDEEP_HOUSE
+	setflag FLAG_HIDE_OTHER_TEAM_METEOR_FALLS_1F
+	setflag FLAG_HIDE_SLUDGE_BOMB_MAN_DEWFORD_HALL
+	setflag FLAG_HIDE_PROF_COSMO_FALLARBOR
+	setflag FLAG_HIDE_STEVEN_ROUTE128
+	setflag FLAG_HIDE_EVIL_LEADER_ROUTE128
+	setflag FLAG_HIDE_OTHER_LEADER_ROUTE128
+	setflag FLAG_HIDE_DEVON_EMPLOYEE_ROUTE116
+	setflag FLAG_HIDE_TM_SALESMAN_SLATEPORT
+	setflag FLAG_HIDE_WALLY_BATTLE_VICTORY_ROAD
+	setflag FLAG_HIDE_BRINEY_AND_PEEKO_SS_TIDAL
+	setflag FLAG_HIDE_BELDUM_BALL_STEVENS_HOUSE
+	setflag FLAG_ITEM_MOSSDEEP_STEVENS_HOUSE_1
+	setflag FLAG_HIDE_STEVENS_LETTER
+	setflag FLAG_HIDE_RIVAL_OLDALE_TOWN
+	setflag FLAG_HIDE_WALLY_DEFEATED_VICTORY_ROAD
+	setflag FLAG_HIDE_BOY_ROUTE101
 	call Event_ResetBerryTrees
 	end
 
 EverGrandeCity_HallOfFame_EventScript_19FC13:: @ 819FC13
-	clearflag 925
+	clearflag FLAG_HIDE_LILYCOVE_MOTEL_PEOPLE
 	call EverGrandeCity_HallOfFame_EventScript_19FD09
-	setflag 869
-	clearflag 950
-	clearflag 727
-	setvar 0x40c6, 1
-	clearflag 751
-	clearflag 860
-	clearflag 861
-	special 169
-	checkflag 291
-	callif 0, EverGrandeCity_HallOfFame_EventScript_19FC62
-	checkflag 255
-	callif 0, EverGrandeCity_HallOfFame_EventScript_19FC70
-	checkflag 298
-	callif 0, EverGrandeCity_HallOfFame_EventScript_19FC5A
-	checkflag 123
-	callif 0, EverGrandeCity_HallOfFame_EventScript_19FC5E
+	setflag FLAG_HIDE_BRINEY_SLATEPORT_SHIPYARD
+	clearflag FLAG_HIDE_BRINEY_AND_PEEKO_SS_TIDAL
+	clearflag FLAG_HIDE_STEVENS_LETTER
+	setvar VAR_STEVENS_HOUSE_STATE, 1
+	clearflag FLAG_HIDE_WALLY_DEFEATED_VICTORY_ROAD
+	clearflag FLAG_HIDE_SS_TIDAL_SLATEPORT_HARBOR
+	clearflag FLAG_HIDE_SS_TIDAL_LILYCOVE_HARBOR
+	special sub_810FAA0
+	call_if_unset FLAG_RECEIVED_SS_TICKET, EverGrandeCity_HallOfFame_EventScript_19FC62
+	call_if_unset FLAG_LATIOS_OR_LATIAS_ROAMING, EverGrandeCity_HallOfFame_EventScript_19FC70
+	call_if_unset FLAG_RECEIVED_BELDUM, EverGrandeCity_HallOfFame_EventScript_19FC5A
+	call_if_unset FLAG_RECEIVED_HM08, EverGrandeCity_HallOfFame_EventScript_19FC5E
 	return
 
 EverGrandeCity_HallOfFame_EventScript_19FC5A:: @ 819FC5A
-	clearflag 968
+	clearflag FLAG_HIDE_BELDUM_BALL_STEVENS_HOUSE
 	return
 
 EverGrandeCity_HallOfFame_EventScript_19FC5E:: @ 819FC5E
-	clearflag 1133
+	clearflag FLAG_ITEM_MOSSDEEP_STEVENS_HOUSE_1
 	return
 
 EverGrandeCity_HallOfFame_EventScript_19FC62:: @ 819FC62
-	setvar 0x4082, 3
-	setvar 0x408c, 3
-	clearflag 734
+	setvar VAR_LITTLEROOT_HOUSES_STATE, 3
+	setvar VAR_LITTLEROOT_HOUSES_STATE_2, 3
+	clearflag FLAG_HIDE_NORMAN_LITTLEROOT
 	return
 
 EverGrandeCity_HallOfFame_EventScript_19FC70:: @ 819FC70
-	setflag 2141
+	setflag FLAG_SYS_TV_LATI
 	return
 
-EventScript_LeagueWhiteOut:: @ 819FC74
+S_WhiteOut:: @ 819FC74
 	call EverGrandeCity_HallOfFame_EventScript_19FD09
 	call EventScript_19FC84
-	jump gUnknown_0819FC9F
+	goto gUnknown_0819FC9F
 	end
 
 EventScript_19FC84:
-	checkflag 221
-	jumpeq Route101_EventScript_1A14DC
-	checkflag 1213
-	jumpif 0, Route101_EventScript_1A14DC
-	clearflag 929
-	setvar 0x4053, 2
+	goto_if_set FLAG_RECEIVED_GO_GOGGLES, Route101_EventScript_1A14DC
+	goto_if_unset FLAG_DEFEATED_LAVARIDGE_GYM, Route101_EventScript_1A14DC
+	clearflag FLAG_HIDE_RIVAL_LAVARIDGE_1
+	setvar VAR_LAVARIDGE_RIVAL_STATE, 2
 	return
 
 gUnknown_0819FC9F:: @ 819FC9F
-	compare 0x4096, 1
-	jumpeq EventScript_19FCC1
-	compare 0x4096, 2
-	jumpeq EventScript_19FCD7
-	compare 0x4096, 3
-	jumpeq EventScript_19FCF0
+	compare VAR_BRINEY_LOCATION, 1
+	goto_if_eq EventScript_19FCC1
+	compare VAR_BRINEY_LOCATION, 2
+	goto_if_eq EventScript_19FCD7
+	compare VAR_BRINEY_LOCATION, 3
+	goto_if_eq EventScript_19FCF0
 	end
 
 EventScript_19FCC1:
-	setflag 740
-	setflag 743
-	setflag 741
-	setflag 744
-	clearflag 742
-	clearflag 739
-	clearflag 881
+	setflag FLAG_HIDE_MR_BRINEY_DEWFORD_TOWN
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_DEWFORD
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE109
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE109
+	clearflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE104
+	clearflag FLAG_HIDE_MR_BRINEY_ROUTE104_HOUSE
+	clearflag FLAG_HIDE_PEEKO_BRINEY_HOUSE
 	end
 
 EventScript_19FCD7:
-	setflag 741
-	setflag 744
-	setflag 738
-	setflag 742
-	setflag 739
-	setflag 881
-	clearflag 740
-	clearflag 743
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE109
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE109
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104_HOUSE
+	setflag FLAG_HIDE_PEEKO_BRINEY_HOUSE
+	clearflag FLAG_HIDE_MR_BRINEY_DEWFORD_TOWN
+	clearflag FLAG_HIDE_MR_BRINEY_BOAT_DEWFORD
 	end
 
 EventScript_19FCF0:
-	setflag 738
-	setflag 742
-	setflag 739
-	setflag 881
-	setflag 740
-	setflag 743
-	clearflag 741
-	clearflag 744
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104_HOUSE
+	setflag FLAG_HIDE_PEEKO_BRINEY_HOUSE
+	setflag FLAG_HIDE_MR_BRINEY_DEWFORD_TOWN
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_DEWFORD
+	clearflag FLAG_HIDE_MR_BRINEY_ROUTE109
+	clearflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE109
 	end
 
 EverGrandeCity_HallOfFame_EventScript_19FD09:: @ 819FD09
-	clearflag 1245
-	clearflag 1246
-	clearflag 1247
-	clearflag 1248
-	setvar 0x409c, 0
+	clearflag FLAG_DEFEATED_ELITE_4_SYDNEY
+	clearflag FLAG_DEFEATED_ELITE_4_PHOEBE
+	clearflag FLAG_DEFEATED_ELITE_4_GLACIA
+	clearflag FLAG_DEFEATED_ELITE_4_DRAKE
+	setvar VAR_ELITE_4_STATE, 0
 	return
 
 DewfordTown_PokemonCenter_1F_EventScript_19FD1B:: @ 819FD1B
@@ -1397,28 +1398,23 @@ PetalburgCity_PokemonCenter_1F_EventScript_19FD1B:: @ 819FD1B
 RustboroCity_PokemonCenter_1F_EventScript_19FD1B:: @ 819FD1B
 SlateportCity_PokemonCenter_1F_EventScript_19FD1B:: @ 819FD1B
 VerdanturfTown_PokemonCenter_1F_EventScript_19FD1B:: @ 819FD1B
-	checkflag 188
-	jumpif 0, OldaleTown_PokemonCenter_1F_EventScript_1A14DC
-	checkflag 1217
-	jumpeq OldaleTown_PokemonCenter_1F_EventScript_1A14DC
-	checkflag 742
-	jumpif 0, OldaleTown_PokemonCenter_1F_EventScript_19FD49
-	checkflag 740
-	jumpif 0, OldaleTown_PokemonCenter_1F_EventScript_19FD4F
-	checkflag 741
-	jumpif 0, OldaleTown_PokemonCenter_1F_EventScript_19FD55
+	goto_if_unset FLAG_RECEIVED_POKENAV, OldaleTown_PokemonCenter_1F_EventScript_1A14DC
+	goto_if_set FLAG_DEFEATED_PETALBURG_GYM, OldaleTown_PokemonCenter_1F_EventScript_1A14DC
+	goto_if_unset FLAG_HIDE_MR_BRINEY_BOAT_ROUTE104, OldaleTown_PokemonCenter_1F_EventScript_19FD49
+	goto_if_unset FLAG_HIDE_MR_BRINEY_DEWFORD_TOWN, OldaleTown_PokemonCenter_1F_EventScript_19FD4F
+	goto_if_unset FLAG_HIDE_MR_BRINEY_ROUTE109, OldaleTown_PokemonCenter_1F_EventScript_19FD55
 	return
 
 OldaleTown_PokemonCenter_1F_EventScript_19FD49:: @ 819FD49
-	setvar 0x4096, 1
+	setvar VAR_BRINEY_LOCATION, 1
 	return
 
 OldaleTown_PokemonCenter_1F_EventScript_19FD4F:: @ 819FD4F
-	setvar 0x4096, 2
+	setvar VAR_BRINEY_LOCATION, 2
 	return
 
 OldaleTown_PokemonCenter_1F_EventScript_19FD55:: @ 819FD55
-	setvar 0x4096, 3
+	setvar VAR_BRINEY_LOCATION, 3
 	return
 
 DewfordTown_PokemonCenter_1F_EventScript_19FD5B:: @ 819FD5B
@@ -1437,76 +1433,75 @@ SootopolisCity_PokemonCenter_1F_EventScript_19FD5B:: @ 819FD5B
 VerdanturfTown_PokemonCenter_1F_EventScript_19FD5B:: @ 819FD5B
 	lock
 	faceplayer
-	msgbox OldaleTown_PokemonCenter_1F_Text_1A0A7D, 5
-	compare RESULT, 1
-	jumpeq OldaleTown_PokemonCenter_1F_EventScript_19FD7C
-	compare RESULT, 0
-	jumpeq OldaleTown_PokemonCenter_1F_EventScript_19FDC7
+	msgbox gText_NurseJoy_Welcome, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq do_heal_party
+	compare RESULT, NO
+	goto_if_eq dont_heal_party
 	end
 
-OldaleTown_PokemonCenter_1F_EventScript_19FD7C:: @ 819FD7C
-	inccounter GAME_STAT_USED_POKECENTER
-	message OldaleTown_PokemonCenter_1F_Text_1A1245
-	waittext
-	move 0x800b, OldaleTown_PokemonCenter_1F_Movement_1A083F
-	waitmove 0
-	doanimation 25
-	checkanimation 25
-	move 0x800b, OldaleTown_PokemonCenter_1F_Movement_1A0845
-	waitmove 0
-	special 0
-	checkflag 273
-	jumpif 0, OldaleTown_PokemonCenter_1F_EventScript_19FDCE
-	jump OldaleTown_PokemonCenter_1F_EventScript_19FDB0
+do_heal_party:: @ 819FD7C
+	incrementgamestat GAME_STAT_USED_POKECENTER
+	message gText_NurseJoy_OkayIllTakeYourPokemon
+	waitmessage
+	applymovement VAR_SPECIAL_B, OldaleTown_PokemonCenter_1F_Movement_1A083F
+	waitmovement 0
+	dofieldeffect FLDEFF_POKECENTER_HEAL
+	waitfieldeffect FLDEFF_POKECENTER_HEAL
+	applymovement VAR_SPECIAL_B, OldaleTown_PokemonCenter_1F_Movement_1A0845
+	waitmovement 0
+	special ScrSpecial_HealPlayerParty
+	goto_if_unset FLAG_POKERUS_EXPLAINED, OldaleTown_PokemonCenter_1F_EventScript_19FDCE
+	goto OldaleTown_PokemonCenter_1F_EventScript_19FDB0
 	end
 
 OldaleTown_PokemonCenter_1F_EventScript_19FDB0:: @ 819FDB0
-	message OldaleTown_PokemonCenter_1F_Text_1A0B14
-	waittext
-	move 0x800b, OldaleTown_PokemonCenter_1F_Movement_19FDF4
-	waitmove 0
-	message OldaleTown_PokemonCenter_1F_Text_1A0AFA
-	waittext
+	message gText_NurseJoy_ThankYouForWaiting
+	waitmessage
+	applymovement VAR_SPECIAL_B, OldaleTown_PokemonCenter_1F_Movement_19FDF4
+	waitmovement 0
+	message gText_NurseJoy_WeHopeToSeeYouAgain
+	waitmessage
 	return
 
-OldaleTown_PokemonCenter_1F_EventScript_19FDC7:: @ 819FDC7
-	message OldaleTown_PokemonCenter_1F_Text_1A0AFA
-	waittext
+dont_heal_party:: @ 819FDC7
+	message gText_NurseJoy_WeHopeToSeeYouAgain
+	waitmessage
 	return
 
 OldaleTown_PokemonCenter_1F_EventScript_19FDCE:: @ 819FDCE
-	specialval RESULT, 308
+	specialvar RESULT, IsPokerusInParty
 	compare RESULT, 1
-	jumpeq OldaleTown_PokemonCenter_1F_EventScript_19FDEA
+	goto_if_eq OldaleTown_PokemonCenter_1F_EventScript_19FDEA
 	compare RESULT, 0
-	jumpeq OldaleTown_PokemonCenter_1F_EventScript_19FDB0
+	goto_if_eq OldaleTown_PokemonCenter_1F_EventScript_19FDB0
 	end
 
 OldaleTown_PokemonCenter_1F_EventScript_19FDEA:: @ 819FDEA
-	message OldaleTown_PokemonCenter_1F_Text_1A1275
-	waittext
-	setflag 273
+	message gText_NurseJoy_Pokerus
+	waitmessage
+	setflag FLAG_POKERUS_EXPLAINED
 	return
 
 OldaleTown_PokemonCenter_1F_Movement_19FDF4:: @ 819FDF4
-	step_4f
-	step_12
-	step_end
+	nurse_joy_bow
+	delay_4
+	end_movement
 
 Std_ObtainItem: @ 819FDF7
-	additem 0x8000, 0x8001
-	copyvar 0x8007, RESULT
+	giveitem VAR_SPECIAL_0, VAR_SPECIAL_1
+	copyvar VAR_SPECIAL_7, RESULT
 	call Std_ObtainItem_
 	return
 
 Std_ObtainItem_: @ 819FE07
-	bufferitem 1, 0x8000
-	checkitemtype 0x8000
+	bufferitemname 1, VAR_SPECIAL_0
+	checkitemtype VAR_SPECIAL_0
 	call GetItem_HandlePocket
-	compare 0x8007, 0x1
-	callif 1, Std_ObtainItem_Success
-	compare 0x8007, 0x0
-	callif 1, Std_ObtainItem_Fail
+	compare VAR_SPECIAL_7, 0x1
+	call_if_eq Std_ObtainItem_Success
+	compare VAR_SPECIAL_7, 0x0
+	call_if_eq Std_ObtainItem_Fail
 	return
 
 GetItem_HandlePocket:
@@ -1519,39 +1514,39 @@ GetItem_HandlePocket:
 	end
 
 GetItem_HandlePocket_Items:
-	bufferstd 2, 0xE
-	compare 0x8007, 1
-	callif 1, PlayGetItemFanfare
+	bufferstdstring 2, 0xE
+	compare VAR_SPECIAL_7, 1
+	call_if_eq PlayGetItemFanfare
 	return
 
 GetItem_HandlePocket_KeyItems:
-	bufferstd 2, 0xF
-	compare 0x8007, 1
-	callif 1, PlayGetItemFanfare
+	bufferstdstring 2, 0xF
+	compare VAR_SPECIAL_7, 1
+	call_if_eq PlayGetItemFanfare
 	return
 
 GetItem_HandlePocket_PokeBalls:
-	bufferstd 2, 0x10
-	compare 0x8007, 1
-	callif 1, PlayGetItemFanfare
+	bufferstdstring 2, 0x10
+	compare VAR_SPECIAL_7, 1
+	call_if_eq PlayGetItemFanfare
 	return
 
 GetItem_HandlePocket_TMsHMs:
-	bufferstd 2, 0x11
-	compare 0x8007, 1
-	callif 1, PlayGetTMHMFanfare
+	bufferstdstring 2, 0x11
+	compare VAR_SPECIAL_7, 1
+	call_if_eq PlayGetTMHMFanfare
 	return
 
 GetItem_HandlePocket_Berries:
-	bufferstd 2, 0x12
-	compare 0x8007, 1
-	callif 1, PlayGetItemFanfare
+	bufferstdstring 2, 0x12
+	compare VAR_SPECIAL_7, 1
+	call_if_eq PlayGetItemFanfare
 	return
 
 Std_ObtainItem_Success: @ 819FEB7
 	message Message_ObtainedItem
 	waitfanfare
-	waittext
+	waitmessage
 	msgbox Message_PutAwayItem
 	setvar RESULT, 1
 	return
@@ -1561,32 +1556,32 @@ Std_ObtainItem_Fail: @ 819FECC
 	return
 
 PlayGetItemFanfare:
-	fanfare 0x172
+	playfanfare MUS_FANFA4
 	return
 
 PlayGetTMHMFanfare:
-	fanfare 0x174
+	playfanfare MUS_ME_WAZA
 	return
 
 Std_ObtainDecoration: @ 819FEDA
-	adddecor 0x8000
-	copyvar 0x8007, RESULT
+	givedecoration VAR_SPECIAL_0
+	copyvar VAR_SPECIAL_7, RESULT
 	call Std_ObtainDecoration_
 	return
 
 Std_ObtainDecoration_: @ 819FEE8
-	bufferdecor 1, 0x8000
-	compare 0x8007, 1
-	callif 1, Std_ObtainDecoration_Success
-	compare 0x8007, 0
-	callif 1, Std_ObtainDecoration_Fail
+	bufferdecorationname 1, VAR_SPECIAL_0
+	compare VAR_SPECIAL_7, 1
+	call_if_eq Std_ObtainDecoration_Success
+	compare VAR_SPECIAL_7, 0
+	call_if_eq Std_ObtainDecoration_Fail
 	return
 
 Std_ObtainDecoration_Success: @ 819FF03
-	fanfare 0x172
+	playfanfare MUS_FANFA4
 	message Message_ObtainedDecoration
 	waitfanfare
-	waittext
+	waitmessage
 	msgbox Message_TransferredToPC
 	setvar RESULT, 1
 	return
@@ -1598,24 +1593,24 @@ Std_ObtainDecoration_Fail: @ 819FF1B
 Std_FindItem: @ 819FF21
 	lock
 	faceplayer
-	checksound
-	additem 0x8000, 0x8001
-	copyvar 0x8007, RESULT
-	bufferitem 1, 0x8000
-	checkitemtype 0x8000
+	waitse
+	giveitem VAR_SPECIAL_0, VAR_SPECIAL_1
+	copyvar VAR_SPECIAL_7, RESULT
+	bufferitemname 1, VAR_SPECIAL_0
+	checkitemtype VAR_SPECIAL_0
 	call GetItem_HandlePocket
-	compare 0x8007, 1
-	callif 1, Std_FindItem_Success
-	compare 0x8007, 0
-	callif 1, Std_FindItem_Fail
+	compare VAR_SPECIAL_7, 1
+	call_if_eq Std_FindItem_Success
+	compare VAR_SPECIAL_7, 0
+	call_if_eq Std_FindItem_Fail
 	release
 	return
 
 Std_FindItem_Success: @ 819FF52
-	disappear LAST_TALKED
+	removeobject LAST_TALKED
 	message Message_FoundOneItem
 	waitfanfare
-	waittext
+	waitmessage
 	msgbox Message_PutAwayItem
 	return
 
@@ -1627,24 +1622,24 @@ Std_FindItem_Fail: @ 819FF65
 
 HiddenItemScript:: @ 819FF7B
 	lockall
-	checksound
-	additem 0x8005, 1
-	copyvar 0x8007, RESULT
-	bufferitem 0x1, 0x8005
-	checkitemtype 0x8005
+	waitse
+	giveitem VAR_SPECIAL_5, 1
+	copyvar VAR_SPECIAL_7, RESULT
+	bufferitemname 0x1, VAR_SPECIAL_5
+	checkitemtype VAR_SPECIAL_5
 	call GetItem_HandlePocket
-	compare 0x8007, 1
-	jumpeq HiddenItemScript_Success
-	compare 0x8007, 0
-	jumpeq HiddenItemScript_Fail
+	compare VAR_SPECIAL_7, 1
+	goto_if_eq HiddenItemScript_Success
+	compare VAR_SPECIAL_7, 0
+	goto_if_eq HiddenItemScript_Fail
 	end
 
 HiddenItemScript_Success:
 	message Message_FoundOneItem
 	waitfanfare
-	waittext
+	waitmessage
 	msgbox Message_PutAwayItem
-	special 0x96
+	special SetFlagInVar
 	releaseall
 	end
 
@@ -1658,39 +1653,39 @@ HiddenItemScript_Fail:
 UnusedMixRecordsScript: @ 819FFD5
 	lock
 	faceplayer
-	msgbox UnusedMixRecordsPromptText, 5
-	compare RESULT, 1
-	jumpeq UnusedMixRecordsScript_Yes
-	compare RESULT, 0
-	jumpeq UnusedMixRecordsScript_Done
-	jump UnusedMixRecordsScript_Done
+	msgbox UnusedMixRecordsPromptText, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq UnusedMixRecordsScript_Yes
+	compare RESULT, NO
+	goto_if_eq UnusedMixRecordsScript_Done
+	goto UnusedMixRecordsScript_Done
 UnusedMixRecordsScript_Yes: @ 819FFFA
-	special 0x1B
+	special sub_80B929C
 	waitstate
 	lock
 	faceplayer
 UnusedMixRecordsScript_Done: @ 81A0000
 	message UnusedMixRecordsSeeYouAgainText
-	waittext
-	waitbutton
+	waitmessage
+	waitbuttonpress
 	release
 	end
 
 gUnknown_081A0009:: @ 81A0009
 	lockall
-	setvar 0x8004, 0
-	special 214
-	playsfx 4
+	setvar VAR_SPECIAL_4, 0
+	special DoPCTurnOnEffect
+	playse SE_PC_ON
 	msgbox UnknownString_81A09EC, 4
-	jump EventScript_1A0023
+	goto EventScript_1A0023
 	end
 
 EventScript_1A0023:
 	message gPCText_WhichPCShouldBeAccessed
-	waittext
-	special 262
+	waitmessage
+	special ScrSpecial_CreatePCMenu
 	waitstate
-	jump EventScript_1A0033
+	goto EventScript_1A0033
 	end
 
 EventScript_1A0033:
@@ -1703,23 +1698,21 @@ EventScript_1A0033:
 	end
 
 EventScript_1A0070:
-	playsfx 2
+	playse SE_PC_LOGON
 	msgbox UnknownString_81A0A54, 4
-	special 250
+	special PlayerPC
 	waitstate
-	jump EventScript_1A0023
+	goto EventScript_1A0023
 	end
 
 EventScript_1A0085:
-	playsfx 2
-	checkflag 2123
-	callif 0, EventScript_1A00AC
-	checkflag 2123
-	callif 1, EventScript_1A00B5
+	playse SE_PC_LOGON
+	call_if_unset FLAG_SYS_PC_LANETTE, EventScript_1A00AC
+	call_if_set FLAG_SYS_PC_LANETTE, EventScript_1A00B5
 	msgbox UnknownString_81A0A35, 4
-	special 60
+	special ShowPokemonStorageSystem
 	waitstate
-	jump EventScript_1A0023
+	goto EventScript_1A0023
 	end
 
 EventScript_1A00AC:
@@ -1731,19 +1724,18 @@ EventScript_1A00B5:
 	return
 
 EventScript_1A00BE:
-	setvar 0x8004, 0
-	playsfx 3
-	special 215
+	setvar VAR_SPECIAL_4, 0
+	playse SE_PC_OFF
+	special DoPCTurnOffEffect
 	releaseall
 	end
 
 EventScript_1A00CB:
-	checkflag 2052
-	jumpif 0, EventScript_1A00BE
-	playsfx 2
-	special 263
+	goto_if_unset FLAG_SYS_GAME_CLEAR, EventScript_1A00BE
+	playse SE_PC_LOGON
+	special AccessHallOfFamePC
 	waitstate
-	jump EventScript_1A0033
+	goto EventScript_1A0033
 	end
 
 FallarborTown_EventScript_1A00E1:: @ 81A00E1
@@ -1788,7 +1780,7 @@ Route123_BerryMastersHouse_EventScript_1A00F3:: @ 81A00F3
 SlateportCity_OceanicMuseum_1F_EventScript_1A00F3:: @ 81A00F3
 SlateportCity_PokemonFanClub_EventScript_1A00F3:: @ 81A00F3
 	fadescreen 1
-	special 95
+	special sub_80E60D8
 	fadescreen 0
 	return
 
@@ -1796,36 +1788,36 @@ DewfordTown_Gym_EventScript_1A00FB:: @ 81A00FB
 LavaridgeTown_Gym_1F_EventScript_1A00FB:: @ 81A00FB
 MauvilleCity_Gym_EventScript_1A00FB:: @ 81A00FB
 RustboroCity_Gym_EventScript_1A00FB:: @ 81A00FB
-	clearflag 781
-	setflag 296
+	clearflag FLAG_HIDE_PETALBURG_GYM_GUIDE
+	setflag FLAG_PETALBURG_MART_EXPANDED_ITEMS
 	return
 
 DewfordTown_EventScript_1A0102:: @ 81A0102
 DewfordTown_Hall_EventScript_1A0102:: @ 81A0102
-	checkdailyflags
-	setvar 0x8004, 0
-	special 126
+	dodailyevents
+	setvar VAR_SPECIAL_4, 0
+	special BufferTrendyPhraseString
 	return
 
 DewfordTown_EventScript_1A010C:: @ 81A010C
 Route104_MrBrineysHouse_EventScript_1A010C:: @ 81A010C
 Route109_EventScript_1A010C:: @ 81A010C
-	copyvar 0x8008, 0x4096
-	setvar 0x4096, 0
+	copyvar VAR_SPECIAL_8, VAR_BRINEY_LOCATION
+	setvar VAR_BRINEY_LOCATION, 0
 	return
 
 UseSurfScript:: @ 81A0117
-	checkattack MOVE_SURF
+	checkpartymove MOVE_SURF
 	compare RESULT, 6
-	jumpeq UseSurfScript_NoMon
-	bufferpartypoke 0, RESULT
-	setanimation 0, RESULT
+	goto_if_eq UseSurfScript_NoMon
+	bufferpartymonnick 0, RESULT
+	setfieldeffectargument 0, RESULT
 	lockall
-	msgbox UseSurfPromptText, 5
-	compare RESULT, 0
-	jumpeq UseSurfScript_No
+	msgbox UseSurfPromptText, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq UseSurfScript_No
 	msgbox UsedSurfText, 4
-	doanimation 9
+	dofieldeffect FLDEFF_USE_SURF
 UseSurfScript_No: @ 81A014C
 	releaseall
 UseSurfScript_NoMon: @ 81A014D
@@ -1840,37 +1832,37 @@ Route103_EventScript_1A014E:: @ 81A014E
 Route110_EventScript_1A014E:: @ 81A014E
 Route119_EventScript_1A014E:: @ 81A014E
 RustboroCity_EventScript_1A014E:: @ 81A014E
-	checkgender
+	checkplayergender
 	compare RESULT, 0
-	jumpeq RustboroCity_EventScript_1A0166
+	goto_if_eq RustboroCity_EventScript_1A0166
 	compare RESULT, 1
-	jumpeq RustboroCity_EventScript_1A016C
+	goto_if_eq RustboroCity_EventScript_1A016C
 	end
 
 RustboroCity_EventScript_1A0166:: @ 81A0166
-	setvar 0x4010, 105
+	setvar VAR_OBJ_GFX_ID_0, EVENT_OBJ_GFX_RIVAL_MAY_NORMAL
 	return
 
 RustboroCity_EventScript_1A016C:: @ 81A016C
-	setvar 0x4010, 100
+	setvar VAR_OBJ_GFX_ID_0, EVENT_OBJ_GFX_RIVAL_BRENDAN_NORMAL
 	return
 
 LavaridgeTown_EventScript_1A0172:: @ 81A0172
 Route110_EventScript_1A0172:: @ 81A0172
 Route119_EventScript_1A0172:: @ 81A0172
-	checkgender
+	checkplayergender
 	compare RESULT, 0
-	jumpeq LavaridgeTown_EventScript_1A018A
+	goto_if_eq LavaridgeTown_EventScript_1A018A
 	compare RESULT, 1
-	jumpeq LavaridgeTown_EventScript_1A0190
+	goto_if_eq LavaridgeTown_EventScript_1A0190
 	end
 
 LavaridgeTown_EventScript_1A018A:: @ 81A018A
-	setvar 0x4013, 106
+	setvar VAR_OBJ_GFX_ID_3, EVENT_OBJ_GFX_RIVAL_MAY_MACH_BIKE
 	return
 
 LavaridgeTown_EventScript_1A0190:: @ 81A0190
-	setvar 0x4013, 101
+	setvar VAR_OBJ_GFX_ID_3, EVENT_OBJ_GFX_RIVAL_BRENDAN_MACH_BIKE
 	return
 
 AquaHideout_1F_EventScript_1A0196:: @ 81A0196
@@ -1897,30 +1889,30 @@ SeafloorCavern_Room4_EventScript_1A0196:: @ 81A0196
 SeafloorCavern_Room9_EventScript_1A0196:: @ 81A0196
 SlateportCity_OceanicMuseum_2F_EventScript_1A0196:: @ 81A0196
 	.ifdef SAPPHIRE
-	setvar 0x4011, 117
-	setvar 0x4012, 118
-	setvar 0x4014, 119
-	setvar 0x4015, 120
-	setvar 0x4016, 195
-	setvar 0x4017, 196
+	setvar VAR_OBJ_GFX_ID_1, EVENT_OBJ_GFX_AQUA_MEMBER_M
+	setvar VAR_OBJ_GFX_ID_2, EVENT_OBJ_GFX_AQUA_MEMBER_F
+	setvar VAR_OBJ_GFX_ID_4, EVENT_OBJ_GFX_MAGMA_MEMBER_M
+	setvar VAR_OBJ_GFX_ID_5, EVENT_OBJ_GFX_MAGMA_MEMBER_F
+	setvar VAR_OBJ_GFX_ID_6, EVENT_OBJ_GFX_ARCHIE
+	setvar VAR_OBJ_GFX_ID_7, EVENT_OBJ_GFX_MAXIE
 	.else
-	setvar 0x4011, 119
-	setvar 0x4012, 120
-	setvar 0x4014, 117
-	setvar 0x4015, 118
-	setvar 0x4016, 196
-	setvar 0x4017, 195
+	setvar VAR_OBJ_GFX_ID_1, EVENT_OBJ_GFX_MAGMA_MEMBER_M
+	setvar VAR_OBJ_GFX_ID_2, EVENT_OBJ_GFX_MAGMA_MEMBER_F
+	setvar VAR_OBJ_GFX_ID_4, EVENT_OBJ_GFX_AQUA_MEMBER_M
+	setvar VAR_OBJ_GFX_ID_5, EVENT_OBJ_GFX_AQUA_MEMBER_F
+	setvar VAR_OBJ_GFX_ID_6, EVENT_OBJ_GFX_MAXIE
+	setvar VAR_OBJ_GFX_ID_7, EVENT_OBJ_GFX_ARCHIE
 	.endif
 	return
 
 CaveOfOrigin_B4F_EventScript_1A01B5:: @ 81A01B5
 SeafloorCavern_Room9_EventScript_1A01B5:: @ 81A01B5
 	.ifdef SAPPHIRE
-	setvar 0x4018, 197
-	setvar 0x4019, 205
+	setvar VAR_OBJ_GFX_ID_8, EVENT_OBJ_GFX_KYOGRE_1
+	setvar VAR_OBJ_GFX_ID_9, EVENT_OBJ_GFX_KYOGRE_2
 	.else
-	setvar 0x4018, 198
-	setvar 0x4019, 206
+	setvar VAR_OBJ_GFX_ID_8, EVENT_OBJ_GFX_GROUDON_1
+	setvar VAR_OBJ_GFX_ID_9, EVENT_OBJ_GFX_GROUDON_2
 	.endif
 	return
 
@@ -1932,7 +1924,7 @@ MossdeepCity_Gym_EventScript_1A01C0:: @ 81A01C0
 PetalburgCity_Gym_EventScript_1A01C0:: @ 81A01C0
 RustboroCity_Gym_EventScript_1A01C0:: @ 81A01C0
 SootopolisCity_Gym_1F_EventScript_1A01C0:: @ 81A01C0
-	switch 0x8008
+	switch VAR_SPECIAL_8
 	case 1, DewfordTown_Gym_EventScript_1A021E
 	case 2, DewfordTown_Gym_EventScript_1A0225
 	case 3, DewfordTown_Gym_EventScript_1A022F
@@ -1944,66 +1936,66 @@ SootopolisCity_Gym_1F_EventScript_1A01C0:: @ 81A01C0
 	end
 
 DewfordTown_Gym_EventScript_1A021E:: @ 81A021E
-	cleartrainerflag OPPONENT_JOSH
-	cleartrainerflag OPPONENT_TOMMY
+	settrainerflag TRAINER_JOSH
+	settrainerflag TRAINER_TOMMY
 	return
 
 DewfordTown_Gym_EventScript_1A0225:: @ 81A0225
-	cleartrainerflag OPPONENT_HIDEKI
-	cleartrainerflag OPPONENT_TESSA
-	cleartrainerflag OPPONENT_LAURA
+	settrainerflag TRAINER_HIDEKI
+	settrainerflag TRAINER_TESSA
+	settrainerflag TRAINER_LAURA
 	return
 
 DewfordTown_Gym_EventScript_1A022F:: @ 81A022F
-	cleartrainerflag OPPONENT_KIRK
-	cleartrainerflag OPPONENT_SHAWN
-	cleartrainerflag OPPONENT_BEN
-	cleartrainerflag OPPONENT_VIVIAN
+	settrainerflag TRAINER_KIRK
+	settrainerflag TRAINER_SHAWN
+	settrainerflag TRAINER_BEN
+	settrainerflag TRAINER_VIVIAN
 	return
 
 DewfordTown_Gym_EventScript_1A023C:: @ 81A023C
-	cleartrainerflag OPPONENT_COLE
-	cleartrainerflag OPPONENT_AXLE
-	cleartrainerflag OPPONENT_ANDY
-	cleartrainerflag OPPONENT_ZANE
-	cleartrainerflag OPPONENT_SADIE
+	settrainerflag TRAINER_COLE
+	settrainerflag TRAINER_AXLE
+	settrainerflag TRAINER_ANDY
+	settrainerflag TRAINER_ZANE
+	settrainerflag TRAINER_SADIE
 	return
 
 DewfordTown_Gym_EventScript_1A024C:: @ 81A024C
-	cleartrainerflag OPPONENT_RANDALL
-	cleartrainerflag OPPONENT_PARKER
-	cleartrainerflag OPPONENT_GEORGE
-	cleartrainerflag OPPONENT_BERKE
-	cleartrainerflag OPPONENT_MARY
-	cleartrainerflag OPPONENT_LORI
-	cleartrainerflag OPPONENT_JODY
+	settrainerflag TRAINER_RANDALL
+	settrainerflag TRAINER_PARKER
+	settrainerflag TRAINER_GEORGE
+	settrainerflag TRAINER_BERKE
+	settrainerflag TRAINER_MARY
+	settrainerflag TRAINER_LORI
+	settrainerflag TRAINER_JODY
 	return
 
 DewfordTown_Gym_EventScript_1A0262:: @ 81A0262
-	cleartrainerflag OPPONENT_JARED
-	cleartrainerflag OPPONENT_TERRELL
-	cleartrainerflag OPPONENT_KYLEE
-	cleartrainerflag OPPONENT_WILL
+	settrainerflag TRAINER_JARED
+	settrainerflag TRAINER_TERRELL
+	settrainerflag TRAINER_KYLEE
+	settrainerflag TRAINER_WILL
 	return
 
 DewfordTown_Gym_EventScript_1A026F:: @ 81A026F
-	cleartrainerflag OPPONENT_PRESTON
-	cleartrainerflag OPPONENT_VIRGIL
-	cleartrainerflag OPPONENT_FRITZ
-	cleartrainerflag OPPONENT_HANNAH
-	cleartrainerflag OPPONENT_SAMANTHA
-	cleartrainerflag OPPONENT_MAURA
+	settrainerflag TRAINER_PRESTON
+	settrainerflag TRAINER_VIRGIL
+	settrainerflag TRAINER_FRITZ
+	settrainerflag TRAINER_HANNAH
+	settrainerflag TRAINER_SAMANTHA
+	settrainerflag TRAINER_MAURA
 	return
 
 DewfordTown_Gym_EventScript_1A0282:: @ 81A0282
-	cleartrainerflag OPPONENT_ANDREA
-	cleartrainerflag OPPONENT_CRISSY
-	cleartrainerflag OPPONENT_BRIANNA_2
-	cleartrainerflag OPPONENT_CONNIE
-	cleartrainerflag OPPONENT_BRIDGET
-	cleartrainerflag OPPONENT_OLIVIA
-	cleartrainerflag OPPONENT_TIFFANY
-	cleartrainerflag OPPONENT_MARISSA
+	settrainerflag TRAINER_ANDREA
+	settrainerflag TRAINER_CRISSY
+	settrainerflag TRAINER_BRIANNA_2
+	settrainerflag TRAINER_CONNIE
+	settrainerflag TRAINER_BRIDGET
+	settrainerflag TRAINER_OLIVIA
+	settrainerflag TRAINER_TIFFANY
+	settrainerflag TRAINER_MARISSA
 	return
 
 DewfordTown_Gym_EventScript_1A029B:: @ 81A029B
@@ -2085,9 +2077,9 @@ Route127_EventScript_1A02C1:: @ 81A02C1
 Route128_EventScript_1A02C1:: @ 81A02C1
 SootopolisCity_EventScript_1A02C1:: @ 81A02C1
 	.ifdef SAPPHIRE
-	setweather 13
+	setweather WEATHER_RAIN_HEAVY
 	.else
-	setweather 12
+	setweather WEATHER_DROUGHT
 	.endif
 	return
 
@@ -2100,7 +2092,7 @@ MossdeepCity_Gym_EventScript_1A02C5:: @ 81A02C5
 PetalburgCity_Gym_EventScript_1A02C5:: @ 81A02C5
 RustboroCity_Gym_EventScript_1A02C5:: @ 81A02C5
 SootopolisCity_Gym_1F_EventScript_1A02C5:: @ 81A02C5
-	fanfare 369
+	playfanfare MUS_ME_BACHI
 	waitfanfare
 	return
 
@@ -2109,9 +2101,9 @@ Route111_OldLadysRestStop_EventScript_1A02CA:: @ 81A02CA
 Route119_WeatherInstitute_1F_EventScript_1A02CA:: @ 81A02CA
 SSTidalRooms_EventScript_1A02CA:: @ 81A02CA
 	fadescreen 1
-	fanfare 368
+	playfanfare MUS_ME_ASA
 	waitfanfare
-	special 0
+	special ScrSpecial_HealPlayerParty
 	fadescreen 0
 	return
 
@@ -2119,7 +2111,7 @@ Event_WorldMap:: @ 81A02D6
 	lockall
 	msgbox UnknownString_817303D, 4
 	fadescreen 1
-	special 251
+	special FieldShowRegionMap
 	waitstate
 	releaseall
 	end
@@ -2127,59 +2119,59 @@ Event_WorldMap:: @ 81A02D6
 DewfordTown_EventScript_1A02E7:: @ 81A02E7
 Route104_EventScript_1A02E7:: @ 81A02E7
 Route109_EventScript_1A02E7:: @ 81A02E7
-	setflag 0x4001
-	playmusic 431, 0
+	setflag FLAG_SPECIAL_FLAG_1
+	playbgm MUS_M_BOAT, FALSE
 	return
 
 DewfordTown_EventScript_1A02EF:: @ 81A02EF
 Route104_EventScript_1A02EF:: @ 81A02EF
 Route109_EventScript_1A02EF:: @ 81A02EF
-	clearflag 0x4001
-	fadedefault
+	clearflag FLAG_SPECIAL_FLAG_1
+	fadedefaultbgm
 	return
 
 LittlerootTown_ProfessorBirchsLab_EventScript_1A02F4:: @ 81A02F4
 Route101_EventScript_1A02F4:: @ 81A02F4
 Route103_EventScript_1A02F4:: @ 81A02F4
-	compare 0x4085, 0
-	jumpeq Route101_EventScript_1A14DC
-	compare 0x4049, 0
-	callif 1, Route101_EventScript_1A0358
-	compare 0x4049, 1
-	callif 1, Route101_EventScript_1A0358
-	compare 0x4049, 2
-	callif 1, Route101_EventScript_1A0365
-	compare 0x4049, 3
-	callif 1, Route101_EventScript_1A0365
-	compare 0x4049, 4
-	callif 1, Route101_EventScript_1A0372
-	compare 0x4049, 5
-	callif 1, Route101_EventScript_1A0372
-	compare 0x4049, 6
-	callif 1, Route101_EventScript_1A0358
-	compare 0x4049, 7
-	callif 1, Route101_EventScript_1A0358
+	compare VAR_PETALBURG_GYM_STATE, 0
+	goto_if_eq Route101_EventScript_1A14DC
+	compare VAR_BIRCH_STATE, 0
+	call_if_eq Route101_EventScript_1A0358
+	compare VAR_BIRCH_STATE, 1
+	call_if_eq Route101_EventScript_1A0358
+	compare VAR_BIRCH_STATE, 2
+	call_if_eq Route101_EventScript_1A0365
+	compare VAR_BIRCH_STATE, 3
+	call_if_eq Route101_EventScript_1A0365
+	compare VAR_BIRCH_STATE, 4
+	call_if_eq Route101_EventScript_1A0372
+	compare VAR_BIRCH_STATE, 5
+	call_if_eq Route101_EventScript_1A0372
+	compare VAR_BIRCH_STATE, 6
+	call_if_eq Route101_EventScript_1A0358
+	compare VAR_BIRCH_STATE, 7
+	call_if_eq Route101_EventScript_1A0358
 	return
 
 Route101_EventScript_1A0358:: @ 81A0358
-	clearflag 721
-	clearflag 896
-	setflag 897
-	setflag 898
+	clearflag FLAG_HIDE_BIRCH_IN_LAB
+	clearflag FLAG_UNKNOWN_BIRCH_380
+	setflag FLAG_HIDE_BIRCH_ROUTE101
+	setflag FLAG_HIDE_BIRCH_ROUTE103
 	return
 
 Route101_EventScript_1A0365:: @ 81A0365
-	clearflag 897
-	setflag 721
-	setflag 896
-	setflag 898
+	clearflag FLAG_HIDE_BIRCH_ROUTE101
+	setflag FLAG_HIDE_BIRCH_IN_LAB
+	setflag FLAG_UNKNOWN_BIRCH_380
+	setflag FLAG_HIDE_BIRCH_ROUTE103
 	return
 
 Route101_EventScript_1A0372:: @ 81A0372
-	clearflag 898
-	setflag 897
-	setflag 721
-	setflag 896
+	clearflag FLAG_HIDE_BIRCH_ROUTE103
+	setflag FLAG_HIDE_BIRCH_ROUTE101
+	setflag FLAG_HIDE_BIRCH_IN_LAB
+	setflag FLAG_UNKNOWN_BIRCH_380
 	return
 
 LittlerootTown_ProfessorBirchsLab_EventScript_1A037F:: @ 81A037F
@@ -2187,9 +2179,9 @@ Route101_EventScript_1A037F:: @ 81A037F
 Route103_EventScript_1A037F:: @ 81A037F
 	lock
 	faceplayer
-	msgbox Route101_Text_1C4449, 5
-	compare RESULT, 0
-	jumpeq Route101_EventScript_1A039B
+	msgbox Route101_Text_1C4449, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq Route101_EventScript_1A039B
 	call Route101_EventScript_1A03B0
 	release
 	end
@@ -2200,105 +2192,105 @@ Route101_EventScript_1A039B:: @ 81A039B
 	end
 
 Route101_EventScript_1A03A5:: @ 81A03A5
-	copyvar 0x8004, 0x8009
-	special 213
-	waittext
-	waitbutton
+	copyvar VAR_SPECIAL_4, VAR_SPECIAL_9
+	special ShowPokedexRatingMessage
+	waitmessage
+	waitbuttonpress
 	return
 
 EverGrandeCity_ChampionsRoom_EventScript_1A03B0:: @ 81A03B0
 Route101_EventScript_1A03B0:: @ 81A03B0
-	setvar 0x8004, 0
-	specialval RESULT, 212
-	copyvar 0x8008, 0x8005
-	copyvar 0x8009, 0x8006
-	copyvar 0x800a, RESULT
-	buffernum 0, 0x8008
-	buffernum 1, 0x8009
+	setvar VAR_SPECIAL_4, 0
+	specialvar RESULT, ScriptGetPokedexInfo
+	copyvar VAR_SPECIAL_8, VAR_SPECIAL_5
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	copyvar VAR_SPECIAL_A, RESULT
+	buffernumberstring 0, VAR_SPECIAL_8
+	buffernumberstring 1, VAR_SPECIAL_9
 	msgbox Route101_Text_1C44DC, 4
 	call Route101_EventScript_1A03A5
-	compare 0x800a, 0
-	jumpeq Route101_EventScript_1A14DC
-	setvar 0x8004, 1
-	specialval RESULT, 212
-	copyvar 0x8008, 0x8005
-	copyvar 0x8009, 0x8006
-	buffernum 0, 0x8008
-	buffernum 1, 0x8009
+	compare VAR_SPECIAL_A, 0
+	goto_if_eq Route101_EventScript_1A14DC
+	setvar VAR_SPECIAL_4, 1
+	specialvar RESULT, ScriptGetPokedexInfo
+	copyvar VAR_SPECIAL_8, VAR_SPECIAL_5
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	buffernumberstring 0, VAR_SPECIAL_8
+	buffernumberstring 1, VAR_SPECIAL_9
 	msgbox Route101_Text_1C4B05, 4
 	return
 
 BattleTower_Outside_EventScript_1A040E:: @ 81A040E
 LilycoveCity_Harbor_EventScript_1A040E:: @ 81A040E
 SlateportCity_Harbor_EventScript_1A040E:: @ 81A040E
-	pause 60
-	move 0x8004, SlateportCity_Harbor_Movement_1A041C
-	waitmove 0
+	delay 60
+	applymovement VAR_SPECIAL_4, SlateportCity_Harbor_Movement_1A041C
+	waitmovement 0
 	return
 
 SlateportCity_Harbor_Movement_1A041C:: @ 81A041C
-	slow_step_right
-	slow_step_right
-	slow_step_right
-	step_right
-	step_right
-	step_right
-	step_right
-	step_end
+	walk_slow_right
+	walk_slow_right
+	walk_slow_right
+	walk_right
+	walk_right
+	walk_right
+	walk_right
+	end_movement
 
 PetalburgCity_Gym_EventScript_1A0424:: @ 81A0424
-	setflag 740
-	setflag 743
-	setflag 741
-	setflag 744
-	setflag 738
-	setflag 742
-	setflag 739
-	setflag 881
-	setvar 0x4096, 0
+	setflag FLAG_HIDE_MR_BRINEY_DEWFORD_TOWN
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_DEWFORD
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE109
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE109
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_BOAT_ROUTE104
+	setflag FLAG_HIDE_MR_BRINEY_ROUTE104_HOUSE
+	setflag FLAG_HIDE_PEEKO_BRINEY_HOUSE
+	setvar VAR_BRINEY_LOCATION, 0
 	return
 
 RusturfTunnel_EventScript_1A0442:: @ 81A0442
-	disappear 1
-	disappear 10
-	clearflag 808
-	clearflag 984
-	setvar 0x409a, 6
-	setflag 199
+	removeobject 1
+	removeobject 10
+	clearflag FLAG_HIDE_BOYFRIEND_WANDAS_HOUSE
+	clearflag FLAG_HIDE_GIRLFRIEND_WANDAS_HOUSE
+	setvar VAR_RUSTURF_TUNNEL_STATE, 6
+	setflag FLAG_RUSTURF_TUNNEL_OPENED
 	return
 
 EventScript_1A0457: @ unreferenced?
-	pause 30
-	move 255, SlateportCity_OceanicMuseum_2F_Movement_1A0841
-	waitmove 0
-	spritevisible 255, 0, 0
-	pause 30
-	move 255, Movement_1A047A
-	waitmove 0
-	pause 30
+	delay 30
+	applymovement 255, SlateportCity_OceanicMuseum_2F_Movement_1A0841
+	waitmovement 0
+	showobjectat 255, MAP_PETALBURG_CITY
+	delay 30
+	applymovement 255, Movement_1A047A
+	waitmovement 0
+	delay 30
 	return
 
 Movement_1A047A:
-	step_up
-	step_end
+	walk_up
+	end_movement
 
 BattleTower_Outside_EventScript_1A047C:: @ 81A047C
 SouthernIsland_Exterior_EventScript_1A047C:: @ 81A047C
 	compare FACING, 1
-	callif 1, BattleTower_Outside_EventScript_160B2F
+	call_if_eq BattleTower_Outside_EventScript_160B2F
 	compare FACING, 3
-	callif 1, BattleTower_Outside_EventScript_160B3A
-	pause 30
-	spriteinvisible 255, 0, 0
+	call_if_eq BattleTower_Outside_EventScript_160B3A
+	delay 30
+	hideobjectat 255, MAP_PETALBURG_CITY
 	call BattleTower_Outside_EventScript_1A040E
 	return
 
 CaveOfOrigin_B4F_EventScript_1A04A0:: @ 81A04A0
 	lockall
-	checksound
-	pokecry SPECIES_GROUDON_OR_KYOGRE, 2
-	waitpokecry
-	setvar 0x4005, 1
+	waitse
+	playmoncry SPECIES_GROUDON_OR_KYOGRE, 2
+	waitmoncry
+	setvar VAR_TEMP_5, 1
 	releaseall
 	end
 
@@ -2307,28 +2299,28 @@ CaveOfOrigin_B1F_EventScript_1A04AF:: @ 81A04AF
 CaveOfOrigin_B2F_EventScript_1A04AF:: @ 81A04AF
 CaveOfOrigin_B3F_EventScript_1A04AF:: @ 81A04AF
 	lockall
-	setvar 0x4001, 1
-	jump CaveOfOrigin_1F_EventScript_1A04D3
+	setvar VAR_TEMP_1, 1
+	goto CaveOfOrigin_1F_EventScript_1A04D3
 	end
 
 CaveOfOrigin_B2F_EventScript_1A04BB:: @ 81A04BB
 CaveOfOrigin_B3F_EventScript_1A04BB:: @ 81A04BB
 	lockall
-	setvar 0x4002, 1
-	jump CaveOfOrigin_B2F_EventScript_1A04D3
+	setvar VAR_TEMP_2, 1
+	goto CaveOfOrigin_B2F_EventScript_1A04D3
 	end
 
 @ 81A04C7
 	lockall
-	setvar 0x4003, 1
-	jump CaveOfOrigin_B2F_EventScript_1A04D3
+	setvar VAR_TEMP_3, 1
+	goto CaveOfOrigin_B2F_EventScript_1A04D3
 	end
 
 CaveOfOrigin_1F_EventScript_1A04D3:: @ 81A04D3
 CaveOfOrigin_B2F_EventScript_1A04D3:: @ 81A04D3
-	setvar 0x8004, 1
-	setvar 0x8005, 1
-	special 310
+	setvar VAR_SPECIAL_4, 1
+	setvar VAR_SPECIAL_5, 1
+	special sub_810F758
 	waitstate
 	releaseall
 	end
@@ -2338,11 +2330,11 @@ CaveOfOrigin_B1F_EventScript_1A04E3:: @ 81A04E3
 CaveOfOrigin_B2F_EventScript_1A04E3:: @ 81A04E3
 CaveOfOrigin_B3F_EventScript_1A04E3:: @ 81A04E3
 CaveOfOrigin_B4F_EventScript_1A04E3:: @ 81A04E3
-	setvar 0x4001, 1
-	setvar 0x4002, 1
-	setvar 0x4003, 1
-	setvar 0x4004, 1
-	setvar 0x4005, 1
+	setvar VAR_TEMP_1, 1
+	setvar VAR_TEMP_2, 1
+	setvar VAR_TEMP_3, 1
+	setvar VAR_TEMP_4, 1
+	setvar VAR_TEMP_5, 1
 	return
 
 AquaHideout_B1F_EventScript_1A04FD:: @ 81A04FD
@@ -2350,14 +2342,14 @@ MagmaHideout_B1F_EventScript_1A04FD:: @ 81A04FD
 	lock
 	faceplayer
 	setwildbattle SPECIES_ELECTRODE, 30, ITEM_NONE
-	checksound
-	pokecry SPECIES_ELECTRODE, 2
-	pause 40
-	waitpokecry
-	setflag 977
-	setflag 2145
+	waitse
+	playmoncry SPECIES_ELECTRODE, 2
+	delay 40
+	waitmoncry
+	setflag FLAG_HIDE_ELECTRODE_1_HIDEOUT
+	setflag FLAG_SYS_CTRL_OBJ_DELETE
 	dowildbattle
-	clearflag 2145
+	clearflag FLAG_SYS_CTRL_OBJ_DELETE
 	release
 	end
 
@@ -2366,174 +2358,174 @@ MagmaHideout_B1F_EventScript_1A051B:: @ 81A051B
 	lock
 	faceplayer
 	setwildbattle SPECIES_ELECTRODE, 30, ITEM_NONE
-	checksound
-	pokecry SPECIES_ELECTRODE, 2
-	pause 40
-	waitpokecry
-	setflag 978
-	setflag 2145
+	waitse
+	playmoncry SPECIES_ELECTRODE, 2
+	delay 40
+	waitmoncry
+	setflag FLAG_HIDE_ELECTRODE_2_HIDEOUT
+	setflag FLAG_SYS_CTRL_OBJ_DELETE
 	dowildbattle
-	clearflag 2145
+	clearflag FLAG_SYS_CTRL_OBJ_DELETE
 	release
 	end
 
 Route120_EventScript_1A0539:: @ 81A0539
 	lock
 	faceplayer
-	setvar 0x8004, 1
-	jump Route120_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 1
+	goto Route120_EventScript_1A0594
 	end
 
 Route120_EventScript_1A0546:: @ 81A0546
 	lock
 	faceplayer
-	setvar 0x8004, 2
-	jump Route120_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 2
+	goto Route120_EventScript_1A0594
 	end
 
 Route120_EventScript_1A0553:: @ 81A0553
 	lock
 	faceplayer
-	setvar 0x8004, 3
-	jump Route120_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 3
+	goto Route120_EventScript_1A0594
 	end
 
 Route120_EventScript_1A0560:: @ 81A0560
 	lock
 	faceplayer
-	setvar 0x8004, 4
-	jump Route120_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 4
+	goto Route120_EventScript_1A0594
 	end
 
 Route120_EventScript_1A056D:: @ 81A056D
 	lock
 	faceplayer
-	setvar 0x8004, 5
-	jump Route120_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 5
+	goto Route120_EventScript_1A0594
 	end
 
 Route119_EventScript_1A057A:: @ 81A057A
 	lock
 	faceplayer
-	setvar 0x8004, 6
-	jump Route119_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 6
+	goto Route119_EventScript_1A0594
 	end
 
 Route119_EventScript_1A0587:: @ 81A0587
 	lock
 	faceplayer
-	setvar 0x8004, 7
-	jump Route119_EventScript_1A0594
+	setvar VAR_SPECIAL_4, 7
+	goto Route119_EventScript_1A0594
 	end
 
 Route119_EventScript_1A0594:: @ 81A0594
 Route120_EventScript_1A0594:: @ 81A0594
 	checkitem ITEM_DEVON_SCOPE, 1
 	compare RESULT, 1
-	jumpeq Route119_EventScript_1A05AE
+	goto_if_eq Route119_EventScript_1A05AE
 	msgbox Route119_Text_171B93, 4
 	release
 	end
 
 Route119_EventScript_1A05AE:: @ 81A05AE
-	msgbox Route119_Text_171BB6, 5
-	compare RESULT, 1
-	jumpeq Route119_EventScript_1A05C3
+	msgbox Route119_Text_171BB6, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq Route119_EventScript_1A05C3
 	release
 	end
 
 Route119_EventScript_1A05C3:: @ 81A05C3
 	msgbox Route119_Text_171BF6, 4
-	closebutton
-	move LAST_TALKED, Route119_Movement_1A0839
-	waitmove 0
-	move LAST_TALKED, Route119_Movement_1A0662
-	waitmove 0
-	checksound
-	pokecry SPECIES_KECLEON, 2
-	pause 40
-	waitpokecry
+	closemessage
+	applymovement LAST_TALKED, Route119_Movement_1A0839
+	waitmovement 0
+	applymovement LAST_TALKED, Route119_Movement_1A0662
+	waitmovement 0
+	waitse
+	playmoncry SPECIES_KECLEON, 2
+	delay 40
+	waitmoncry
 	setwildbattle SPECIES_KECLEON, 30, ITEM_NONE
-	compare 0x8004, 1
-	callif 1, Route119_EventScript_1A0646
-	compare 0x8004, 2
-	callif 1, Route119_EventScript_1A064A
-	compare 0x8004, 3
-	callif 1, Route119_EventScript_1A064E
-	compare 0x8004, 4
-	callif 1, Route119_EventScript_1A0652
-	compare 0x8004, 5
-	callif 1, Route119_EventScript_1A0656
-	compare 0x8004, 6
-	callif 1, Route119_EventScript_1A065A
-	compare 0x8004, 7
-	callif 1, Route119_EventScript_1A065E
-	setflag 2145
+	compare VAR_SPECIAL_4, 1
+	call_if_eq Route119_EventScript_1A0646
+	compare VAR_SPECIAL_4, 2
+	call_if_eq Route119_EventScript_1A064A
+	compare VAR_SPECIAL_4, 3
+	call_if_eq Route119_EventScript_1A064E
+	compare VAR_SPECIAL_4, 4
+	call_if_eq Route119_EventScript_1A0652
+	compare VAR_SPECIAL_4, 5
+	call_if_eq Route119_EventScript_1A0656
+	compare VAR_SPECIAL_4, 6
+	call_if_eq Route119_EventScript_1A065A
+	compare VAR_SPECIAL_4, 7
+	call_if_eq Route119_EventScript_1A065E
+	setflag FLAG_SYS_CTRL_OBJ_DELETE
 	dowildbattle
-	clearflag 2145
+	clearflag FLAG_SYS_CTRL_OBJ_DELETE
 	release
 	end
 
 Route119_EventScript_1A0646:: @ 81A0646
-	setflag 982
+	setflag FLAG_HIDE_KECLEON_ROUTE120_3
 	return
 
 Route119_EventScript_1A064A:: @ 81A064A
-	setflag 985
+	setflag FLAG_HIDE_KECLEON_ROUTE120_4
 	return
 
 Route119_EventScript_1A064E:: @ 81A064E
-	setflag 986
+	setflag FLAG_HIDE_KECLEON_ROUTE120_5
 	return
 
 Route119_EventScript_1A0652:: @ 81A0652
-	setflag 987
+	setflag FLAG_HIDE_KECLEON_ROUTE120_6
 	return
 
 Route119_EventScript_1A0656:: @ 81A0656
-	setflag 988
+	setflag FLAG_HIDE_KECLEON_ROUTE120_7
 	return
 
 Route119_EventScript_1A065A:: @ 81A065A
-	setflag 989
+	setflag FLAG_HIDE_KECLEON_ROUTE119_1
 	return
 
 Route119_EventScript_1A065E:: @ 81A065E
-	setflag 990
+	setflag FLAG_HIDE_KECLEON_ROUTE119_2
 	return
 
 FortreeCity_Movement_1A0662:: @ 81A0662
 Route119_Movement_1A0662:: @ 81A0662
 Route120_Movement_1A0662:: @ 81A0662
-	step_55
-	step_12
-	step_54
-	step_12
-	step_55
-	step_12
-	step_54
-	step_12
-	step_55
-	step_13
-	step_54
-	step_13
-	step_55
-	step_13
-	step_54
-	step_13
-	step_55
-	step_14
-	step_54
-	step_14
-	step_55
-	step_end
+	set_visible
+	delay_4
+	set_invisible
+	delay_4
+	set_visible
+	delay_4
+	set_invisible
+	delay_4
+	set_visible
+	delay_8
+	set_invisible
+	delay_8
+	set_visible
+	delay_8
+	set_invisible
+	delay_8
+	set_visible
+	delay_16
+	set_invisible
+	delay_16
+	set_visible
+	end_movement
 
 LittlerootTown_ProfessorBirchsLab_EventScript_1A0678:: @ 81A0678
 MossdeepCity_StevensHouse_EventScript_1A0678:: @ 81A0678
 RustboroCity_DevonCorp_2F_EventScript_1A0678:: @ 81A0678
 SlateportCity_House1_EventScript_1A0678:: @ 81A0678
 	fadescreen 1
-	special 158
+	special ChangePokemonNickname
 	waitstate
 	return
 
@@ -2541,91 +2533,91 @@ FallarborTown_House1_EventScript_1A067F:: @ 81A067F
 GraniteCave_StevensRoom_EventScript_1A067F:: @ 81A067F
 MtPyre_Summit_EventScript_1A067F:: @ 81A067F
 SlateportCity_OceanicMuseum_2F_EventScript_1A067F:: @ 81A067F
-	bufferitem 0, 0x8004
-	fanfare 372
+	bufferitemname 0, VAR_SPECIAL_4
+	playfanfare MUS_ME_WAZA
 	message FallarborTown_House1_Text_1A1498
-	waittext
+	waitmessage
 	waitfanfare
-	removeitem 0x8004, 1
+	takeitem VAR_SPECIAL_4, 1
 	return
 
 EverGrandeCity_DrakesRoom_EventScript_1A0693:: @ 81A0693
 EverGrandeCity_GlaciasRoom_EventScript_1A0693:: @ 81A0693
 EverGrandeCity_PhoebesRoom_EventScript_1A0693:: @ 81A0693
 EverGrandeCity_SidneysRoom_EventScript_1A0693:: @ 81A0693
-	move 255, EverGrandeCity_SidneysRoom_Movement_1A0853
-	waitmove 0
-	playsfx 8
-	setmaptile 6, 1, 836, 0
-	setmaptile 6, 2, 837, 0
-	setmaptile 0, 2, 734, 1
-	setmaptile 1, 2, 733, 1
-	setmaptile 2, 2, 734, 1
-	setmaptile 3, 2, 733, 1
-	setmaptile 4, 2, 734, 1
-	setmaptile 8, 2, 733, 1
-	setmaptile 9, 2, 734, 1
-	setmaptile 10, 2, 733, 1
-	setmaptile 11, 2, 734, 1
-	setmaptile 12, 2, 733, 1
-	special 142
+	applymovement 255, EverGrandeCity_SidneysRoom_Movement_1A0853
+	waitmovement 0
+	playse SE_DOOR
+	setmetatile 6, 1, 836, 0
+	setmetatile 6, 2, 837, 0
+	setmetatile 0, 2, 734, 1
+	setmetatile 1, 2, 733, 1
+	setmetatile 2, 2, 734, 1
+	setmetatile 3, 2, 733, 1
+	setmetatile 4, 2, 734, 1
+	setmetatile 8, 2, 733, 1
+	setmetatile 9, 2, 734, 1
+	setmetatile 10, 2, 733, 1
+	setmetatile 11, 2, 734, 1
+	setmetatile 12, 2, 733, 1
+	special DrawWholeMapView
 	return
 
 EverGrandeCity_DrakesRoom_EventScript_1A0710:: @ 81A0710
 EverGrandeCity_GlaciasRoom_EventScript_1A0710:: @ 81A0710
 EverGrandeCity_PhoebesRoom_EventScript_1A0710:: @ 81A0710
 EverGrandeCity_SidneysRoom_EventScript_1A0710:: @ 81A0710
-	move 255, EverGrandeCity_SidneysRoom_Movement_1A0847
-	waitmove 0
-	playsfx 52
-	setmaptile 5, 12, 518, 1
-	setmaptile 6, 12, 518, 1
-	setmaptile 7, 12, 518, 1
-	setmaptile 5, 13, 526, 1
-	setmaptile 6, 13, 526, 1
-	setmaptile 7, 13, 526, 1
-	special 142
+	applymovement 255, EverGrandeCity_SidneysRoom_Movement_1A0847
+	waitmovement 0
+	playse SE_TRACK_DOOR
+	setmetatile 5, 12, 518, 1
+	setmetatile 6, 12, 518, 1
+	setmetatile 7, 12, 518, 1
+	setmetatile 5, 13, 526, 1
+	setmetatile 6, 13, 526, 1
+	setmetatile 7, 13, 526, 1
+	special DrawWholeMapView
 	return
 
 EverGrandeCity_DrakesRoom_EventScript_1A0757:: @ 81A0757
 EverGrandeCity_GlaciasRoom_EventScript_1A0757:: @ 81A0757
 EverGrandeCity_PhoebesRoom_EventScript_1A0757:: @ 81A0757
 EverGrandeCity_SidneysRoom_EventScript_1A0757:: @ 81A0757
-	setmaptile 6, 1, 836, 0
-	setmaptile 6, 2, 837, 0
-	setmaptile 5, 12, 518, 1
-	setmaptile 6, 12, 518, 1
-	setmaptile 7, 12, 518, 1
-	setmaptile 5, 13, 526, 1
-	setmaptile 6, 13, 526, 1
-	setmaptile 7, 13, 526, 1
-	setmaptile 0, 2, 734, 1
-	setmaptile 1, 2, 733, 1
-	setmaptile 2, 2, 734, 1
-	setmaptile 3, 2, 733, 1
-	setmaptile 4, 2, 734, 1
-	setmaptile 8, 2, 733, 1
-	setmaptile 9, 2, 734, 1
-	setmaptile 10, 2, 733, 1
-	setmaptile 11, 2, 734, 1
-	setmaptile 12, 2, 733, 1
+	setmetatile 6, 1, 836, 0
+	setmetatile 6, 2, 837, 0
+	setmetatile 5, 12, 518, 1
+	setmetatile 6, 12, 518, 1
+	setmetatile 7, 12, 518, 1
+	setmetatile 5, 13, 526, 1
+	setmetatile 6, 13, 526, 1
+	setmetatile 7, 13, 526, 1
+	setmetatile 0, 2, 734, 1
+	setmetatile 1, 2, 733, 1
+	setmetatile 2, 2, 734, 1
+	setmetatile 3, 2, 733, 1
+	setmetatile 4, 2, 734, 1
+	setmetatile 8, 2, 733, 1
+	setmetatile 9, 2, 734, 1
+	setmetatile 10, 2, 733, 1
+	setmetatile 11, 2, 734, 1
+	setmetatile 12, 2, 733, 1
 	return
 
 EverGrandeCity_DrakesRoom_EventScript_1A07FA:: @ 81A07FA
 EverGrandeCity_GlaciasRoom_EventScript_1A07FA:: @ 81A07FA
 EverGrandeCity_PhoebesRoom_EventScript_1A07FA:: @ 81A07FA
 EverGrandeCity_SidneysRoom_EventScript_1A07FA:: @ 81A07FA
-	setmaptile 5, 12, 518, 1
-	setmaptile 6, 12, 518, 1
-	setmaptile 7, 12, 518, 1
-	setmaptile 5, 13, 526, 1
-	setmaptile 6, 13, 526, 1
-	setmaptile 7, 13, 526, 1
+	setmetatile 5, 12, 518, 1
+	setmetatile 6, 12, 518, 1
+	setmetatile 7, 12, 518, 1
+	setmetatile 5, 13, 526, 1
+	setmetatile 6, 13, 526, 1
+	setmetatile 7, 13, 526, 1
 	return
 
 SlateportCity_Movement_1A0831:: @ 81A0831
-	step_57
-	step_end
+	emote_question_mark
+	end_movement
 
 AquaHideout_B2F_Movement_1A0833:: @ 81A0833
 EverGrandeCity_ChampionsRoom_Movement_1A0833:: @ 81A0833
@@ -2654,8 +2646,8 @@ SlateportCity_Movement_1A0833:: @ 81A0833
 SlateportCity_OceanicMuseum_1F_Movement_1A0833:: @ 81A0833
 SlateportCity_PokemonFanClub_Movement_1A0833:: @ 81A0833
 SootopolisCity_Movement_1A0833:: @ 81A0833
-	step_56
-	step_end
+	emote_exclamation_mark
+	end_movement
 
 EverGrandeCity_ChampionsRoom_Movement_1A0835:: @ 81A0835
 LavaridgeTown_Movement_1A0835:: @ 81A0835
@@ -2681,10 +2673,10 @@ SlateportCity_Movement_1A0835:: @ 81A0835
 SlateportCity_OceanicMuseum_1F_Movement_1A0835:: @ 81A0835
 SlateportCity_PokemonFanClub_Movement_1A0835:: @ 81A0835
 SootopolisCity_Movement_1A0835:: @ 81A0835
-	step_14
-	step_14
-	step_14
-	step_end
+	delay_16
+	delay_16
+	delay_16
+	end_movement
 
 AquaHideout_B2F_Movement_1A0839:: @ 81A0839
 EverGrandeCity_PokemonLeague_Movement_1A0839:: @ 81A0839
@@ -2716,12 +2708,12 @@ SeafloorCavern_Room9_Movement_1A0839:: @ 81A0839
 SlateportCity_ContestLobby_Movement_1A0839:: @ 81A0839
 SlateportCity_Movement_1A0839:: @ 81A0839
 SlateportCity_SternsShipyard_1F_Movement_1A0839:: @ 81A0839
-	step_3e
-	step_end
+	face_player
+	end_movement
 
 @ 81A083B
-	step_3f
-	step_end
+	face_away_player
+	end_movement
 
 EverGrandeCity_PokemonLeague_Movement_1A083D:: @ 81A083D
 LilycoveCity_ContestHall_Movement_1A083D:: @ 81A083D
@@ -2752,8 +2744,8 @@ SlateportCity_Movement_1A083D:: @ 81A083D
 SlateportCity_OceanicMuseum_2F_Movement_1A083D:: @ 81A083D
 SlateportCity_SternsShipyard_1F_Movement_1A083D:: @ 81A083D
 VerdanturfTown_Movement_1A083D:: @ 81A083D
-	step_4e
-	step_end
+	face_original_direction
+	end_movement
 
 Movement_1A083F:: @ 81A083F
 DewfordTown_Hall_Movement_1A083F:: @ 81A083F
@@ -2786,8 +2778,8 @@ SlateportCity_OceanicMuseum_1F_Movement_1A083F:: @ 81A083F
 SlateportCity_OceanicMuseum_2F_Movement_1A083F:: @ 81A083F
 SootopolisCity_Movement_1A083F:: @ 81A083F
 VictoryRoad_1F_Movement_1A083F:: @ 81A083F
-	step_27
-	step_end
+	walk_in_place_fastest_left
+	end_movement
 
 AquaHideout_B2F_Movement_1A0841:: @ 81A0841
 CaveOfOrigin_B4F_Movement_1A0841:: @ 81A0841
@@ -2817,8 +2809,8 @@ SeafloorCavern_Room9_Movement_1A0841:: @ 81A0841
 SlateportCity_Harbor_Movement_1A0841:: @ 81A0841
 SlateportCity_Movement_1A0841:: @ 81A0841
 SlateportCity_OceanicMuseum_2F_Movement_1A0841:: @ 81A0841
-	step_26
-	step_end
+	walk_in_place_fastest_up
+	end_movement
 
 AquaHideout_B2F_Movement_1A0843:: @ 81A0843
 DewfordTown_Hall_Movement_1A0843:: @ 81A0843
@@ -2849,8 +2841,8 @@ SlateportCity_Movement_1A0843:: @ 81A0843
 SlateportCity_OceanicMuseum_1F_Movement_1A0843:: @ 81A0843
 SlateportCity_OceanicMuseum_2F_Movement_1A0843:: @ 81A0843
 SootopolisCity_Movement_1A0843:: @ 81A0843
-	step_28
-	step_end
+	walk_in_place_fastest_right
+	end_movement
 
 BattleTower_Outside_Movement_1A0845:: @ 81A0845
 DewfordTown_Hall_Movement_1A0845:: @ 81A0845
@@ -2881,38 +2873,38 @@ SlateportCity_Movement_1A0845:: @ 81A0845
 SlateportCity_OceanicMuseum_2F_Movement_1A0845:: @ 81A0845
 SootopolisCity_Movement_1A0845:: @ 81A0845
 SouthernIsland_Exterior_Movement_1A0845:: @ 81A0845
-	step_25
-	step_end
+	walk_in_place_fastest_down
+	end_movement
 
 EverGrandeCity_SidneysRoom_Movement_1A0847:: @ 81A0847
-	step_up
-	step_up
-	step_up
-	step_up
-	step_up
-	step_up
-	step_end
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	end_movement
 
 EverGrandeCity_ChampionsRoom_Movement_1A084E:: @ 81A084E
-	step_up
-	step_up
-	step_up
-	step_up
-	step_end
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	end_movement
 
 EverGrandeCity_SidneysRoom_Movement_1A0853:: @ 81A0853
-	step_14
-	step_14
-	step_end
+	delay_16
+	delay_16
+	end_movement
 
 Route110_TrickHouseEntrance_Movement_1A0856:: @ 81A0856
-	step_up
-	step_end
+	walk_up
+	end_movement
 
 @ 81A0858
-	step_up
-	step_up
-	step_end
+	walk_up
+	walk_up
+	end_movement
 
 PictureBookShelfScript:: @ 81A085B
 	msgbox PictureBookShelfText, 3
@@ -2985,17 +2977,17 @@ UnknownString_81A0A54: @ 81A0A54
 UnknownString_81A0A66: @ 81A0A66
 	.string "Accessed LANETTE’s PC.$"
 
-OldaleTown_PokemonCenter_1F_Text_1A0A7D:: @ 81A0A7D
+gText_NurseJoy_Welcome:: @ 81A0A7D
 	.string "Hello, and welcome to the POKéMON\n"
 	.string "CENTER.\p"
 	.string "We restore your tired POKéMON to\n"
 	.string "full health.\p"
 	.string "Would you like to rest your POKéMON?$"
 
-OldaleTown_PokemonCenter_1F_Text_1A0AFA:: @ 81A0AFA
+gText_NurseJoy_WeHopeToSeeYouAgain:: @ 81A0AFA
 	.string "We hope to see you again!$"
 
-OldaleTown_PokemonCenter_1F_Text_1A0B14:: @ 81A0B14
+gText_NurseJoy_ThankYouForWaiting:: @ 81A0B14
 	.string "Thank you for waiting.\p"
 	.string "We’ve restored your POKéMON to\n"
 	.string "full health.$"
@@ -3209,11 +3201,11 @@ SlateportCity_Text_1A116E:: @ 81A116E
 	.string "We’ll accept you as a member and sell\n"
 	.string "you good stuff in secrecy.$"
 
-OldaleTown_PokemonCenter_1F_Text_1A1245:: @ 81A1245
+gText_NurseJoy_OkayIllTakeYourPokemon:: @ 81A1245
 	.string "Okay, I’ll take your POKéMON for a\n"
 	.string "few seconds.$"
 
-OldaleTown_PokemonCenter_1F_Text_1A1275:: @ 81A1275
+gText_NurseJoy_Pokerus:: @ 81A1275
 	.string "Your POKéMON may be infected with\n"
 	.string "POKéRUS.\p"
 	.string "Little is known about the POKéRUS\n"
@@ -3256,21 +3248,21 @@ Event_NoRegisteredItem:: @ 81A14AF
 
 gUnknown_081A14B8:: @ 81A14B8
 	lockall
-	special 199
+	special ExecuteWhiteOut
 	waitstate
 	compare RESULT, 1
-	jumpeq EventScript_1A14CA
+	goto_if_eq EventScript_1A14CA
 	releaseall
 	end
 
 EventScript_1A14CA::
 	message UnknownString_81A1141
-	waittext
-	waitbutton
-	special 332
+	waitmessage
+	waitbuttonpress
+	special sub_8081924
 	waitstate
 	fadescreen 1
-	special 200
+	special sp0C8_whiteout_maybe
 	waitstate
 	end
 
@@ -3279,6 +3271,7 @@ PacifidlogTown_House2_EventScript_1A14DC:: @ 81A14DC
 Route101_EventScript_1A14DC:: @ 81A14DC
 	return
 
+	.include "data/scripts/debug.inc"
 	.include "data/scripts/berry_tree.inc"
 	.include "data/text/berry_tree.inc"
 
@@ -3600,47 +3593,47 @@ SecretBase_RedCave1_Text_1A2BA4:: @ 81A2BA4
 	.string "Are you speechless?$"
 
 gUnknown_081A2C51:: @ 81A2C51
-	special 21
-	special 7
+	special sub_80BB70C
+	special CheckPlayerHasSecretBase
 	compare RESULT, 1
-	jumpeq EventScript_1A2E45
-	checkattack MOVE_SECRET_POWER
-	setanimation 0, RESULT
-	bufferattack 1, MOVE_SECRET_POWER
-	compare 0x8007, 1
-	jumpeq EventScript_1A2CB0
-	compare 0x8007, 2
-	jumpeq EventScript_1A2CB0
-	compare 0x8007, 3
-	jumpeq EventScript_1A2CB0
-	compare 0x8007, 4
-	jumpeq EventScript_1A2CB0
-	compare 0x8007, 5
-	jumpeq EventScript_1A2D08
-	compare 0x8007, 6
-	jumpeq EventScript_1A2D60
+	goto_if_eq AskToMoveSecretBase
+	checkpartymove MOVE_SECRET_POWER
+	setfieldeffectargument 0, RESULT
+	buffermovename 1, MOVE_SECRET_POWER
+	compare VAR_SPECIAL_7, 1
+	goto_if_eq EventScript_1A2CB0
+	compare VAR_SPECIAL_7, 2
+	goto_if_eq EventScript_1A2CB0
+	compare VAR_SPECIAL_7, 3
+	goto_if_eq EventScript_1A2CB0
+	compare VAR_SPECIAL_7, 4
+	goto_if_eq EventScript_1A2CB0
+	compare VAR_SPECIAL_7, 5
+	goto_if_eq EventScript_1A2D08
+	compare VAR_SPECIAL_7, 6
+	goto_if_eq EventScript_1A2D60
 	end
 
 EventScript_1A2CB0:
 	lockall
 	compare RESULT, 6
-	jumpeq EventScript_1A2CF1
-	bufferpartypoke 0, RESULT
-	msgbox UnknownString_8198F34, 5
-	compare RESULT, 0
-	jumpeq EventScript_1A2F3A
+	goto_if_eq EventScript_1A2CF1
+	bufferpartymonnick 0, RESULT
+	msgbox UnknownString_8198F34, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_1A2F3A
 	msgbox UsedCutRockSmashText, 4
-	closebutton
-	doanimation 11
+	closemessage
+	dofieldeffect FLDEFF_USE_SECRET_POWER_CAVE
 	waitstate
-	jump EventScript_1A2CFA
+	goto EventScript_1A2CFA
 	end
 
-gUnknown_081A2CE6:: @ 81A2CE6
+DoSecretBaseCaveFieldEffectScript:: @ 81A2CE6
 	lockall
-	doanimation 11
+	dofieldeffect FLDEFF_USE_SECRET_POWER_CAVE
 	waitstate
-	jump EventScript_1A2CFA
+	goto EventScript_1A2CFA
 	end
 
 EventScript_1A2CF1:
@@ -3649,29 +3642,29 @@ EventScript_1A2CF1:
 
 EventScript_1A2CFA:
 	msgbox UnknownString_8198F6E, 4
-	jump EventScript_1A2DB8
+	goto EventScript_1A2DB8
 	end
 
 EventScript_1A2D08:
 	lockall
 	compare RESULT, 6
-	jumpeq EventScript_1A2D49
-	bufferpartypoke 0, RESULT
-	msgbox UnknownString_81A197B, 5
-	compare RESULT, 0
-	jumpeq EventScript_1A2F3A
+	goto_if_eq EventScript_1A2D49
+	bufferpartymonnick 0, RESULT
+	msgbox UnknownString_81A197B, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_1A2F3A
 	msgbox UsedCutRockSmashText, 4
-	closebutton
-	doanimation 26
+	closemessage
+	dofieldeffect FLDEFF_USE_SECRET_POWER_TREE
 	waitstate
-	jump EventScript_1A2D52
+	goto EventScript_1A2D52
 	end
 
-gUnknown_081A2D3E:: @ 81A2D3E
+DoSecretBaseTreeFieldEffectScript:: @ 81A2D3E
 	lockall
-	doanimation 26
+	dofieldeffect FLDEFF_USE_SECRET_POWER_TREE
 	waitstate
-	jump EventScript_1A2D52
+	goto EventScript_1A2D52
 	end
 
 EventScript_1A2D49:
@@ -3680,29 +3673,29 @@ EventScript_1A2D49:
 
 EventScript_1A2D52:
 	msgbox UnknownString_81A19C4, 4
-	jump EventScript_1A2DB8
+	goto EventScript_1A2DB8
 	end
 
 EventScript_1A2D60:
 	lockall
 	compare RESULT, 6
-	jumpeq EventScript_1A2DA1
-	bufferpartypoke 0, RESULT
-	msgbox UnknownString_81A1A4B, 5
-	compare RESULT, 0
-	jumpeq EventScript_1A2F3A
+	goto_if_eq EventScript_1A2DA1
+	bufferpartymonnick 0, RESULT
+	msgbox UnknownString_81A1A4B, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_1A2F3A
 	msgbox UsedCutRockSmashText, 4
-	closebutton
-	doanimation 27
+	closemessage
+	dofieldeffect FLDEFF_USE_SECRET_POWER_SHRUB
 	waitstate
-	jump EventScript_1A2DAA
+	goto EventScript_1A2DAA
 	end
 
-gUnknown_081A2D96:: @ 81A2D96
+DoSecretBaseShrubFieldEffectScript:: @ 81A2D96
 	lockall
-	doanimation 27
+	dofieldeffect FLDEFF_USE_SECRET_POWER_SHRUB
 	waitstate
-	jump EventScript_1A2DAA
+	goto EventScript_1A2DAA
 	end
 
 EventScript_1A2DA1:
@@ -3711,180 +3704,180 @@ EventScript_1A2DA1:
 
 EventScript_1A2DAA:
 	msgbox UnknownString_81A1AA9, 4
-	jump EventScript_1A2DB8
+	goto EventScript_1A2DB8
 	end
 
 EventScript_1A2DB8:
-	closebutton
-	playsfx 9
-	setvar 0x4097, 0
-	setflag 173
-	special 6
-	special 8
-	setvar 0x8004, 0
-	setvar 0x8005, 0
-	special 18
-	setvar 0x4089, 1
+	closemessage
+	playse SE_KAIDAN
+	setvar VAR_0x4097, 0
+	setflag FLAG_DECORATION_1
+	special sub_80BB8CC
+	special sub_80BBAF0
+	setvar VAR_SPECIAL_4, 0
+	setvar VAR_SPECIAL_5, 0
+	special sub_80BBDD0
+	setvar VAR_0x4089, 1
 	waitstate
 	end
 
 SecretBase_RedCave1_EventScript_1A2DDE:: @ 81A2DDE
-	move 255, SecretBase_RedCave1_Movement_1A2E11
-	waitmove 0
-	setvar 0x4097, 1
-	msgbox SecretBase_RedCave1_Text_198F89, 5
-	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A2E08
-	closebutton
-	playsfx 9
-	special 9
+	applymovement 255, SecretBase_RedCave1_Movement_1A2E11
+	waitmovement 0
+	setvar VAR_0x4097, 1
+	msgbox SecretBase_RedCave1_Text_198F89, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq SecretBase_RedCave1_EventScript_1A2E08
+	closemessage
+	playse SE_KAIDAN
+	special sub_80BC440
 	end
 
 SecretBase_RedCave1_EventScript_1A2E08:: @ 81A2E08
-	closebutton
-	setflag 96
-	special 24
+	closemessage
+	setflag FLAG_RECEIVED_SECRET_POWER
+	special sub_80BBC78
 	waitstate
 	end
 
 SecretBase_RedCave1_Movement_1A2E11:: @ 81A2E11
-	step_up
-	step_up
-	step_end
+	walk_up
+	walk_up
+	end_movement
 
 gUnknown_081A2E14:: @ 81A2E14
 	lockall
-	setvar 0x4097, 1
-	playsfx 9
-	special 11
+	setvar VAR_0x4097, 1
+	playse SE_KAIDAN
+	special sub_80BC114
 	compare RESULT, 0
-	jumpeq EventScript_1A2E38
-	clearflag 173
-	special 8
-	setvar 0x4089, 0
+	goto_if_eq EventScript_1A2E38
+	clearflag FLAG_DECORATION_1
+	special sub_80BBAF0
+	setvar VAR_0x4089, 0
 	waitstate
 	end
 
 EventScript_1A2E38:
-	setflag 173
-	special 8
-	setvar 0x4089, 0
+	setflag FLAG_DECORATION_1
+	special sub_80BBAF0
+	setvar VAR_0x4089, 0
 	waitstate
 	end
 
-EventScript_1A2E45:
-	checkattack MOVE_SECRET_POWER
+AskToMoveSecretBase:
+	checkpartymove MOVE_SECRET_POWER
 	compare RESULT, 6
-	jumpeq EventScript_1A2EF7
-	setanimation 0, RESULT
-	setorcopyvar 0x8004, RESULT
+	goto_if_eq EventScript_1A2EF7
+	setfieldeffectargument 0, RESULT
+	setorcopyvar VAR_SPECIAL_4, RESULT
 	lockall
-	special 278
-	msgbox UnknownString_81A3C71, 5
-	compare RESULT, 0
-	jumpeq EventScript_1A2F3A
-	msgbox UnknownString_81A38FB, 5
-	compare RESULT, 0
-	jumpeq EventScript_1A2F3A
+	special GetSecretBaseNearbyMapName
+	msgbox UnknownString_81A3C71, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_1A2F3A
+	msgbox UnknownString_81A38FB, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_1A2F3A
 	fadescreen 1
-	special 330
-	closebutton
+	special MoveSecretBase
+	closemessage
 	fadescreen 0
-	msgbox UnknownString_81A3CC9, 5
-	compare RESULT, 0
-	jumpeq EventScript_1A2F3A
-	bufferpartypoke 0, 0x8004
-	bufferattack 1, MOVE_SECRET_POWER
+	msgbox UnknownString_81A3CC9, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq EventScript_1A2F3A
+	bufferpartymonnick 0, VAR_SPECIAL_4
+	buffermovename 1, MOVE_SECRET_POWER
 	msgbox UsedCutRockSmashText, 4
-	closebutton
-	closebutton
-	compare 0x8007, 1
-	jumpeq gUnknown_081A2CE6
-	compare 0x8007, 2
-	jumpeq gUnknown_081A2CE6
-	compare 0x8007, 3
-	jumpeq gUnknown_081A2CE6
-	compare 0x8007, 4
-	jumpeq gUnknown_081A2CE6
-	compare 0x8007, 5
-	jumpeq gUnknown_081A2D3E
-	compare 0x8007, 6
-	jumpeq gUnknown_081A2D96
+	closemessage
+	closemessage
+	compare VAR_SPECIAL_7, 1
+	goto_if_eq DoSecretBaseCaveFieldEffectScript
+	compare VAR_SPECIAL_7, 2
+	goto_if_eq DoSecretBaseCaveFieldEffectScript
+	compare VAR_SPECIAL_7, 3
+	goto_if_eq DoSecretBaseCaveFieldEffectScript
+	compare VAR_SPECIAL_7, 4
+	goto_if_eq DoSecretBaseCaveFieldEffectScript
+	compare VAR_SPECIAL_7, 5
+	goto_if_eq DoSecretBaseTreeFieldEffectScript
+	compare VAR_SPECIAL_7, 6
+	goto_if_eq DoSecretBaseShrubFieldEffectScript
 	releaseall
 	end
 
 EventScript_1A2EF7::
-	compare 0x8007, 1
-	jumpeq EventScript_1A2CF1
-	compare 0x8007, 2
-	jumpeq EventScript_1A2CF1
-	compare 0x8007, 3
-	jumpeq EventScript_1A2CF1
-	compare 0x8007, 4
-	jumpeq EventScript_1A2CF1
-	compare 0x8007, 5
-	jumpeq EventScript_1A2D49
-	compare 0x8007, 6
-	jumpeq EventScript_1A2DA1
+	compare VAR_SPECIAL_7, 1
+	goto_if_eq EventScript_1A2CF1
+	compare VAR_SPECIAL_7, 2
+	goto_if_eq EventScript_1A2CF1
+	compare VAR_SPECIAL_7, 3
+	goto_if_eq EventScript_1A2CF1
+	compare VAR_SPECIAL_7, 4
+	goto_if_eq EventScript_1A2CF1
+	compare VAR_SPECIAL_7, 5
+	goto_if_eq EventScript_1A2D49
+	compare VAR_SPECIAL_7, 6
+	goto_if_eq EventScript_1A2DA1
 	end
 
 EventScript_1A2F3A::
-	closebutton
+	closemessage
 	releaseall
 	end
 
 LittlerootTown_BrendansHouse_2F_EventScript_1A2F3D:: @ 81A2F3D
 LittlerootTown_MaysHouse_2F_EventScript_1A2F3D:: @ 81A2F3D
 SecretBase_RedCave1_EventScript_1A2F3D:: @ 81A2F3D
-	setflag 174
-	setflag 175
-	setflag 176
-	setflag 177
-	setflag 178
-	setflag 179
-	setflag 180
-	setflag 181
-	setflag 182
-	setflag 183
-	setflag 184
-	setflag 185
-	setflag 186
-	setflag 187
+	setflag FLAG_DECORATION_2
+	setflag FLAG_DECORATION_3
+	setflag FLAG_DECORATION_4
+	setflag FLAG_DECORATION_5
+	setflag FLAG_DECORATION_6
+	setflag FLAG_DECORATION_7
+	setflag FLAG_DECORATION_8
+	setflag FLAG_DECORATION_9
+	setflag FLAG_DECORATION_10
+	setflag FLAG_DECORATION_11
+	setflag FLAG_DECORATION_12
+	setflag FLAG_DECORATION_13
+	setflag FLAG_DECORATION_14
+	setflag FLAG_DECORATION_15
 	return
 
 LittlerootTown_BrendansHouse_2F_EventScript_1A2F68:: @ 81A2F68
 LittlerootTown_MaysHouse_2F_EventScript_1A2F68:: @ 81A2F68
 SecretBase_RedCave1_EventScript_1A2F68:: @ 81A2F68
-	setvar 0x8004, 0
-	setvar 0x8005, 0
-	special 18
-	setvar 0x4089, 1
+	setvar VAR_SPECIAL_4, 0
+	setvar VAR_SPECIAL_5, 0
+	special sub_80BBDD0
+	setvar VAR_0x4089, 1
 	end
 
 gUnknown_081A2F7B:: @ 81A2F7B
-	setvar 0x8005, 0
-	jump EventScript_1A2F86
+	setvar VAR_SPECIAL_5, 0
+	goto EventScript_1A2F86
 	end
 
 EventScript_1A2F86:
-	special 19
+	special sub_80FF474
 	end
 
 gUnknown_081A2F8A:: @ 81A2F8A
-	setvar 0x8004, 0
-	jump EventScript_1A2F95
+	setvar VAR_SPECIAL_4, 0
+	goto EventScript_1A2F95
 	end
 
 EventScript_1A2F95:
-	special 23
+	special sub_8100A7C
 	compare RESULT, 1
-	jumpeq EventScript_1A2FBF
-	addvar 0x8004, 1
-	compare 0x8005, 0
-	jumpeq EventScript_1A2F95
-	disappear 0x8006
-	setflag 0x8005
-	jump EventScript_1A2F95
+	goto_if_eq EventScript_1A2FBF
+	addvar VAR_SPECIAL_4, 1
+	compare VAR_SPECIAL_5, 0
+	goto_if_eq EventScript_1A2F95
+	removeobject VAR_SPECIAL_6
+	setflag VAR_SPECIAL_5
+	goto EventScript_1A2F95
 	end
 
 EventScript_1A2FBF:
@@ -3914,47 +3907,46 @@ SecretBase_YellowCave1_EventScript_1A2FC0:: @ 81A2FC0
 SecretBase_YellowCave2_EventScript_1A2FC0:: @ 81A2FC0
 SecretBase_YellowCave3_EventScript_1A2FC0:: @ 81A2FC0
 SecretBase_YellowCave4_EventScript_1A2FC0:: @ 81A2FC0
-	special 17
-	compare 0x8004, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3032
-	compare 0x8004, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A30AE
-	compare 0x8004, 2
-	jumpeq SecretBase_RedCave1_EventScript_1A312A
-	compare 0x8004, 3
-	jumpeq SecretBase_RedCave1_EventScript_1A31A6
-	compare 0x8004, 4
-	jumpeq SecretBase_RedCave1_EventScript_1A3222
-	compare 0x8004, 5
-	jumpeq SecretBase_RedCave1_EventScript_1A329E
-	compare 0x8004, 6
-	jumpeq SecretBase_RedCave1_EventScript_1A331A
-	compare 0x8004, 7
-	jumpeq SecretBase_RedCave1_EventScript_1A3396
-	compare 0x8004, 8
-	jumpeq SecretBase_RedCave1_EventScript_1A3412
-	compare 0x8004, 9
-	jumpeq SecretBase_RedCave1_EventScript_1A348E
+	special sub_80BCE90
+	compare VAR_SPECIAL_4, 0
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3032
+	compare VAR_SPECIAL_4, 1
+	goto_if_eq SecretBase_RedCave1_EventScript_1A30AE
+	compare VAR_SPECIAL_4, 2
+	goto_if_eq SecretBase_RedCave1_EventScript_1A312A
+	compare VAR_SPECIAL_4, 3
+	goto_if_eq SecretBase_RedCave1_EventScript_1A31A6
+	compare VAR_SPECIAL_4, 4
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3222
+	compare VAR_SPECIAL_4, 5
+	goto_if_eq SecretBase_RedCave1_EventScript_1A329E
+	compare VAR_SPECIAL_4, 6
+	goto_if_eq SecretBase_RedCave1_EventScript_1A331A
+	compare VAR_SPECIAL_4, 7
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3396
+	compare VAR_SPECIAL_4, 8
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3412
+	compare VAR_SPECIAL_4, 9
+	goto_if_eq SecretBase_RedCave1_EventScript_1A348E
 	end
 
 SecretBase_RedCave1_EventScript_1A3032:: @ 81A3032
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A3086
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A3086
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A30A5
+	goto_if_eq SecretBase_RedCave1_EventScript_1A30A5
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A1AEA, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A308F
+	msgbox SecretBase_RedCave1_Text_1A1AEA, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A308F
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A308F
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A308F
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A1B83, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A3086:: @ 81A3086
@@ -3963,8 +3955,8 @@ SecretBase_RedCave1_EventScript_1A3086:: @ 81A3086
 
 SecretBase_RedCave1_EventScript_1A308F:: @ 81A308F
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A1B97, 2
 	end
 
@@ -3973,23 +3965,22 @@ SecretBase_RedCave1_EventScript_1A30A5:: @ 81A30A5
 	end
 
 SecretBase_RedCave1_EventScript_1A30AE:: @ 81A30AE
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A3102
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A3102
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3121
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3121
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A1E67, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A310B
+	msgbox SecretBase_RedCave1_Text_1A1E67, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A310B
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A310B
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A310B
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A1F04, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A3102:: @ 81A3102
@@ -3998,8 +3989,8 @@ SecretBase_RedCave1_EventScript_1A3102:: @ 81A3102
 
 SecretBase_RedCave1_EventScript_1A310B:: @ 81A310B
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A1F2E, 2
 	end
 
@@ -4008,23 +3999,22 @@ SecretBase_RedCave1_EventScript_1A3121:: @ 81A3121
 	end
 
 SecretBase_RedCave1_EventScript_1A312A:: @ 81A312A
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A317E
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A317E
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A319D
+	goto_if_eq SecretBase_RedCave1_EventScript_1A319D
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A218F, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3187
+	msgbox SecretBase_RedCave1_Text_1A218F, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3187
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3187
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3187
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2220, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A317E:: @ 81A317E
@@ -4033,8 +4023,8 @@ SecretBase_RedCave1_EventScript_1A317E:: @ 81A317E
 
 SecretBase_RedCave1_EventScript_1A3187:: @ 81A3187
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2230, 2
 	end
 
@@ -4043,23 +4033,22 @@ SecretBase_RedCave1_EventScript_1A319D:: @ 81A319D
 	end
 
 SecretBase_RedCave1_EventScript_1A31A6:: @ 81A31A6
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A31FA
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A31FA
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3219
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3219
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A24E1, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3203
+	msgbox SecretBase_RedCave1_Text_1A24E1, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3203
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3203
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3203
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A256F, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A31FA:: @ 81A31FA
@@ -4068,8 +4057,8 @@ SecretBase_RedCave1_EventScript_1A31FA:: @ 81A31FA
 
 SecretBase_RedCave1_EventScript_1A3203:: @ 81A3203
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A258A, 2
 	end
 
@@ -4078,23 +4067,22 @@ SecretBase_RedCave1_EventScript_1A3219:: @ 81A3219
 	end
 
 SecretBase_RedCave1_EventScript_1A3222:: @ 81A3222
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A3276
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A3276
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3295
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3295
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A2830, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A327F
+	msgbox SecretBase_RedCave1_Text_1A2830, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A327F
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A327F
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A327F
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A28D7, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A3276:: @ 81A3276
@@ -4103,8 +4091,8 @@ SecretBase_RedCave1_EventScript_1A3276:: @ 81A3276
 
 SecretBase_RedCave1_EventScript_1A327F:: @ 81A327F
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A28F4, 2
 	end
 
@@ -4113,23 +4101,22 @@ SecretBase_RedCave1_EventScript_1A3295:: @ 81A3295
 	end
 
 SecretBase_RedCave1_EventScript_1A329E:: @ 81A329E
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A32F2
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A32F2
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3311
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3311
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A1CB2, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A32FB
+	msgbox SecretBase_RedCave1_Text_1A1CB2, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A32FB
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A32FB
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A32FB
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A1D48, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A32F2:: @ 81A32F2
@@ -4138,8 +4125,8 @@ SecretBase_RedCave1_EventScript_1A32F2:: @ 81A32F2
 
 SecretBase_RedCave1_EventScript_1A32FB:: @ 81A32FB
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A1D59, 2
 	end
 
@@ -4148,23 +4135,22 @@ SecretBase_RedCave1_EventScript_1A3311:: @ 81A3311
 	end
 
 SecretBase_RedCave1_EventScript_1A331A:: @ 81A331A
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A336E
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A336E
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A338D
+	goto_if_eq SecretBase_RedCave1_EventScript_1A338D
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A2026, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3377
+	msgbox SecretBase_RedCave1_Text_1A2026, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3377
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A3377
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3377
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2095, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A336E:: @ 81A336E
@@ -4173,8 +4159,8 @@ SecretBase_RedCave1_EventScript_1A336E:: @ 81A336E
 
 SecretBase_RedCave1_EventScript_1A3377:: @ 81A3377
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A20AE, 2
 	end
 
@@ -4183,23 +4169,22 @@ SecretBase_RedCave1_EventScript_1A338D:: @ 81A338D
 	end
 
 SecretBase_RedCave1_EventScript_1A3396:: @ 81A3396
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A33EA
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A33EA
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3409
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3409
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A236A, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A33F3
+	msgbox SecretBase_RedCave1_Text_1A236A, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A33F3
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A33F3
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A33F3
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2405, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A33EA:: @ 81A33EA
@@ -4208,8 +4193,8 @@ SecretBase_RedCave1_EventScript_1A33EA:: @ 81A33EA
 
 SecretBase_RedCave1_EventScript_1A33F3:: @ 81A33F3
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2420, 2
 	end
 
@@ -4218,23 +4203,22 @@ SecretBase_RedCave1_EventScript_1A3409:: @ 81A3409
 	end
 
 SecretBase_RedCave1_EventScript_1A3412:: @ 81A3412
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A3466
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A3466
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3485
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3485
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A2663, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A346F
+	msgbox SecretBase_RedCave1_Text_1A2663, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A346F
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A346F
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A346F
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2710, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A3466:: @ 81A3466
@@ -4243,8 +4227,8 @@ SecretBase_RedCave1_EventScript_1A3466:: @ 81A3466
 
 SecretBase_RedCave1_EventScript_1A346F:: @ 81A346F
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2736, 2
 	end
 
@@ -4253,23 +4237,22 @@ SecretBase_RedCave1_EventScript_1A3485:: @ 81A3485
 	end
 
 SecretBase_RedCave1_EventScript_1A348E:: @ 81A348E
-	checkflag 2052
-	jumpif 0, SecretBase_RedCave1_EventScript_1A34E2
+	goto_if_unset FLAG_SYS_GAME_CLEAR, SecretBase_RedCave1_EventScript_1A34E2
 	compare RESULT, 1
-	jumpeq SecretBase_RedCave1_EventScript_1A3501
+	goto_if_eq SecretBase_RedCave1_EventScript_1A3501
 	lock
 	faceplayer
-	msgbox SecretBase_RedCave1_Text_1A2A13, 5
-	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A34EB
+	msgbox SecretBase_RedCave1_Text_1A2A13, MSGBOX_YESNO
+	compare RESULT, NO
+	goto_if_eq SecretBase_RedCave1_EventScript_1A34EB
 	setvar RESULT, 1
-	special 25
-	call SecretBase_RedCave1_EventScript_19F806
+	special sub_80BCE4C
+	call S_DoSaveDialog
 	compare RESULT, 0
-	jumpeq SecretBase_RedCave1_EventScript_1A34EB
-	hidebox 0, 0, 15, 10
+	goto_if_eq SecretBase_RedCave1_EventScript_1A34EB
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2AE2, 4
-	jump SecretBase_RedCave1_EventScript_1A350A
+	goto SecretBase_RedCave1_EventScript_1A350A
 	end
 
 SecretBase_RedCave1_EventScript_1A34E2:: @ 81A34E2
@@ -4278,8 +4261,8 @@ SecretBase_RedCave1_EventScript_1A34E2:: @ 81A34E2
 
 SecretBase_RedCave1_EventScript_1A34EB:: @ 81A34EB
 	setvar RESULT, 0
-	special 25
-	hidebox 0, 0, 15, 10
+	special sub_80BCE4C
+	erasebox 0, 0, 15, 10
 	msgbox SecretBase_RedCave1_Text_1A2AFB, 2
 	end
 
@@ -4288,12 +4271,12 @@ SecretBase_RedCave1_EventScript_1A3501:: @ 81A3501
 	end
 
 SecretBase_RedCave1_EventScript_1A350A:: @ 81A350A
-	special 16
-	setvar 0x8004, 1
-	setvar 0x8005, 0
-	special 236
+	special sub_80BCE1C
+	setvar VAR_SPECIAL_4, 1
+	setvar VAR_SPECIAL_5, 0
+	special StartSpecialBattle
 	waitstate
-	special 0
+	special ScrSpecial_HealPlayerParty
 	release
 	end
 
@@ -4378,36 +4361,36 @@ BattleTower_Lobby_EventScript_1ADE46:: @ 81ADE46
 FallarborTown_ContestLobby_EventScript_1ADE46:: @ 81ADE46
 SlateportCity_OceanicMuseum_1F_EventScript_1ADE46:: @ 81ADE46
 SlateportCity_PokemonFanClub_EventScript_1ADE46:: @ 81ADE46
-	special 68
-	inccounter GAME_STAT_GOT_INTERVIEWED
+	special InterviewAfter
+	incrementgamestat GAME_STAT_GOT_INTERVIEWED
 	release
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1ADE4D:: @ 81ADE4D
-	setvar 0x8005, 1
-	special 67
+	setvar VAR_SPECIAL_5, 1
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADED6
-	copyvar 0x8009, 0x8006
-	msgbox SlateportCity_PokemonFanClub_Text_1A8704, 5
-	compare RESULT, 1
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADE84
-	compare RESULT, 0
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADEB9
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADED6
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	msgbox SlateportCity_PokemonFanClub_Text_1A8704, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADE84
+	compare RESULT, NO
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADEB9
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1ADE84:: @ 81ADE84
 	msgbox SlateportCity_PokemonFanClub_Text_1A87CA, 4
-	setvar 0x8004, 5
-	copyvar 0x8005, 0x8009
-	setvar 0x8006, 1
+	setvar VAR_SPECIAL_4, 5
+	copyvar VAR_SPECIAL_5, VAR_SPECIAL_9
+	setvar VAR_SPECIAL_6, 1
 	call SlateportCity_PokemonFanClub_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 1
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADEC3
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADEC3
 	compare RESULT, 0
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADEB9
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADEB9
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1ADEB9:: @ 81ADEB9
@@ -4417,8 +4400,8 @@ SlateportCity_PokemonFanClub_EventScript_1ADEB9:: @ 81ADEB9
 
 SlateportCity_PokemonFanClub_EventScript_1ADEC3:: @ 81ADEC3
 	msgbox SlateportCity_PokemonFanClub_Text_1A8818, 4
-	setvar 0x8005, 1
-	jump SlateportCity_PokemonFanClub_EventScript_1ADE46
+	setvar VAR_SPECIAL_5, 1
+	goto SlateportCity_PokemonFanClub_EventScript_1ADE46
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1ADED6:: @ 81ADED6
@@ -4429,41 +4412,40 @@ SlateportCity_PokemonFanClub_EventScript_1ADED6:: @ 81ADED6
 SlateportCity_OceanicMuseum_1F_EventScript_1ADEE0:: @ 81ADEE0
 	lock
 	faceplayer
-	setvar 0x8005, 2
-	special 67
+	setvar VAR_SPECIAL_5, 2
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF96
-	copyvar 0x8009, 0x8006
-	checkflag 105
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF25
-	setflag 105
-	msgbox SlateportCity_OceanicMuseum_1F_Text_1A927F, 5
-	compare RESULT, 1
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF44
-	compare RESULT, 0
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF79
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF96
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	goto_if_set FLAG_OCEANIC_MUSEUM_MET_REPORTER, SlateportCity_OceanicMuseum_1F_EventScript_1ADF25
+	setflag FLAG_OCEANIC_MUSEUM_MET_REPORTER
+	msgbox SlateportCity_OceanicMuseum_1F_Text_1A927F, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF44
+	compare RESULT, NO
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF79
 	end
 
 SlateportCity_OceanicMuseum_1F_EventScript_1ADF25:: @ 81ADF25
-	msgbox SlateportCity_OceanicMuseum_1F_Text_1A934C, 5
-	compare RESULT, 1
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF44
-	compare RESULT, 0
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF79
+	msgbox SlateportCity_OceanicMuseum_1F_Text_1A934C, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF44
+	compare RESULT, NO
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF79
 	end
 
 SlateportCity_OceanicMuseum_1F_EventScript_1ADF44:: @ 81ADF44
 	msgbox SlateportCity_OceanicMuseum_1F_Text_1A93D1, 4
-	setvar 0x8004, 5
-	copyvar 0x8005, 0x8009
-	setvar 0x8006, 0
+	setvar VAR_SPECIAL_4, 5
+	copyvar VAR_SPECIAL_5, VAR_SPECIAL_9
+	setvar VAR_SPECIAL_6, 0
 	call SlateportCity_OceanicMuseum_1F_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 1
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF83
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF83
 	compare RESULT, 0
-	jumpeq SlateportCity_OceanicMuseum_1F_EventScript_1ADF79
+	goto_if_eq SlateportCity_OceanicMuseum_1F_EventScript_1ADF79
 	end
 
 SlateportCity_OceanicMuseum_1F_EventScript_1ADF79:: @ 81ADF79
@@ -4473,8 +4455,8 @@ SlateportCity_OceanicMuseum_1F_EventScript_1ADF79:: @ 81ADF79
 
 SlateportCity_OceanicMuseum_1F_EventScript_1ADF83:: @ 81ADF83
 	msgbox SlateportCity_OceanicMuseum_1F_Text_1A949A, 4
-	setvar 0x8005, 2
-	jump SlateportCity_OceanicMuseum_1F_EventScript_1ADE46
+	setvar VAR_SPECIAL_5, 2
+	goto SlateportCity_OceanicMuseum_1F_EventScript_1ADE46
 	end
 
 SlateportCity_OceanicMuseum_1F_EventScript_1ADF96:: @ 81ADF96
@@ -4485,25 +4467,25 @@ SlateportCity_OceanicMuseum_1F_EventScript_1ADF96:: @ 81ADF96
 SlateportCity_PokemonFanClub_EventScript_1ADFA0:: @ 81ADFA0
 	lock
 	faceplayer
-	specialval RESULT, 69
+	specialvar RESULT, LeadMonNicknamed
 	compare RESULT, 0
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADE4D
-	setvar 0x8005, 3
-	special 67
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADE4D
+	setvar VAR_SPECIAL_5, 3
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1AE0AC
-	copyvar 0x8009, 0x8006
-	msgbox SlateportCity_PokemonFanClub_Text_1A82F1, 5
-	compare RESULT, 1
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1ADFE9
-	compare RESULT, 0
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1AE0A2
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1AE0AC
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	msgbox SlateportCity_PokemonFanClub_Text_1A82F1, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1ADFE9
+	compare RESULT, NO
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1AE0A2
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1ADFE9:: @ 81ADFE9
 	msgbox SlateportCity_PokemonFanClub_Text_1A83D0, 4
 	random 3
-	copyvar 0x800a, RESULT
+	copyvar VAR_SPECIAL_A, RESULT
 	switch RESULT
 	case 0, SlateportCity_PokemonFanClub_EventScript_1AE020
 	case 1, SlateportCity_PokemonFanClub_EventScript_1AE02E
@@ -4512,39 +4494,39 @@ SlateportCity_PokemonFanClub_EventScript_1ADFE9:: @ 81ADFE9
 
 SlateportCity_PokemonFanClub_EventScript_1AE020:: @ 81AE020
 	msgbox SlateportCity_PokemonFanClub_Text_1A8414, 4
-	jump SlateportCity_PokemonFanClub_EventScript_1AE04A
+	goto SlateportCity_PokemonFanClub_EventScript_1AE04A
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1AE02E:: @ 81AE02E
 	msgbox SlateportCity_PokemonFanClub_Text_1A8470, 4
-	jump SlateportCity_PokemonFanClub_EventScript_1AE04A
+	goto SlateportCity_PokemonFanClub_EventScript_1AE04A
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1AE03C:: @ 81AE03C
 	msgbox SlateportCity_PokemonFanClub_Text_1A84D5, 4
-	jump SlateportCity_PokemonFanClub_EventScript_1AE04A
+	goto SlateportCity_PokemonFanClub_EventScript_1AE04A
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1AE04A:: @ 81AE04A
-	setvar 0x8004, 7
-	copyvar 0x8005, 0x8009
-	setvar 0x8006, 0
+	setvar VAR_SPECIAL_4, 7
+	copyvar VAR_SPECIAL_5, VAR_SPECIAL_9
+	setvar VAR_SPECIAL_6, 0
 	call SlateportCity_PokemonFanClub_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 0
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1AE0A2
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1AE0A2
 	msgbox SlateportCity_PokemonFanClub_Text_1A852D, 4
-	setvar 0x8006, 1
+	setvar VAR_SPECIAL_6, 1
 	call SlateportCity_PokemonFanClub_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 0
-	jumpeq SlateportCity_PokemonFanClub_EventScript_1AE0A2
+	goto_if_eq SlateportCity_PokemonFanClub_EventScript_1AE0A2
 	msgbox SlateportCity_PokemonFanClub_Text_1A85A6, 4
-	copyvar 0x8007, 0x800a
-	setvar 0x8005, 3
-	jump SlateportCity_PokemonFanClub_EventScript_1ADE46
+	copyvar VAR_SPECIAL_7, VAR_SPECIAL_A
+	setvar VAR_SPECIAL_5, 3
+	goto SlateportCity_PokemonFanClub_EventScript_1ADE46
 	end
 
 SlateportCity_PokemonFanClub_EventScript_1AE0A2:: @ 81AE0A2
@@ -4563,32 +4545,31 @@ SlateportCity_ContestLobby_EventScript_1AE0B6:: @ 81AE0B6
 VerdanturfTown_ContestLobby_EventScript_1AE0B6:: @ 81AE0B6
 	lock
 	faceplayer
-	checkflag 2
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE17E
-	setvar 0x8005, 6
-	special 67
+	goto_if_set FLAG_TEMP_2, FallarborTown_ContestLobby_EventScript_1AE17E
+	setvar VAR_SPECIAL_5, 6
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE17E
-	copyvar 0x8009, 0x8006
-	msgbox FallarborTown_ContestLobby_Text_1A6F7C, 5
-	compare RESULT, 1
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE0F8
-	compare RESULT, 0
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE12D
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE17E
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	msgbox FallarborTown_ContestLobby_Text_1A6F7C, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE0F8
+	compare RESULT, NO
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE12D
 	end
 
 FallarborTown_ContestLobby_EventScript_1AE0F8:: @ 81AE0F8
 	msgbox FallarborTown_ContestLobby_Text_1A704E, 4
-	setvar 0x8004, 11
-	copyvar 0x8005, 0x8009
-	setvar 0x8006, 0
+	setvar VAR_SPECIAL_4, 11
+	copyvar VAR_SPECIAL_5, VAR_SPECIAL_9
+	setvar VAR_SPECIAL_6, 0
 	call FallarborTown_ContestLobby_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 1
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE137
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE137
 	compare RESULT, 0
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE12D
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE12D
 	end
 
 FallarborTown_ContestLobby_EventScript_1AE12D:: @ 81AE12D
@@ -4597,21 +4578,21 @@ FallarborTown_ContestLobby_EventScript_1AE12D:: @ 81AE12D
 	end
 
 FallarborTown_ContestLobby_EventScript_1AE137:: @ 81AE137
-	setvar 0x8004, 24
-	special 70
+	setvar VAR_SPECIAL_4, 24
+	special SetContestCategoryStringVarForInterview
 	msgbox FallarborTown_ContestLobby_Text_1A70A5, 4
-	setvar 0x8004, 11
-	copyvar 0x8005, 0x8009
-	setvar 0x8006, 1
+	setvar VAR_SPECIAL_4, 11
+	copyvar VAR_SPECIAL_5, VAR_SPECIAL_9
+	setvar VAR_SPECIAL_6, 1
 	call FallarborTown_ContestLobby_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 0
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE12D
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE12D
 	msgbox FallarborTown_ContestLobby_Text_1A7153, 4
-	setflag 2
-	setvar 0x8005, 6
-	jump FallarborTown_ContestLobby_EventScript_1ADE46
+	setflag FLAG_TEMP_2
+	setvar VAR_SPECIAL_5, 6
+	goto FallarborTown_ContestLobby_EventScript_1ADE46
 	end
 
 FallarborTown_ContestLobby_EventScript_1AE17E:: @ 81AE17E
@@ -4623,13 +4604,13 @@ FallarborTown_ContestLobby_EventScript_1AE188:: @ 81AE188
 LilycoveCity_ContestLobby_EventScript_1AE188:: @ 81AE188
 SlateportCity_ContestLobby_EventScript_1AE188:: @ 81AE188
 VerdanturfTown_ContestLobby_EventScript_1AE188:: @ 81AE188
-	compare 0x4086, 2
-	jumpif 5, FallarborTown_ContestLobby_EventScript_1AE1FE
-	setvar 0x8005, 6
-	special 67
+	compare VAR_LINK_CONTEST_ROOM_STATE, 2
+	goto_if_ne FallarborTown_ContestLobby_EventScript_1AE1FE
+	setvar VAR_SPECIAL_5, 6
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq FallarborTown_ContestLobby_EventScript_1AE1FE
-	switch 0x4088
+	goto_if_eq FallarborTown_ContestLobby_EventScript_1AE1FE
+	switch VAR_CONTEST_LOCATION
 	case 0, FallarborTown_ContestLobby_EventScript_1AE1FE
 	case 2, FallarborTown_ContestLobby_EventScript_1AE1EE
 	case 1, FallarborTown_ContestLobby_EventScript_1AE1F2
@@ -4639,19 +4620,19 @@ VerdanturfTown_ContestLobby_EventScript_1AE188:: @ 81AE188
 	end
 
 FallarborTown_ContestLobby_EventScript_1AE1EE:: @ 81AE1EE
-	clearflag 800
+	clearflag FLAG_HIDE_CONTEST_REPORTER_FALLARBOR
 	return
 
 FallarborTown_ContestLobby_EventScript_1AE1F2:: @ 81AE1F2
-	clearflag 801
+	clearflag FLAG_HIDE_CONTEST_REPORTER_VERDANTURF
 	return
 
 FallarborTown_ContestLobby_EventScript_1AE1F6:: @ 81AE1F6
-	clearflag 803
+	clearflag FLAG_HIDE_CONTEST_REPORTER_SLATEPORT
 	return
 
 FallarborTown_ContestLobby_EventScript_1AE1FA:: @ 81AE1FA
-	clearflag 802
+	clearflag FLAG_HIDE_CONTEST_REPORTER_LILYCOVE
 	return
 
 FallarborTown_ContestLobby_EventScript_1AE1FE:: @ 81AE1FE
@@ -4660,39 +4641,38 @@ FallarborTown_ContestLobby_EventScript_1AE1FE:: @ 81AE1FE
 BattleTower_Lobby_EventScript_1AE1FF:: @ 81AE1FF
 	lock
 	faceplayer
-	checkflag 2
-	jumpeq BattleTower_Lobby_EventScript_1AE2E3
-	setvar 0x8005, 7
-	special 67
+	goto_if_set FLAG_TEMP_2, BattleTower_Lobby_EventScript_1AE2E3
+	setvar VAR_SPECIAL_5, 7
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq BattleTower_Lobby_EventScript_1AE2E3
-	copyvar 0x8009, 0x8006
-	msgbox BattleTower_Lobby_Text_1A776D, 5
-	compare RESULT, 1
-	jumpeq BattleTower_Lobby_EventScript_1AE241
-	compare RESULT, 0
-	jumpeq BattleTower_Lobby_EventScript_1AE297
+	goto_if_eq BattleTower_Lobby_EventScript_1AE2E3
+	copyvar VAR_SPECIAL_9, VAR_SPECIAL_6
+	msgbox BattleTower_Lobby_Text_1A776D, MSGBOX_YESNO
+	compare RESULT, YES
+	goto_if_eq BattleTower_Lobby_EventScript_1AE241
+	compare RESULT, NO
+	goto_if_eq BattleTower_Lobby_EventScript_1AE297
 	end
 
 BattleTower_Lobby_EventScript_1AE241:: @ 81AE241
 	message BattleTower_Lobby_Text_1A7823
-	waittext
+	waitmessage
 	multichoice 19, 8, 45, 1
-	copyvar 0x8008, RESULT
+	copyvar VAR_SPECIAL_8, RESULT
 	compare RESULT, 0
-	callif 1, BattleTower_Lobby_EventScript_1AE2A1
+	call_if_eq BattleTower_Lobby_EventScript_1AE2A1
 	compare RESULT, 1
-	callif 1, BattleTower_Lobby_EventScript_1AE2AA
+	call_if_eq BattleTower_Lobby_EventScript_1AE2AA
 	msgbox BattleTower_Lobby_Text_1A79EB, 4
-	setvar 0x8004, 12
-	copyvar 0x8005, 0x8009
+	setvar VAR_SPECIAL_4, 12
+	copyvar VAR_SPECIAL_5, VAR_SPECIAL_9
 	call BattleTower_Lobby_EventScript_1A00F3
 	lock
 	faceplayer
 	compare RESULT, 1
-	jumpeq BattleTower_Lobby_EventScript_1AE2B3
+	goto_if_eq BattleTower_Lobby_EventScript_1AE2B3
 	compare RESULT, 0
-	jumpeq BattleTower_Lobby_EventScript_1AE2D9
+	goto_if_eq BattleTower_Lobby_EventScript_1AE2D9
 	end
 
 BattleTower_Lobby_EventScript_1AE297:: @ 81AE297
@@ -4710,12 +4690,12 @@ BattleTower_Lobby_EventScript_1AE2AA:: @ 81AE2AA
 
 BattleTower_Lobby_EventScript_1AE2B3:: @ 81AE2B3
 	compare RESULT, 0
-	jumpeq BattleTower_Lobby_EventScript_1AE2D9
+	goto_if_eq BattleTower_Lobby_EventScript_1AE2D9
 	msgbox BattleTower_Lobby_Text_1A7A6E, 4
-	setflag 2
-	copyvar 0x8004, 0x8008
-	setvar 0x8005, 7
-	jump BattleTower_Lobby_EventScript_1ADE46
+	setflag FLAG_TEMP_2
+	copyvar VAR_SPECIAL_4, VAR_SPECIAL_8
+	setvar VAR_SPECIAL_5, 7
+	goto BattleTower_Lobby_EventScript_1ADE46
 	end
 
 BattleTower_Lobby_EventScript_1AE2D9:: @ 81AE2D9
@@ -4729,31 +4709,22 @@ BattleTower_Lobby_EventScript_1AE2E3:: @ 81AE2E3
 	end
 
 BattleTower_Lobby_EventScript_1AE2ED:: @ 81AE2ED
-	compare 0x40bc, 0
-	jumpeq BattleTower_Lobby_EventScript_1AE30F
-	setvar 0x8005, 7
-	special 67
+	compare VAR_BRAVO_TRAINER_BATTLE_TOWER_ON, 0
+	goto_if_eq BattleTower_Lobby_EventScript_1AE30F
+	setvar VAR_SPECIAL_5, 7
+	special InterviewBefore
 	compare RESULT, 1
-	jumpeq BattleTower_Lobby_EventScript_1AE30F
-	clearflag 918
+	goto_if_eq BattleTower_Lobby_EventScript_1AE30F
+	clearflag FLAG_HIDE_REPORTER_BATTLE_TOWER
 	return
 
 BattleTower_Lobby_EventScript_1AE30F:: @ 81AE30F
-	setflag 918
+	setflag FLAG_HIDE_REPORTER_BATTLE_TOWER
 	return
 
 	.include "data/scripts/gabby_and_ty.inc"
 
-	.include "data/scripts/bard.inc"
-	.include "data/scripts/hipster.inc"
-	.include "data/text/trader.inc"
-	.include "data/scripts/trader.inc"
-	.include "data/text/storyteller.inc"
-	.include "data/scripts/storyteller.inc"
-	.include "data/text/giddy.inc"
-	.include "data/scripts/giddy.inc"
-	.include "data/text/bard.inc"
-	.include "data/text/hipster.inc"
+	.include "data/scripts/mauville_man.inc"
 
 	.include "data/field_move_scripts.inc"
 	.include "data/item_ball_scripts.inc"
@@ -4777,13 +4748,13 @@ BattleTower_Lobby_EventScript_1AE30F:: @ 81AE30F
 	.include "data/text/magma_summit.inc"
 
 gUnknown_081B694A:: @ 81B694A
-	lighten 1
-	darken 1
+	animateflash 1
+	setflashradius 1
 	end
 
 	.include "data/scripts/players_house.inc"
 
-Event_RunningShoesManual:: @ 81B6E5A
+S_RunningShoesManual:: @ 81B6E5A
 	msgbox UnknownString_81728E3, 3
 	end
 
@@ -4792,7 +4763,7 @@ Event_RunningShoesManual:: @ 81B6E5A
 
 	.include "data/text/trainers.inc"
 
-Event_RepelWoreOff:: @ 81C33E6
+S_RepelWoreOff:: @ 81C33E6
 	msgbox Text_RepelWoreOff, 3
 	end
 
@@ -4805,29 +4776,29 @@ Text_RepelWoreOff: @ 81C33EF
 MauvilleCity_GameCorner_EventScript_1C407E:: @ 81C407E
 	checkitem ITEM_COIN_CASE, 1
 	compare RESULT, 0
-	jumpeq MauvilleCity_GameCorner_EventScript_1572B5
-	setvar 0x8004, 0
-	event_96 2
+	goto_if_eq MauvilleCity_GameCorner_EventScript_1572B5
+	setvar VAR_SPECIAL_4, 0
+	getpricereduction 2
 	compare RESULT, 0
-	jumpeq MauvilleCity_GameCorner_EventScript_1C40DA
-	addvar 0x8004, 128
-	jump MauvilleCity_GameCorner_EventScript_1C40DA
+	goto_if_eq MauvilleCity_GameCorner_EventScript_1C40DA
+	addvar VAR_SPECIAL_4, 128
+	goto MauvilleCity_GameCorner_EventScript_1C40DA
 	end
 
 MauvilleCity_GameCorner_EventScript_1C40AC:: @ 81C40AC
 	checkitem ITEM_COIN_CASE, 1
 	compare RESULT, 0
-	jumpeq MauvilleCity_GameCorner_EventScript_1572B5
-	setvar 0x8004, 1
-	event_96 2
+	goto_if_eq MauvilleCity_GameCorner_EventScript_1572B5
+	setvar VAR_SPECIAL_4, 1
+	getpricereduction 2
 	compare RESULT, 0
-	jumpeq MauvilleCity_GameCorner_EventScript_1C40DA
-	addvar 0x8004, 128
-	jump MauvilleCity_GameCorner_EventScript_1C40DA
+	goto_if_eq MauvilleCity_GameCorner_EventScript_1C40DA
+	addvar VAR_SPECIAL_4, 128
+	goto MauvilleCity_GameCorner_EventScript_1C40DA
 	end
 
 MauvilleCity_GameCorner_EventScript_1C40DA:: @ 81C40DA
-	special 162
+	special PlayRoulette
 	waitstate
 	end
 
@@ -4872,41 +4843,41 @@ GraniteCave_B1F_MapScript2_1C6BB5:: @ 81C6BB5
 MtPyre_2F_MapScript2_1C6BB5:: @ 81C6BB5
 SkyPillar_2F_MapScript2_1C6BB5:: @ 81C6BB5
 SkyPillar_4F_MapScript2_1C6BB5:: @ 81C6BB5
-	map_script_2 0x4022, 0, GraniteCave_B1F_EventScript_1C6BC5
+	map_script_2 VAR_ICE_STEP_COUNT, 0, S_FallDownHole
 	.2byte 0
 
 GraniteCave_B1F_MapScript1_1C6BBF:: @ 81C6BBF
 MtPyre_2F_MapScript1_1C6BBF:: @ 81C6BBF
 SkyPillar_2F_MapScript1_1C6BBF:: @ 81C6BBF
 SkyPillar_4F_MapScript1_1C6BBF:: @ 81C6BBF
-	copyvar 0x4022, 0x1
+	copyvar VAR_ICE_STEP_COUNT, 0x1
 	end
 
-GraniteCave_B1F_EventScript_1C6BC5:: @ 81C6BC5
+S_FallDownHole:: @ 81C6BC5
 	lockall
-	pause 20
-	move 255, GraniteCave_B1F_Movement_1C6BF7
-	waitmove 0
-	playsfx 43
-	pause 60
-	warphole UNDEFINED
+	delay 20
+	applymovement 255, GraniteCave_B1F_Movement_1C6BF7
+	waitmovement 0
+	playse SE_RU_HYUU
+	delay 60
+	warphole MAP_UNDEFINED
 	waitstate
 	end
 
 gUnknown_081C6BDE:: @ 81C6BDE
 	lockall
-	pause 20
-	move 255, GraniteCave_B1F_Movement_1C6BF7
-	waitmove 0
-	playsfx 43
-	pause 60
-	special 319
+	delay 20
+	applymovement 255, GraniteCave_B1F_Movement_1C6BF7
+	waitmovement 0
+	playse SE_RU_HYUU
+	delay 60
+	special sp13F_fall_to_last_warp
 	waitstate
 	end
 
 GraniteCave_B1F_Movement_1C6BF7:: @ 81C6BF7
-	step_54
-	step_end
+	set_invisible
+	end_movement
 
 @ 81C6BF9
 	msgbox Text_1C6C2B, 2
@@ -4931,9 +4902,9 @@ gUnknown_081C6C02:: @ 81C6C02
 
 @ 81C6C1D
 	lockall
-	braillemsg Underwater_SealedChamber_Braille_1C533D
-	waitbutton
-	hidebox 0, 0, 29, 19
+	braillemessage Underwater_SealedChamber_Braille_1C533D
+	waitbuttonpress
+	erasebox 0, 0, 29, 19
 	releaseall
 	end
 

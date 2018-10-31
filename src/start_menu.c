@@ -1,23 +1,28 @@
 #include "global.h"
+#include "battle_tower.h"
 #include "start_menu.h"
-#include "asm.h"
 #include "event_data.h"
-#include "field_map_obj_helpers.h"
 #include "field_player_avatar.h"
 #include "field_weather.h"
+#include "fieldmap.h"
+#include "item_menu.h"
 #include "load_save.h"
+#include "m4a.h"
 #include "main.h"
-#include "map_obj_lock.h"
+#include "event_obj_lock.h"
 #include "menu.h"
+#include "new_game.h"
 #include "option_menu.h"
 #include "palette.h"
 #include "pokedex.h"
-#include "rom4.h"
+#include "pokemon_menu.h"
+#include "pokenav.h"
+#include "overworld.h"
 #include "safari_zone.h"
 #include "save.h"
 #include "save_menu_util.h"
 #include "script.h"
-#include "songs.h"
+#include "constants/songs.h"
 #include "sound.h"
 #include "sprite.h"
 #include "string_util.h"
@@ -25,6 +30,7 @@
 #include "strings2.h"
 #include "task.h"
 #include "trainer_card.h"
+#include "scanline_effect.h"
 
 //Menu actions
 enum {
@@ -40,16 +46,22 @@ enum {
     MENU_ACTION_PLAYER_LINK
 };
 
+#if DEBUG
+static u32 _debugStartMenu_0  __attribute__((unused));
+static u32 _debugStartMenu_1 __attribute__((unused));
+#endif
+
 static u8 (*saveDialogCallback)(void);
 static u8 saveDialogTimer;    //Number of frames to keep the window on screen after save was completed
 static bool8 savingComplete;
 
 extern bool8 gDifferentSaveFile;
 extern u16 gSaveFileStatus;
-extern u16 gScriptResult;
-extern u8 (*gCallback_03004AE8)(void);
+extern u16 gSpecialVar_Result;
+
 extern u8 gUnknown_03004860;
-extern u8 gNumSafariBalls;
+
+u8 (*gMenuCallback)(void);
 
 EWRAM_DATA static u8 sStartMenuCursorPos = 0;
 EWRAM_DATA static u8 sNumStartMenuActions = 0;
@@ -127,6 +139,107 @@ static bool32 sub_80719FC(u8 *ptr);
 static void sub_8071B54(void);
 static void Task_8071B64(u8 taskId);
 
+#if DEBUG
+
+void debug_sub_8075D9C(void);
+
+u8 debug_sub_8075C30(void)
+{
+    CloseMenu();
+    debug_sub_8075D9C();
+    return 1;
+}
+
+extern const u8 gUnknown_Debug_839B6D8[];
+
+void debug_sub_8075C40(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+    u16 savedIme;
+    s32 i;
+
+    switch (data[0])
+    {
+    case 0:
+        m4aSoundVSyncOff();
+        data[0]++;
+        break;
+    case 1:
+        savedIme = REG_IME;
+        REG_IME = 0;
+        REG_TM2CNT_L = 0;
+        REG_TM2CNT = 0x830000;
+        for (i = 0; i < 0xC350; i++)
+        {
+            DmaSet(
+                0,
+                gScanlineEffectRegBuffers,
+                &REG_WIN0H,
+                ((DMA_ENABLE | DMA_START_HBLANK | DMA_16BIT | DMA_REPEAT | DMA_SRC_INC | DMA_DEST_RELOAD) << 16) | 1);
+            DmaStop(0);
+        }
+        REG_TM2CNT_H = 0;
+        _debugStartMenu_0 = REG_TM2CNT_L;
+        REG_TM2CNT_L = 0;
+        REG_IME = savedIme;
+        _debugStartMenu_1 = i;
+        m4aSoundVSyncOn();
+        data[0]++;
+        break;
+    case 2:
+        PlaySE(0x15);
+        ConvertIntToDecimalStringN(gStringVar1, _debugStartMenu_1, 1, 8);
+        ConvertIntToDecimalStringN(gStringVar2, _debugStartMenu_0, 1, 8);
+        Menu_DisplayDialogueFrame();
+        Menu_PrintText(gUnknown_Debug_839B6D8, 2, 15);
+        data[0]++;
+        break;
+    case 3:
+        if (gMain.newKeys & A_BUTTON)
+        {
+            Menu_EraseScreen();
+            ScriptContext2_Disable();
+            DestroyTask(taskId);
+        }
+        break;
+    }
+}
+
+void debug_sub_8075D9C(void)
+{
+    CreateTask(debug_sub_8075C40, 10);
+    ScriptContext2_Enable();
+}
+
+void debug_sub_8075DB4(struct BattleTowerEReaderTrainer *ereaderTrainer, const u8 *b, u32 trainerId)
+{
+    s32 i;
+    s32 r3;
+
+    ereaderTrainer->trainerClass = trainerId % 77;
+    write_word_to_mem(trainerId, ereaderTrainer->trainerId);
+    StringCopy8(ereaderTrainer->name, b);
+    r3 = 7;
+    for (i = 0; i < 6; i++)
+    {
+        ereaderTrainer->greeting[i] = gSaveBlock1.easyChats.unk2B28[i];
+        ereaderTrainer->farewellPlayerLost[i] = r3;
+        ereaderTrainer->farewellPlayerWon[i] = r3 + 6;
+        r3++;
+    }
+    for (i = 0; i < 3; i++)
+        sub_803AF78(&gPlayerParty[i], &ereaderTrainer->party[i]);
+    SetEReaderTrainerChecksum(ereaderTrainer);
+}
+
+void unref_sub_8070F90(void)
+{
+    FlagSet(FLAG_SYS_POKEDEX_GET);
+    FlagSet(FLAG_SYS_POKEMON_GET);
+    FlagSet(FLAG_SYS_POKENAV_GET);
+}
+
+#endif
 
 static void BuildStartMenuActions(void)
 {
@@ -149,12 +262,12 @@ static void AddStartMenuAction(u8 action)
 
 static void BuildStartMenuActions_Normal(void)
 {
-    if (FlagGet(SYS_POKEDEX_GET) == TRUE)
+    if (FlagGet(FLAG_SYS_POKEDEX_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKEDEX);
-    if (FlagGet(SYS_POKEMON_GET) == TRUE)
+    if (FlagGet(FLAG_SYS_POKEMON_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKEMON);
     AddStartMenuAction(MENU_ACTION_BAG);
-    if (FlagGet(SYS_POKENAV_GET) == TRUE)
+    if (FlagGet(FLAG_SYS_POKENAV_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKENAV);
     AddStartMenuAction(MENU_ACTION_PLAYER);
     AddStartMenuAction(MENU_ACTION_SAVE);
@@ -177,7 +290,7 @@ static void BuildStartMenuActions_Link(void)
 {
     AddStartMenuAction(MENU_ACTION_POKEMON);
     AddStartMenuAction(MENU_ACTION_BAG);
-    if (FlagGet(SYS_POKENAV_GET) == TRUE)
+    if (FlagGet(FLAG_SYS_POKENAV_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKENAV);
     AddStartMenuAction(MENU_ACTION_PLAYER_LINK);
     AddStartMenuAction(MENU_ACTION_OPTION);
@@ -187,9 +300,9 @@ static void BuildStartMenuActions_Link(void)
 //Show number of safari balls left
 static void DisplaySafariBallsWindow(void)
 {
-    sub_8072C44(gStringVar1, gNumSafariBalls, 12, 1);
-    MenuDrawTextWindow(0, 0, 10, 5);
-    MenuPrint(gOtherText_SafariStock, 1, 1);
+    AlignInt2InMenuWindow(gStringVar1, gNumSafariBalls, 12, 1);
+    Menu_DrawStdWindowFrame(0, 0, 10, 5);
+    Menu_PrintText(gOtherText_SafariStock, 1, 1);
 }
 
 //Prints n menu items starting at *index
@@ -199,7 +312,7 @@ static bool32 PrintStartMenuItemsMultistep(s16 *index, u32 n)
 
     do
     {
-        MenuPrint(sStartMenuItems[sCurrentStartMenuActions[_index]].text, 23, 2 + _index * 2);
+        Menu_PrintText(sStartMenuItems[sCurrentStartMenuActions[_index]].text, 23, 2 + _index * 2);
         _index++;
         if (_index >= sNumStartMenuActions)
         {
@@ -221,7 +334,7 @@ static bool32 InitStartMenuMultistep(s16 *step, s16 *index)
         (*step)++;
         break;
     case 2:
-        MenuDrawTextWindow(22, 0, 29, sNumStartMenuActions * 2 + 3);
+        Menu_DrawStdWindowFrame(22, 0, 29, sNumStartMenuActions * 2 + 3);
         *index = 0;
         (*step)++;
         break;
@@ -266,7 +379,7 @@ void CreateStartMenuTask(void (*func)(u8))
 {
     u8 taskId;
 
-    InitMenuWindow(&gWindowConfig_81E6CE4);
+    InitMenuWindow(&gMenuTextWindowTemplate);
     taskId = CreateTask(Task_StartMenu, 0x50);
     SetTaskFuncWithFollowupFunc(taskId, Task_StartMenu, func);
 }
@@ -278,11 +391,11 @@ void sub_80712B4(u8 taskId)
     switch (task->data[0])
     {
     case 0:
-        gCallback_03004AE8 = StartMenu_InputProcessCallback;
+        gMenuCallback = StartMenu_InputProcessCallback;
         task->data[0]++;
         break;
     case 1:
-        if (gCallback_03004AE8() == 1)
+        if (gMenuCallback() == 1)
             DestroyTask(taskId);
         break;
     }
@@ -292,7 +405,7 @@ void sub_8071310(void)
 {
     if (!is_c1_link_related_active())
     {
-        FreezeMapObjects();
+        FreezeEventObjects();
         sub_80594C0();
         sub_80597F4();
     }
@@ -305,12 +418,12 @@ static u8 StartMenu_InputProcessCallback(void)
     if (gMain.newKeys & DPAD_UP)
     {
         PlaySE(SE_SELECT);
-        sStartMenuCursorPos = MoveMenuCursor(-1);
+        sStartMenuCursorPos = Menu_MoveCursor(-1);
     }
     if (gMain.newKeys & DPAD_DOWN)
     {
         PlaySE(SE_SELECT);
-        sStartMenuCursorPos = MoveMenuCursor(1);
+        sStartMenuCursorPos = Menu_MoveCursor(1);
     }
     if (gMain.newKeys & A_BUTTON)
     {
@@ -320,11 +433,11 @@ static u8 StartMenu_InputProcessCallback(void)
             if (GetNationalPokedexCount(0) == 0)
                 return 0;
         }
-        gCallback_03004AE8 = sStartMenuItems[sCurrentStartMenuActions[sStartMenuCursorPos]].func;
-        if (gCallback_03004AE8 != StartMenu_SaveCallback &&
-           gCallback_03004AE8 != StartMenu_ExitCallback &&
-           gCallback_03004AE8 != StartMenu_RetireCallback)
-            fade_screen(1, 0);
+        gMenuCallback = sStartMenuItems[sCurrentStartMenuActions[sStartMenuCursorPos]].func;
+        if (gMenuCallback != StartMenu_SaveCallback &&
+           gMenuCallback != StartMenu_ExitCallback &&
+           gMenuCallback != StartMenu_RetireCallback)
+            FadeScreen(1, 0);
         return 0;
     }
     if (gMain.newKeys & (START_BUTTON | B_BUTTON))
@@ -340,7 +453,7 @@ static u8 StartMenu_PokedexCallback(void)
 {
     if (!gPaletteFade.active)
     {
-        IncrementGameStat(0x29);
+        IncrementGameStat(GAME_STAT_CHECKED_POKEDEX);
         PlayRainSoundEffect();
         SetMainCallback2(CB2_InitPokedex);
         return 1;
@@ -390,7 +503,7 @@ static u8 StartMenu_PlayerCallback(void)
     if (!gPaletteFade.active)
     {
         PlayRainSoundEffect();
-        sub_8093110(sub_805469C);
+        TrainerCard_ShowPlayerCard(c2_exit_to_overworld_1_sub_8080DEC);
         return 1;
     }
     return 0;
@@ -399,8 +512,8 @@ static u8 StartMenu_PlayerCallback(void)
 //When player selects SAVE
 static u8 StartMenu_SaveCallback(void)
 {
-    sub_8072DEC();
-    gCallback_03004AE8 = SaveCallback1;
+    Menu_DestroyCursor();
+    gMenuCallback = SaveCallback1;
     return 0;
 }
 
@@ -411,7 +524,7 @@ static u8 StartMenu_OptionCallback(void)
     {
         PlayRainSoundEffect();
         SetMainCallback2(CB2_InitOptionMenu);
-        gMain.savedCallback = sub_805469C;
+        gMain.savedCallback = c2_exit_to_overworld_1_sub_8080DEC;
         return 1;
     }
     return 0;
@@ -438,7 +551,7 @@ static u8 StartMenu_PlayerLinkCallback(void)
     if (!gPaletteFade.active)
     {
         PlayRainSoundEffect();
-        sub_8093130(gUnknown_03004860, sub_805469C);
+        TrainerCard_ShowLinkCard(gUnknown_03004860, c2_exit_to_overworld_1_sub_8080DEC);
         return 1;
     }
     return 0;
@@ -456,7 +569,7 @@ enum
 static u8 SaveCallback1(void)
 {
     sub_807160C();
-    gCallback_03004AE8 = SaveCallback2;
+    gMenuCallback = SaveCallback2;
     return FALSE;
 }
 
@@ -468,14 +581,14 @@ static u8 SaveCallback2(void)
         return FALSE;
     case SAVE_CANCELED:
         //Go back to start menu
-        MenuZeroFillScreen();
+        Menu_EraseScreen();
         InitStartMenu();
-        gCallback_03004AE8 = StartMenu_InputProcessCallback;
+        gMenuCallback = StartMenu_InputProcessCallback;
         return FALSE;
     case SAVE_SUCCESS:
     case SAVE_ERROR:
-        MenuZeroFillScreen();
-        sub_8064E2C();
+        Menu_EraseScreen();
+        ScriptUnfreezeEventObjects();
         ScriptContext2_Disable();
         return TRUE;
     }
@@ -493,14 +606,14 @@ static u8 RunSaveDialogCallback(void)
 {
     if (savingComplete)
     {
-        if (!MenuUpdateWindowText())
+        if (!Menu_UpdateWindowText())
             return 0;
     }
     savingComplete = FALSE;
     return saveDialogCallback();
 }
 
-void InitSaveDialog(void)
+void ScrSpecial_DoSaveDialog(void)
 {
     sub_807160C();
     CreateTask(Task_SaveDialog, 0x50);
@@ -509,8 +622,8 @@ void InitSaveDialog(void)
 static void DisplaySaveMessageWithCallback(const u8 *ptr, u8 (*func)(void))
 {
     StringExpandPlaceholders(gStringVar4, ptr);
-    MenuDisplayMessageBox();
-    sub_8072044(gStringVar4);
+    Menu_DisplayDialogueFrame();
+    MenuPrintMessageDefaultCoords(gStringVar4);
     savingComplete = TRUE;
     saveDialogCallback = func;
 }
@@ -523,10 +636,10 @@ static void Task_SaveDialog(u8 taskId)
     {
     case SAVE_CANCELED:
     case SAVE_ERROR:
-        gScriptResult = 0;
+        gSpecialVar_Result = 0;
         break;
     case SAVE_SUCCESS:
-        gScriptResult = status;
+        gSpecialVar_Result = status;
         break;
     case SAVE_IN_PROGRESS:
         return;
@@ -542,7 +655,7 @@ static void sub_8071700(void)
 
 static void HideSaveDialog(void)
 {
-    MenuZeroFillWindowRect(20, 8, 26, 13);
+    Menu_EraseWindowRect(20, 8, 26, 13);
 }
 
 static void SaveDialogStartTimeout(void)
@@ -574,7 +687,7 @@ static bool8 SaveDialogCheckForTimeoutAndKeypress(void)
 
 static u8 SaveDialogCB_DisplayConfirmMessage(void)
 {
-    MenuZeroFillScreen();
+    Menu_EraseScreen();
     HandleDrawSaveWindowInfo(0, 0);
     DisplaySaveMessageWithCallback(gSaveText_WouldYouLikeToSave, SaveDialogCB_DisplayConfirmYesNoMenu);
     return SAVE_IN_PROGRESS;
@@ -589,7 +702,7 @@ static u8 SaveDialogCB_DisplayConfirmYesNoMenu(void)
 
 static u8 SaveDialogCB_ProcessConfirmYesNoMenu(void)
 {
-    switch (ProcessMenuInputNoWrap_())
+    switch (Menu_ProcessInputNoWrap_())
     {
     case 0:     //YES
         HideSaveDialog();
@@ -635,7 +748,7 @@ static u8 SaveDialogCB_DisplayOverwriteYesNoMenu(void)
 
 static u8 SaveDialogCB_ProcessOverwriteYesNoMenu(void)
 {
-    switch (ProcessMenuInputNoWrap_())
+    switch (Menu_ProcessInputNoWrap_())
     {
     case 0:     //YES
         HideSaveDialog();
@@ -659,20 +772,20 @@ static u8 SaveDialogCB_DisplaySavingMessage(void)
 
 static u8 SaveDialogCB_DoSave(void)
 {
-    bool8 saveSucceeded;
+    u8 saveStatus;
 
-    IncrementGameStat(0);
+    IncrementGameStat(GAME_STAT_SAVED_GAME);
     if (gDifferentSaveFile == TRUE)
     {
-        saveSucceeded = TrySavingData(DIFFERENT_FILE_SAVE);
+        saveStatus = Save_WriteData(SAVE_OVERWRITE_DIFFERENT_FILE);
         gDifferentSaveFile = FALSE;
     }
     else
     {
-        saveSucceeded = TrySavingData(NORMAL_SAVE);
+        saveStatus = Save_WriteData(SAVE_NORMAL);
     }
 
-    if (saveSucceeded == TRUE)
+    if (saveStatus == SAVE_STATUS_OK)
     {
         //"(Player) saved the game."
         DisplaySaveMessageWithCallback(gSaveText_PlayerSavedTheGame, SaveDialogCB_SaveSuccess);
@@ -689,7 +802,7 @@ static u8 SaveDialogCB_DoSave(void)
 
 static u8 SaveDialogCB_SaveSuccess(void)
 {
-    if (MenuUpdateWindowText())
+    if (Menu_UpdateWindowText())
     {
         PlaySE(SE_SAVE);
         saveDialogCallback = SaveDialogCB_ReturnSuccess;
@@ -710,7 +823,7 @@ static u8 SaveDialogCB_ReturnSuccess(void)
 
 static u8 SaveDialogCB_SaveError(void)
 {
-    if (MenuUpdateWindowText())
+    if (Menu_UpdateWindowText())
     {
         PlaySE(SE_BOO);
         saveDialogCallback = SaveDialogCB_ReturnError;
@@ -739,45 +852,28 @@ static bool32 sub_80719FC(u8 *step)
     switch (*step)
     {
     case 0:
-    {
-        u8 *addr;
-        u32 size;
-
         REG_DISPCNT = 0;
         SetVBlankCallback(NULL);
-        remove_some_task();
+        ScanlineEffect_Stop();
         DmaClear16(3, PLTT, PLTT_SIZE);
-        addr = (void *)VRAM;
-        size = 0x18000;
-        while (1)
-        {
-            DmaFill16(3, 0, addr, 0x1000);
-            addr += 0x1000;
-            size -= 0x1000;
-            if (size <= 0x1000)
-            {
-                DmaFill16(3, 0, addr, size);
-                break;
-            }
-        }
+        DmaFill16Large(3, 0, (void *)(VRAM + 0x0), 0x18000, 0x1000);
         break;
-    }
     case 1:
         ResetSpriteData();
         ResetTasks();
         ResetPaletteFade();
-        dp12_8087EA4();
+        ScanlineEffect_Clear();
         break;
     case 2:
-        SetUpWindowConfig(&gWindowConfig_81E6CE4);
-        InitMenuWindow(&gWindowConfig_81E6CE4);
+        Text_LoadWindowTemplate(&gMenuTextWindowTemplate);
+        InitMenuWindow(&gMenuTextWindowTemplate);
         REG_DISPCNT = DISPCNT_MODE_0 | DISPCNT_BG0_ON;
         break;
     case 3:
     {
         u32 savedIme;
 
-        BlendPalettes(-1, 0x10, 0);
+        BlendPalettes(0xFFFFFFFF, 16, RGB(0, 0, 0));
         SetVBlankCallback(sub_80719F0);
         savedIme = REG_IME;
         REG_IME = 0;
@@ -816,9 +912,9 @@ static void Task_8071B64(u8 taskId)
         switch (*step)
         {
         case 0:
-            MenuDisplayMessageBox();
-            MenuPrint(gSystemText_Saving, 2, 15);
-            BeginNormalPaletteFade(-1, 0, 0x10, 0, 0);
+            Menu_DisplayDialogueFrame();
+            Menu_PrintText(gSystemText_Saving, 2, 15);
+            BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
             (*step)++;
             break;
         case 1:
@@ -833,7 +929,7 @@ static void Task_8071B64(u8 taskId)
             (*step)++;
             break;
         case 3:
-            BeginNormalPaletteFade(-1, 0, 0, 0x10, 0);
+            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
             (*step)++;
             break;
         case 4:

@@ -1,14 +1,10 @@
 #include "global.h"
-#include "pokemon.h"
-#include "rng.h"
+#include "debug.h"
 #include "roamer.h"
-#include "species.h"
-
-#ifdef SAPPHIRE
-#define ROAMER_SPECIES SPECIES_LATIAS
-#else
-#define ROAMER_SPECIES SPECIES_LATIOS
-#endif
+#include "pokemon.h"
+#include "random.h"
+#include "region_map.h"
+#include "constants/species.h"
 
 enum
 {
@@ -173,13 +169,13 @@ void CreateRoamerMonInstance(void)
     struct Pokemon *mon = &gEnemyParty[0];
     struct Roamer *roamer = &gSaveBlock1.roamer;
     CreateMonWithIVsPersonality(mon, roamer->species, roamer->level, roamer->ivs, roamer->personality);
-    SetMonData(mon, MON_DATA_STATUS, (u8 *)&roamer->status);
-    SetMonData(mon, MON_DATA_HP, (u8 *)&roamer->hp);
-    SetMonData(mon, MON_DATA_COOL, (u8 *)&roamer->cool);
-    SetMonData(mon, MON_DATA_BEAUTY, (u8 *)&roamer->beauty);
-    SetMonData(mon, MON_DATA_CUTE, (u8 *)&roamer->cute);
-    SetMonData(mon, MON_DATA_SMART, (u8 *)&roamer->smart);
-    SetMonData(mon, MON_DATA_TOUGH, (u8 *)&roamer->tough);
+    SetMonData(mon, MON_DATA_STATUS, &roamer->status);
+    SetMonData(mon, MON_DATA_HP, &roamer->hp);
+    SetMonData(mon, MON_DATA_COOL, &roamer->cool);
+    SetMonData(mon, MON_DATA_BEAUTY, &roamer->beauty);
+    SetMonData(mon, MON_DATA_CUTE, &roamer->cute);
+    SetMonData(mon, MON_DATA_SMART, &roamer->smart);
+    SetMonData(mon, MON_DATA_TOUGH, &roamer->tough);
 }
 
 bool8 TryStartRoamerEncounter(void)
@@ -224,3 +220,20 @@ void GetRoamerLocation(u8 *mapGroup, u8 *mapNum)
     *mapGroup = sRoamerLocation[MAP_GRP];
     *mapNum = sRoamerLocation[MAP_NUM];
 }
+
+#if DEBUG
+void Debug_CreateRoamer(void)
+{
+    if (gSaveBlock1.location.mapGroup == 0)
+    {
+        CreateInitialRoamerMon();
+        sRoamerLocation[0] = 0;
+        sRoamerLocation[1] = gSaveBlock1.location.mapNum;
+    }
+}
+
+void Debug_GetRoamerLocation(u8* str)
+{
+    GetMapSectionName(str, sRoamerLocation[1], 0);
+}
+#endif

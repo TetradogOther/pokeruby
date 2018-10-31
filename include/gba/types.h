@@ -28,22 +28,35 @@ typedef u8  bool8;
 typedef u16 bool16;
 typedef u32 bool32;
 
+struct BgCnt
+{
+    u16 priority:2;
+    u16 charBaseBlock:2;
+    u16 dummy:2;
+    u16 mosaic:1;
+    u16 palettes:1;
+    u16 screenBaseBlock:5;
+    u16 areaOverflowMode:1;
+    u16 screenSize:2;
+};
+typedef volatile struct BgCnt vBgCnt;
+
 struct PlttData
 {
     u16 r:5; // red
     u16 g:5; // green
     u16 b:5; // blue
     u16 unused_15:1;
-};
+} /*__attribute__((packed))*/;
 
 struct OamData
 {
     /*0x00*/ u32 y:8;
-    /*0x01*/ u32 affineMode:2;
-             u32 objMode:2;
-             u32 mosaic:1;
-             u32 bpp:1;
-             u32 shape:2;
+    /*0x01*/ u32 affineMode:2;  // 0x1, 0x2 = 0x3
+             u32 objMode:2;     // 0x4, 0x8 = 0xC
+             u32 mosaic:1;      // 0x10
+             u32 bpp:1;         // 0x20
+             u32 shape:2;       // 0x40, 0x80
 
     /*0x02*/ u32 x:9;
              u32 matrixNum:5; // bits 3/4 are h-flip/v-flip if not in affine mode

@@ -1,15 +1,37 @@
 #ifndef GUARD_FIELDCONTROLAVATAR_H
 #define GUARD_FIELDCONTROLAVATAR_H
 
-#include "asm.h"
+struct FieldInput
+{
+    u8 pressedAButton:1;
+    u8 checkStandardWildEncounter:1;
+    u8 pressedStartButton:1;
+    u8 pressedSelectButton:1;
+    u8 input_field_0_4:1;
+    u8 input_field_0_5:1;
+    u8 tookStep:1;
+    u8 pressedBButton:1;
+    u8 input_field_1_0:1;
+    u8 input_field_1_1:1;
+    u8 input_field_1_2:1;
+    u8 input_field_1_3:1;
+    u8 input_field_1_4:1;
+    u8 input_field_1_5:1;
+    u8 input_field_1_6:1;
+    u8 input_field_1_7:1;
+    u8 dpadDirection;
+    u8 input_field_3;
+};
 
-void FieldClearPlayerInput(struct FieldInput *pStruct);
-void FieldGetPlayerInput(struct FieldInput *pStruct, u16 keys, u16 heldKeys);
-int sub_8068024(struct FieldInput *pStruct);
-u8 *sub_80682A8(struct MapPosition *, u8, u8);
-void overworld_poison_timer_set(void);
-void prev_quest_postbuffer_cursor_backup_reset(void);
-u8 *sub_8068E24(struct MapPosition *);
-u8 *GetFieldObjectScriptPointerForComparison();
+void ClearPlayerFieldInput(struct FieldInput *pStruct);
+void GetPlayerFieldInput(struct FieldInput *pStruct, u16 keys, u16 heldKeys);
+int ProcessPlayerFieldInput(struct FieldInput *pStruct);
+u8 *GetInteractedLinkPlayerScript(struct MapPosition *, u8, u8);
+void ClearPoisonStepCounter(void);
+void RestartWildEncounterImmunitySteps(void);
+u8 *GetCoordEventScriptAtMapPosition(struct MapPosition *);
+u8 *GetEventObjectScriptPointerPlayerFacing(void);
+u8 TrySetDiveWarp(void);
+bool8 dive_warp(struct MapPosition*, u16);
 
 #endif

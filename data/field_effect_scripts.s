@@ -1,12 +1,12 @@
-	.include "asm/macros.inc"
-	.include "asm/macros/field_effect_script.inc"
+	.include "include/macros.inc"
+	.include "include/macros/field_effect_script.inc"
 	.include "constants/constants.inc"
 
 	.section script_data, "aw", %progbits
 
 	.align 2
 gFieldEffectScriptPointers:: @ 81D9B34
-	.4byte gFieldEffectScript_ExclamationMarkIcon1
+	.4byte gFieldEffectScript_ExclamationMarkIcon
 	.4byte gFieldEffectScript_UseCutOnGrass
 	.4byte gFieldEffectScript_UseCutOnTree
 	.4byte gFieldEffectScript_Shadow
@@ -39,7 +39,7 @@ gFieldEffectScriptPointers:: @ 81D9B34
 	.4byte gFieldEffectScript_NPCFlyOut
 	.4byte gFieldEffectScript_UseFly
 	.4byte gFieldEffectScript_FlyIn
-	.4byte gFieldEffectScript_ExclamationMarkIcon2
+	.4byte gFieldEffectScript_QuestionMarkIcon
 	.4byte gFieldEffectScript_FeetInFlowingWater
 	.4byte gFieldEffectScript_BikeTireTracks
 	.4byte gFieldEffectScript_SandDisguise
@@ -67,12 +67,12 @@ gFieldEffectScriptPointers:: @ 81D9B34
 	.4byte gFieldEffectScript_CutGrass
 	.4byte gFieldEffectScript_FieldMoveShowMonInit
 	.4byte gFieldEffectScript_UseFlyAncientTomb
-	.4byte gFieldEffectScript_PCTurnOn
+	.4byte gFieldEffectScript_SecretBasePCTurnOn
 	.4byte gFieldEffectScript_HallOfFameRecord
 	.4byte gFieldEffectScript_UseTeleport
 
-gFieldEffectScript_ExclamationMarkIcon1: @ 81D9C34
-	callnative FldEff_ExclamationMarkIcon1
+gFieldEffectScript_ExclamationMarkIcon: @ 81D9C34
+	callnative FldEff_ExclamationMarkIcon
 	end
 
 gFieldEffectScript_UseCutOnGrass: @ 81D9C3A
@@ -204,8 +204,8 @@ gFieldEffectScript_FlyIn: @ 81D9D3D
 	callnative FldEff_FlyIn
 	end
 
-gFieldEffectScript_ExclamationMarkIcon2: @ 81D9D43
-	callnative FldEff_ExclamationMarkIcon2
+gFieldEffectScript_QuestionMarkIcon: @ 81D9D43
+	callnative FldEff_QuestionMarkIcon
 	end
 
 gFieldEffectScript_FeetInFlowingWater: @ 81D9D49
@@ -317,8 +317,8 @@ gFieldEffectScript_UseFlyAncientTomb: @ 81D9E26
 	callnative FldEff_UseFlyAncientTomb
 	end
 
-gFieldEffectScript_PCTurnOn: @ 81D9E2C
-	callnative FldEff_PCTurnOn
+gFieldEffectScript_SecretBasePCTurnOn: @ 81D9E2C
+	callnative FldEff_SecretBasePCTurnOn
 	end
 
 gFieldEffectScript_HallOfFameRecord: @ 81D9E32

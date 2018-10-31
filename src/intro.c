@@ -1,49 +1,44 @@
 #include "global.h"
 #include "gba/m4a_internal.h"
 #include "intro.h"
-#include "asm.h"
 #include "data2.h"
 #include "decompress.h"
+#include "hall_of_fame.h"
+#include "intro_credits_graphics.h"
 #include "libgncmultiboot.h"
 #include "link.h"
 #include "m4a.h"
 #include "main.h"
 #include "new_game.h"
 #include "palette.h"
-#include "rng.h"
+#include "random.h"
 #include "save.h"
-#include "songs.h"
+#include "constants/songs.h"
 #include "sound.h"
-#include "species.h"
+#include "constants/species.h"
 #include "task.h"
 #include "title_screen.h"
 #include "trig.h"
-
-extern void *species_and_otid_get_pal(/*TODO: arg types*/);
-extern void sub_8143680(int, u8);
+#include "scanline_effect.h"
+#include "ewram.h"
 
 extern struct SpriteTemplate gUnknown_02024E8C;
-extern u16 gUnknown_02039318;
-extern u16 gUnknown_0203931A;
 extern u16 gUnknown_02039358;
 extern u16 gUnknown_0203935A;
-extern u32 gIntroFrameCounter;
-extern struct GcmbStruct gMultibootProgramStruct;
 extern u16 gSaveFileStatus;
 extern u8 gReservedSpritePaletteCount;
 extern const u8 gInterfaceGfx_PokeBall[];
-extern const u16 gInterfacePal_PokeBall[];
-extern const struct SpriteSheet gIntro2BrendanSpriteSheet;
-extern const struct SpriteSheet gIntro2MaySpriteSheet;
-extern const struct SpriteSheet gIntro2BicycleSpriteSheet;
-extern const struct SpriteSheet gIntro2LatiosSpriteSheet;
-extern const struct SpriteSheet gIntro2LatiasSpriteSheet;
-extern const struct SpritePalette gIntro2SpritePalettes[];
+extern const u8 gInterfacePal_PokeBall[];
 extern const u8 gIntroCopyright_Gfx[];
 extern const u16 gIntroCopyright_Pal[];
 extern const u16 gIntroCopyright_Tilemap[];
-extern const u16 gUnknown_08393E64[];
 extern void *const gUnknown_0840B5A0[];
+
+static EWRAM_DATA u16 gUnknown_02039318 = 0;
+static EWRAM_DATA u16 gUnknown_0203931A = 0;
+
+u32 gIntroFrameCounter;
+struct GcmbStruct gMultibootProgramStruct;
 
 //--------------------------------------------------
 // Graphics Data
@@ -51,7 +46,11 @@ extern void *const gUnknown_0840B5A0[];
 
 static const u16 Palette_406340[] = INCBIN_U16("graphics/intro/unknown1.gbapal");
 static const u16 Palette_406360[] = INCBIN_U16("graphics/intro/unknown2.gbapal");
+#if ENGLISH
 static const u8 gIntroTiles[] = INCBIN_U8("graphics/intro/intro.4bpp.lz");
+#elif GERMAN
+extern const u8 gIntroTiles[];
+#endif
 static const u16 gIntro1BGPals[][16] =
 {
     INCBIN_U16("graphics/intro/intro1_bgpal1.gbapal"),
@@ -419,12 +418,12 @@ static const struct SpriteTemplate gSpriteTemplate_840AFF0 =
     .affineAnims = gDummySpriteAffineAnimTable,
     .callback = sub_813DA64,
 };
-const struct SpriteSheet gUnknown_0840B008[] =
+const struct CompressedSpriteSheet gUnknown_0840B008[] =
 {
     {gIntroTiles, 0x1400, 2000},
     {NULL},
 };
-const struct SpriteSheet gUnknown_0840B018[] =
+const struct CompressedSpriteSheet gUnknown_0840B018[] =
 {
     {gIntro1EonTiles, 0x400, 2002},
     {NULL},
@@ -746,17 +745,17 @@ static const struct SpriteTemplate gSpriteTemplate_840B1F4 =
     .affineAnims = gDummySpriteAffineAnimTable,
     .callback = sub_813EDFC,
 };
-const struct SpriteSheet gIntro3PokeballGfx_Table[] =
+const struct CompressedSpriteSheet gIntro3PokeballGfx_Table[] =
 {
     {gInterfaceGfx_PokeBall, 0x100, 2002},
     {NULL},
 };
-const struct SpriteSheet gIntro3MiscGfx_Table[] =
+const struct CompressedSpriteSheet gIntro3MiscGfx_Table[] =
 {
     {gIntro3MiscTiles, 0xa00, 2003},
     {NULL},
 };
-const struct SpritePalette gInterfacePokeballPal_Table[] =
+const struct CompressedSpritePalette gInterfacePokeballPal_Table[] =
 {
     {gInterfacePal_PokeBall, 2002},
     {NULL},
@@ -767,10 +766,14 @@ const struct SpritePalette gIntro3MiscPal_Table[] =
     {gIntro3Misc2Palette, 2004},
     {NULL},
 };
-const u32 unusedData = 0x02000000;
+
+// Game Freak probably used the raw address here.
+// Treating this like a u8 * causes the compiler
+// to remove it at link time.
+const u32 unusedSharedMemPtr = (u32)gSharedMem;
 
 static void MainCB2_EndIntro(void);
-static void Task_IntroLoadPart1Graphics(u8);
+void Task_IntroLoadPart1Graphics(u8);
 static void Task_IntroFadeIn(u8);
 static void Task_IntroWaterDrops(u8);
 static void Task_IntroScrollDownAndShowEon(u8);
@@ -870,11 +873,11 @@ static u8 SetUpCopyrightScreen(void)
         DmaFill16(3, 0, (void *)(PLTT + 2), PLTT_SIZE - 2);
         ResetPaletteFade();
         LoadCopyrightGraphics(0, 0x3800, 0);
-        remove_some_task();
+        ScanlineEffect_Stop();
         ResetTasks();
         ResetSpriteData();
         FreeAllSpritePalettes();
-        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0x10, 0, 0xFFFF);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, FADE_COLOR_WHITE);
         REG_BG0CNT = BGCNT_PRIORITY(0)
                    | BGCNT_CHARBASE(0)
                    | BGCNT_SCREENBASE(7)
@@ -898,7 +901,7 @@ static u8 SetUpCopyrightScreen(void)
         GameCubeMultiBoot_Main(&gMultibootProgramStruct);
         if (gMultibootProgramStruct.gcmb_field_2 != 1)
         {
-            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 0x10, 0);
+            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
             gMain.state++;
         }
         break;
@@ -927,8 +930,8 @@ void CB2_InitCopyrightScreenAfterBootup(void)
     if (!SetUpCopyrightScreen())
     {
         sub_8052E4C();
-        ResetSaveCounters();
-        sub_8125EC8(0);
+        Save_ResetSaveCounters();
+        Save_LoadGameData(SAVE_NORMAL);
         if (gSaveFileStatus == 0 || gSaveFileStatus == 2)
             ClearSav2();
         SetPokemonCryStereo(gSaveBlock2.optionsSound);
@@ -940,7 +943,7 @@ void CB2_InitCopyrightScreenAfterTitleScreen(void)
     SetUpCopyrightScreen();
 }
 
-static void Task_IntroLoadPart1Graphics(u8 taskId)
+void Task_IntroLoadPart1Graphics(u8 taskId)
 {
     SetVBlankCallback(NULL);
     gUnknown_02039318 = Random() & 1;
@@ -979,7 +982,7 @@ static void Task_IntroLoadPart1Graphics(u8 taskId)
 
 static void Task_IntroFadeIn(u8 taskId)
 {
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
     SetVBlankCallback(VBlankCB_Intro);
     REG_DISPCNT = DISPCNT_MODE_0 | DISPCNT_OBJ_1D_MAP | DISPCNT_BG_ALL_ON | DISPCNT_OBJ_ON;
     gTasks[taskId].func = Task_IntroWaterDrops;
@@ -992,11 +995,11 @@ static void Task_IntroWaterDrops(u8 taskId)
 {
     //start moving rock
     if (gIntroFrameCounter == 76)
-        gSprites[gTasks[taskId].data[0]].data0 = 1;
+        gSprites[gTasks[taskId].data[0]].data[0] = 1;
 
     //drop rock
     if (gIntroFrameCounter == 251)
-        gSprites[gTasks[taskId].data[0]].data0 = 2;
+        gSprites[gTasks[taskId].data[0]].data[0] = 2;
 
     if (gIntroFrameCounter == 368)
         CreateWaterDrop(48, 0, 0x400, 5, 0x70, TRUE);
@@ -1051,7 +1054,7 @@ static void Task_IntroScrollDownAndShowEon(u8 taskId)
         //fade to white
         if (gIntroFrameCounter > 1007)
         {
-            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, 0xFFFF);
+            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, FADE_COLOR_WHITE);
             gTasks[taskId].func = Task_IntroWaitToSetupPart2;
         }
     }
@@ -1084,14 +1087,14 @@ static void Task_IntroStartBikeRide(u8 taskId)
     u8 spriteId;
 
     if (gUnknown_02039318 == 0)
-        LoadCompressedObjectPic(&gIntro2BrendanSpriteSheet);
+        LoadCompressedObjectPic(gIntro2BrendanSpriteSheet);
     else
-        LoadCompressedObjectPic(&gIntro2MaySpriteSheet);
-    LoadCompressedObjectPic(&gIntro2BicycleSpriteSheet);
+        LoadCompressedObjectPic(gIntro2MaySpriteSheet);
+    LoadCompressedObjectPic(gIntro2BicycleSpriteSheet);
 #ifdef SAPPHIRE
-    LoadCompressedObjectPic(&gIntro2LatiasSpriteSheet);
+    LoadCompressedObjectPic(gIntro2LatiasSpriteSheet);
 #else
-    LoadCompressedObjectPic(&gIntro2LatiosSpriteSheet);
+    LoadCompressedObjectPic(gIntro2LatiosSpriteSheet);
 #endif
     LoadSpritePalettes(gIntro2SpritePalettes);
     if (gUnknown_02039318 == 0)
@@ -1108,7 +1111,7 @@ static void Task_IntroStartBikeRide(u8 taskId)
 #endif
     gSprites[spriteId].callback = sub_813D880;
     gTasks[taskId].data[2] = spriteId;
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, 0xFFFF);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, FADE_COLOR_WHITE);
     SetVBlankCallback(VBlankCB_Intro);
 #ifdef SAPPHIRE
     gTasks[taskId].data[0] = sub_8148EC0(0, 0x4000, 0x40, 0x10);
@@ -1127,21 +1130,21 @@ static void Task_IntroHandleBikeAndEonMovement(u8 taskId)
 
     if (gIntroFrameCounter > 1823)
     {
-        BeginNormalPaletteFade(0xFFFFFFFF, 16, 0, 16, 0xFFFF);
+        BeginNormalPaletteFade(0xFFFFFFFF, 16, 0, 16, FADE_COLOR_WHITE);
         gTasks[taskId].func = Task_IntroWaitToSetupPart3;
     }
     if (gIntroFrameCounter == 1109)
-        gSprites[gTasks[taskId].data[1]].data0 = 1;
+        gSprites[gTasks[taskId].data[1]].data[0] = 1;
     if (gIntroFrameCounter == 1214)
-        gSprites[gTasks[taskId].data[1]].data0 = 0;
+        gSprites[gTasks[taskId].data[1]].data[0] = 0;
     if (gIntroFrameCounter == 1394)
-        gSprites[gTasks[taskId].data[2]].data0 = 1;
+        gSprites[gTasks[taskId].data[2]].data[0] = 1;
     if (gIntroFrameCounter == 1398)
-        gSprites[gTasks[taskId].data[1]].data0 = 2;
+        gSprites[gTasks[taskId].data[1]].data[0] = 2;
     if (gIntroFrameCounter == 1586)
-        gSprites[gTasks[taskId].data[1]].data0 = 3;
+        gSprites[gTasks[taskId].data[1]].data[0] = 3;
     if (gIntroFrameCounter == 1727)
-        gSprites[gTasks[taskId].data[1]].data0 = 4;
+        gSprites[gTasks[taskId].data[1]].data[0] = 4;
 
     //TODO: Clean this up
     a = (((u16)gTasks[taskId].data[3] << 16) >> 18) & 0x7F;
@@ -1178,7 +1181,7 @@ static void Task_IntroLoadPart3Graphics(u8 taskId)
     sub_813CE30(0x78, 0x50, 0, 0);
     ResetSpriteData();
     FreeAllSpritePalettes();
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0x10, 0, 0xFFFF);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, FADE_COLOR_WHITE);
     REG_BG2CNT = BGCNT_PRIORITY(3) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(8) | BGCNT_256COLOR | BGCNT_AFF256x256;
     REG_DISPCNT = DISPCNT_MODE_1 | DISPCNT_OBJ_1D_MAP | DISPCNT_BG2_ON | DISPCNT_OBJ_ON;
     gTasks[taskId].func = Task_IntroSpinAndZoomPokeball;
@@ -1200,7 +1203,7 @@ static void Task_IntroSpinAndZoomPokeball(u8 taskId)
     }
     sub_813CE30(0x78, 0x50, 0x10000 / gTasks[taskId].data[1], gTasks[taskId].data[0]);
     if (gIntroFrameCounter == 44)
-        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 0x10, 0xFFFF);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, FADE_COLOR_WHITE);
 }
 
 static void Task_IntroWaitToSetupPart3DoubleFight(u8 taskId)
@@ -1209,22 +1212,20 @@ static void Task_IntroWaitToSetupPart3DoubleFight(u8 taskId)
         gTasks[taskId].func = Task_IntroLoadPart3Streaks;
 }
 
-extern u8 unk_2000000[][32];
+//extern u8 gSharedMem[][32];
 
 static void Task_IntroLoadPart3Streaks(u8 taskId)
 {
     u16 i;
-    void *vram;
 
     intro_reset_and_hide_bgs();
     for (i = 0; i < 32; i++)
     {
-        unk_2000000[0][i] = 0;
-        unk_2000000[1][i] = 17;
-        unk_2000000[2][i] = 34;
+        ewram0arr[0][i] = 0;
+        ewram0arr[1][i] = 17;
+        ewram0arr[2][i] = 34;
     }
-    vram = (void *)VRAM;
-    DmaCopy16(3, unk_2000000, vram, 0x60);
+    DmaCopy16Defvars(3, gSharedMem, (void *)(VRAM + 0x0), 0x60);
     for (i = 0; i < 0x280; i++)
         ((u16 *)(VRAM + 0x3000))[i] = 0xF001;
     for (i = 0; i < 0x80; i++)
@@ -1311,15 +1312,15 @@ static void Task_IntroPokemonBattle(u8 taskId)
     {
         spriteId = sub_813CE88(SPECIES_SHARPEDO, 0xF0, 0xA0, 5, 1);
         gSprites[spriteId].callback = sub_813DB9C;
-        gSprites[spriteId].data1 = 1;
-        gSprites[spriteId].data2 = 0;
+        gSprites[spriteId].data[1] = 1;
+        gSprites[spriteId].data[2] = 0;
     }
     if (gIntroFrameCounter == 152)
     {
         spriteId = sub_813CE88(SPECIES_DUSKULL, 0, 0xA0, 4, 1);
         gSprites[spriteId].callback = sub_813DB9C;
-        gSprites[spriteId].data1 = 2;
-        gSprites[spriteId].data2 = 1;
+        gSprites[spriteId].data[1] = 2;
+        gSprites[spriteId].data[2] = 1;
     }
     if (gIntroFrameCounter == 219)
     {
@@ -1331,24 +1332,24 @@ static void Task_IntroPokemonBattle(u8 taskId)
     if (gIntroFrameCounter == 304)
     {
         gTasks[gTasks[taskId].data[15]].data[0] = 4;
-        gSprites[gTasks[taskId].data[1]].data0 = 2;
+        gSprites[gTasks[taskId].data[1]].data[0] = 2;
     }
     if (gIntroFrameCounter == 384)
     {
         gTasks[gTasks[taskId].data[15]].data[0] = 0;
-        gSprites[gTasks[taskId].data[1]].data0 = 4;
+        gSprites[gTasks[taskId].data[1]].data[0] = 4;
     }
     if (gIntroFrameCounter == 400)
     {
-        BeginNormalPaletteFade(0xFF0000, 0, 0x10, 0, 0x7EFF);
+        BeginNormalPaletteFade(0xFF0000, 0, 16, 0, RGB(31, 23, 31));
     }
     if (gIntroFrameCounter == 432)
     {
-        gSprites[gTasks[taskId].data[1]].data0 = 5;
+        gSprites[gTasks[taskId].data[1]].data[0] = 5;
     }
     if (gIntroFrameCounter == 462)
     {
-        gSprites[gTasks[taskId].data[1]].data0 = 6;
+        gSprites[gTasks[taskId].data[1]].data[0] = 6;
         gTasks[gTasks[taskId].data[15]].data[0] = 2;
     }
     if (gIntroFrameCounter == 463)
@@ -1368,8 +1369,8 @@ static void Task_IntroPokemonBattle(u8 taskId)
     }
     if (gIntroFrameCounter == 623)
     {
-        gSprites[gTasks[taskId].data[2]].data0 = 2;
-        gSprites[gTasks[taskId].data[3]].data0 = 2;
+        gSprites[gTasks[taskId].data[2]].data[0] = 2;
+        gSprites[gTasks[taskId].data[3]].data[0] = 2;
         gTasks[gTasks[taskId].data[15]].data[0] = 3;
     }
     if (gIntroFrameCounter == 624)
@@ -1390,24 +1391,24 @@ static void Task_IntroPokemonBattle(u8 taskId)
     if (gIntroFrameCounter == 776)
     {
         gUnknown_0203931A = 1;
-        gSprites[gTasks[taskId].data[4]].data0 = 2;
-        gSprites[gTasks[taskId].data[5]].data0 = 2;
+        gSprites[gTasks[taskId].data[4]].data[0] = 2;
+        gSprites[gTasks[taskId].data[5]].data[0] = 2;
         gTasks[gTasks[taskId].data[15]].data[0] = 0;
     }
     if (gIntroFrameCounter == 781)
     {
         sub_813D084(2);
-        gSprites[gTasks[taskId].data[2]].data0 = 3;
-        gSprites[gTasks[taskId].data[3]].data0 = 3;
-        gSprites[gTasks[taskId].data[4]].data0 = 3;
-        gSprites[gTasks[taskId].data[5]].data0 = 3;
+        gSprites[gTasks[taskId].data[2]].data[0] = 3;
+        gSprites[gTasks[taskId].data[3]].data[0] = 3;
+        gSprites[gTasks[taskId].data[4]].data[0] = 3;
+        gSprites[gTasks[taskId].data[5]].data[0] = 3;
         spriteId = CreateSprite(&gSpriteTemplate_840B1F4, 0x78, 0x50, 15);
         gSprites[spriteId].invisible = 1;
     }
     if (gIntroFrameCounter == 800)
         PlaySE(SE_OP_BASYU);
     if (gIntroFrameCounter == 850)
-        BeginNormalPaletteFade(0xFFFFFFFF, 4, 0, 0x10, 0xFFFF);
+        BeginNormalPaletteFade(0xFFFFFFFF, 4, 0, 16, FADE_COLOR_WHITE);
     if (gIntroFrameCounter == 946)
         gTasks[taskId].func = task_intro_19;
 }
@@ -1432,7 +1433,7 @@ static void task_intro_20(u8 taskId)
         gTasks[taskId].data[0] = 0xFF;
         break;
     case 2:
-        BeginNormalPaletteFade(1, 0, 0x10, 0, 0xFFFF);
+        BeginNormalPaletteFade(0x1, 0, 16, 0, FADE_COLOR_WHITE);
         REG_BG2CNT = BG2_FLAGS;
         REG_DISPCNT = DISPCNT_FLAGS;
         gTasks[taskId].data[1] = 0;
@@ -1446,7 +1447,7 @@ static void task_intro_20(u8 taskId)
         gTasks[taskId].data[2] -= 8;
         break;
     case 3:
-        BeginNormalPaletteFade(1, 0, 0x10, 0, 0xFFFF);
+        BeginNormalPaletteFade(0x1, 0, 16, 0, FADE_COLOR_WHITE);
         REG_BG2CNT = BG2_FLAGS;
         REG_DISPCNT = DISPCNT_FLAGS;
         gTasks[taskId].data[1] = 0;
@@ -1460,7 +1461,7 @@ static void task_intro_20(u8 taskId)
         gTasks[taskId].data[2] += 8;
         break;
     case 4:
-        BeginNormalPaletteFade(1, 5, 0, 0x10, 0x37F7);
+        BeginNormalPaletteFade(0x1, 5, 0, 16, RGB(23, 31, 13));
         REG_BG2CNT = BG2_FLAGS;
         REG_DISPCNT = DISPCNT_FLAGS;
         gTasks[taskId].data[1] = 0;
@@ -1500,7 +1501,6 @@ static void intro_reset_and_hide_bgs(void)
     REG_BLDY = 0;
 }
 
-#ifdef NONMATCHING
 static void sub_813CCE8(u8 taskId)
 {
     switch (gTasks[taskId].data[0])
@@ -1512,18 +1512,15 @@ static void sub_813CCE8(u8 taskId)
         REG_BLDY = 0;
         gTasks[taskId].data[1] = 0x40;
         gTasks[taskId].data[0] = 1;
-        return;
+        break;
     case 1:
         if (gTasks[taskId].data[1] != 0)
         {
-            u32 foo;
-            u32 bar asm("r2");
+            u8 foo;
 
             gTasks[taskId].data[1]--;
-            //tail merge at _0813CDC2
-            foo = gTasks[taskId].data[1] + (gTasks[taskId].data[1] < 0);
-            bar = 0x1FE;
-            REG_BLDALPHA = gUnknown_08393E64[(foo & bar) / 2];
+            foo = gTasks[taskId].data[1] / 2;
+            REG_BLDALPHA = gUnknown_08393E64[foo];
         }
         else
         {
@@ -1531,7 +1528,7 @@ static void sub_813CCE8(u8 taskId)
             gTasks[taskId].data[1] = 0x80;
             gTasks[taskId].data[0]++;
         }
-        return;
+        break;
     case 2:
         if (gTasks[taskId].data[1] != 0)
         {
@@ -1543,18 +1540,15 @@ static void sub_813CCE8(u8 taskId)
             gTasks[taskId].data[1] = 0;  //redundant?
             gTasks[taskId].data[0]++;
         }
-        return;
+        break;
     case 3:
         if (gTasks[taskId].data[1] <= 0x3D)
         {
-            u32 foo;
-            u32 bar asm("r2");
+            u8 foo;
 
             gTasks[taskId].data[1]++;
-            //_0813CDC2
-            foo = gTasks[taskId].data[1] + (gTasks[taskId].data[1] < 0);
-            bar = 0x1FE;
-            REG_BLDALPHA = gUnknown_08393E64[(foo & bar) / 2];
+            foo = gTasks[taskId].data[1] / 2;
+            REG_BLDALPHA = gUnknown_08393E64[foo];
         }
         else
         {
@@ -1563,7 +1557,7 @@ static void sub_813CCE8(u8 taskId)
             gTasks[taskId].data[1] = 0x10;
             gTasks[taskId].data[0]++;
         }
-        return;
+        break;
     case 4:
         if (gTasks[taskId].data[1] != 0)
         {
@@ -1576,186 +1570,9 @@ static void sub_813CCE8(u8 taskId)
             REG_BLDY = 0;
             DestroyTask(taskId);
         }
-        return;
+        break;
     }
 }
-#else
-__attribute__((naked))
-static void sub_813CCE8(u8 taskId)
-{
-    asm("\n\
-    .equ REG_BLDCNT, 0x4000050\n\
-    .equ REG_BLDALPHA, 0x4000052\n\
-    .syntax unified\n\
-    push {r4,lr}\n\
-    lsls r0, 24\n\
-    lsrs r3, r0, 24\n\
-    ldr r1, _0813CD0C @ =gTasks\n\
-    lsls r0, r3, 2\n\
-    adds r0, r3\n\
-    lsls r0, 3\n\
-    adds r0, r1\n\
-    movs r2, 0x8\n\
-    ldrsh r0, [r0, r2]\n\
-    adds r2, r1, 0\n\
-    cmp r0, 0x4\n\
-    bhi _0813CD28\n\
-    lsls r0, 2\n\
-    ldr r1, _0813CD10 @ =_0813CD14\n\
-    adds r0, r1\n\
-    ldr r0, [r0]\n\
-    mov pc, r0\n\
-    .align 2, 0\n\
-_0813CD0C: .4byte gTasks\n\
-_0813CD10: .4byte _0813CD14\n\
-    .align 2, 0\n\
-_0813CD14:\n\
-    .4byte _0813CD28\n\
-    .4byte _0813CD5C\n\
-    .4byte _0813CD8C\n\
-    .4byte _0813CDA8\n\
-    .4byte _0813CDFC\n\
-_0813CD28:\n\
-    ldr r1, _0813CD54 @ =REG_BLDCNT\n\
-    ldr r4, _0813CD58 @ =0x00003f50\n\
-    adds r0, r4, 0\n\
-    strh r0, [r1]\n\
-    adds r1, 0x2\n\
-    movs r4, 0x80\n\
-    lsls r4, 5\n\
-    adds r0, r4, 0\n\
-    strh r0, [r1]\n\
-    adds r1, 0x2\n\
-    movs r0, 0\n\
-    strh r0, [r1]\n\
-    lsls r0, r3, 2\n\
-    adds r0, r3\n\
-    lsls r0, 3\n\
-    adds r0, r2\n\
-    movs r1, 0x40\n\
-    strh r1, [r0, 0xA]\n\
-    movs r1, 0x1\n\
-    strh r1, [r0, 0x8]\n\
-    b _0813CE26\n\
-    .align 2, 0\n\
-_0813CD54: .4byte REG_BLDCNT\n\
-_0813CD58: .4byte 0x00003f50\n\
-_0813CD5C:\n\
-    lsls r0, r3, 2\n\
-    adds r0, r3\n\
-    lsls r0, 3\n\
-    adds r2, r0, r2\n\
-    ldrh r1, [r2, 0xA]\n\
-    movs r3, 0xA\n\
-    ldrsh r0, [r2, r3]\n\
-    cmp r0, 0\n\
-    beq _0813CD78\n\
-    subs r0, r1, 0x1\n\
-    strh r0, [r2, 0xA]\n\
-    movs r4, 0xA\n\
-    ldrsh r0, [r2, r4]\n\
-    b _0813CDC2\n\
-_0813CD78:\n\
-    ldr r1, _0813CD84 @ =REG_BLDALPHA\n\
-    ldr r0, _0813CD88 @ =gUnknown_08393E64\n\
-    ldrh r0, [r0]\n\
-    strh r0, [r1]\n\
-    movs r0, 0x80\n\
-    b _0813CDEA\n\
-    .align 2, 0\n\
-_0813CD84: .4byte REG_BLDALPHA\n\
-_0813CD88: .4byte gUnknown_08393E64\n\
-_0813CD8C:\n\
-    lsls r0, r3, 2\n\
-    adds r0, r3\n\
-    lsls r0, 3\n\
-    adds r1, r0, r2\n\
-    ldrh r0, [r1, 0xA]\n\
-    movs r3, 0xA\n\
-    ldrsh r2, [r1, r3]\n\
-    cmp r2, 0\n\
-    bne _0813CE0E\n\
-    strh r2, [r1, 0xA]\n\
-    ldrh r0, [r1, 0x8]\n\
-    adds r0, 0x1\n\
-    strh r0, [r1, 0x8]\n\
-    b _0813CE26\n\
-_0813CDA8:\n\
-    lsls r0, r3, 2\n\
-    adds r0, r3\n\
-    lsls r0, 3\n\
-    adds r2, r0, r2\n\
-    ldrh r1, [r2, 0xA]\n\
-    movs r4, 0xA\n\
-    ldrsh r0, [r2, r4]\n\
-    cmp r0, 0x3D\n\
-    bgt _0813CDE0\n\
-    adds r0, r1, 0x1\n\
-    strh r0, [r2, 0xA]\n\
-    movs r1, 0xA\n\
-    ldrsh r0, [r2, r1]\n\
-_0813CDC2:\n\
-    lsrs r1, r0, 31\n\
-    adds r0, r1\n\
-    movs r2, 0xFF\n\
-    lsls r2, 1\n\
-    ldr r3, _0813CDD8 @ =REG_BLDALPHA\n\
-    ldr r1, _0813CDDC @ =gUnknown_08393E64\n\
-    ands r0, r2\n\
-    adds r0, r1\n\
-    ldrh r0, [r0]\n\
-    strh r0, [r3]\n\
-    b _0813CE26\n\
-    .align 2, 0\n\
-_0813CDD8: .4byte REG_BLDALPHA\n\
-_0813CDDC: .4byte gUnknown_08393E64\n\
-_0813CDE0:\n\
-    ldr r1, _0813CDF4 @ =REG_BLDALPHA\n\
-    ldr r0, _0813CDF8 @ =gUnknown_08393E64\n\
-    ldrh r0, [r0, 0x3E]\n\
-    strh r0, [r1]\n\
-    movs r0, 0x10\n\
-_0813CDEA:\n\
-    strh r0, [r2, 0xA]\n\
-    ldrh r0, [r2, 0x8]\n\
-    adds r0, 0x1\n\
-    strh r0, [r2, 0x8]\n\
-    b _0813CE26\n\
-    .align 2, 0\n\
-_0813CDF4: .4byte REG_BLDALPHA\n\
-_0813CDF8: .4byte gUnknown_08393E64\n\
-_0813CDFC:\n\
-    lsls r0, r3, 2\n\
-    adds r0, r3\n\
-    lsls r0, 3\n\
-    adds r1, r0, r2\n\
-    ldrh r0, [r1, 0xA]\n\
-    movs r4, 0xA\n\
-    ldrsh r2, [r1, r4]\n\
-    cmp r2, 0\n\
-    beq _0813CE14\n\
-_0813CE0E:\n\
-    subs r0, 0x1\n\
-    strh r0, [r1, 0xA]\n\
-    b _0813CE26\n\
-_0813CE14:\n\
-    ldr r0, _0813CE2C @ =REG_BLDCNT\n\
-    strh r2, [r0]\n\
-    adds r0, 0x2\n\
-    strh r2, [r0]\n\
-    adds r0, 0x2\n\
-    strh r2, [r0]\n\
-    adds r0, r3, 0\n\
-    bl DestroyTask\n\
-_0813CE26:\n\
-    pop {r4}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_0813CE2C: .4byte REG_BLDCNT\n\
-    .syntax divided\n");
-}
-#endif
 
 void sub_813CE30(u16 scrX, u16 scrY, u16 zoom, u16 alpha)
 {
@@ -1780,15 +1597,15 @@ void sub_813CE30(u16 scrX, u16 scrY, u16 zoom, u16 alpha)
 
 static u16 sub_813CE88(u16 species, s16 x, s16 y, u16 d, u8 front)
 {
-    void *pal;
+    const u8 *lzPaletteData;
     u8 spriteId;
 
     if (front)
         LoadSpecialPokePic(&gMonFrontPicTable[species], gMonFrontPicCoords[species].coords, gMonFrontPicCoords[species].y_offset, 0x2000000, gUnknown_0840B5A0[d], species, 0, 1);
     else
         LoadSpecialPokePic(&gMonBackPicTable[species], gMonBackPicCoords[species].coords, gMonBackPicCoords[species].y_offset, 0x2000000, gUnknown_0840B5A0[d], species, 0, 0);
-    pal = species_and_otid_get_pal(species, 0, 0xFFFF);
-    LoadCompressedPalette(pal, 0x100 + d * 0x10, 0x20);
+    lzPaletteData = GetMonSpritePalFromOtIdPersonality(species, 0, 0xFFFF);
+    LoadCompressedPalette(lzPaletteData, 0x100 + d * 0x10, 0x20);
     sub_8143648(d, d);
     spriteId = CreateSprite(&gUnknown_02024E8C, x, y, (d + 1) * 4);
     gSprites[spriteId].oam.paletteNum = d;
@@ -1835,18 +1652,18 @@ static void sub_813D0CC(struct Sprite *sprite)
 {
     u8 r0;
 
-    if (sprite->data2 >= 192)
+    if (sprite->data[2] >= 192)
     {
-        if (sprite->data3 != 0)
+        if (sprite->data[3] != 0)
         {
-            sprite->data3--;
+            sprite->data[3]--;
         }
         else
         {
             sprite->invisible = FALSE;
-            SetOamMatrix(sprite->data1, sprite->data2, 0, 0, sprite->data2);
-            sprite->data2 = (sprite->data2 * 95) / 100;
-            r0 = (sprite->data2 - 192) / 128 + 9;
+            SetOamMatrix(sprite->data[1], sprite->data[2], 0, 0, sprite->data[2]);
+            sprite->data[2] = (sprite->data[2] * 95) / 100;
+            r0 = (sprite->data[2] - 192) / 128 + 9;
             if (r0 > 15)
                 r0 = 15;
             sprite->oam.paletteNum = r0;
@@ -1860,14 +1677,14 @@ static void sub_813D0CC(struct Sprite *sprite)
 
 static void sub_813D158(struct Sprite *sprite)
 {
-    if (gSprites[sprite->data7].data7 != 0)
+    if (gSprites[sprite->data[7]].data[7] != 0)
     {
         sprite->invisible = TRUE;
         sprite->pos1.x += sprite->pos2.x;
         sprite->pos1.y += sprite->pos2.y;
         StartSpriteAnim(sprite, 3);
-        sprite->data2 = 1024;
-        sprite->data3 = 8 * (sprite->data1 & 3);
+        sprite->data[2] = 1024;
+        sprite->data[3] = 8 * (sprite->data[1] & 3);
         sprite->callback = sub_813D0CC;
         sprite->oam.shape = 1;
         sprite->oam.size = 3;
@@ -1875,16 +1692,16 @@ static void sub_813D158(struct Sprite *sprite)
     }
     else
     {
-        sprite->pos2.x = gSprites[sprite->data7].pos2.x;
-        sprite->pos2.y = gSprites[sprite->data7].pos2.y;
-        sprite->pos1.x = gSprites[sprite->data7].pos1.x;
-        sprite->pos1.y = gSprites[sprite->data7].pos1.y;
+        sprite->pos2.x = gSprites[sprite->data[7]].pos2.x;
+        sprite->pos2.y = gSprites[sprite->data[7]].pos2.y;
+        sprite->pos1.x = gSprites[sprite->data[7]].pos1.x;
+        sprite->pos1.y = gSprites[sprite->data[7]].pos1.y;
     }
 }
 
 static void sub_813D208(struct Sprite *sprite)
 {
-    if (sprite->data0 != 0)
+    if (sprite->data[0] != 0)
         sprite->callback = sub_813D220;
 }
 
@@ -1896,7 +1713,7 @@ static void sub_813D220(struct Sprite *sprite)
         sprite->pos2.y = 0;
         sprite->pos1.x += 4;
         sprite->pos2.x = -4;
-        sprite->data4 = 128;
+        sprite->data[4] = 128;
         sprite->callback = sub_813D368;
     }
     else
@@ -1914,58 +1731,58 @@ static void sub_813D220(struct Sprite *sprite)
         s16 var4;
         s16 temp;
 
-        data4 = sprite->data4;
+        data4 = sprite->data[4];
         sin1 = gSineTable[(u8)data4];
         sin2 = gSineTable[(u8)(data4 + 64)];
-        sprite->data4 += 2;
+        sprite->data[4] += 2;
         sprite->pos2.y = sin1 / 32;
         sprite->pos1.x--;
         if (sprite->pos1.x & 1)
             sprite->pos1.y++;
         temp = -sin2 / 16;
-        data2 = sprite->data2;
-        data3 = sprite->data3;
+        data2 = sprite->data[2];
+        data3 = sprite->data[3];
         sin3 = gSineTable[(u8)(temp - 16)];
         sin4 = gSineTable[(u8)(temp + 48)];
         var1 = sin4 * data2 / 256;
         var2 = -sin3 * data3 / 256;
         var3 = sin3 * data2 / 256;
         var4 = sin4 * data3 / 256;
-        SetOamMatrix(sprite->data1, data2, 0, 0, data3);
-        SetOamMatrix(sprite->data1 + 1, var1, var3, var2, var4);
-        SetOamMatrix(sprite->data1 + 2, var1, var3, var2 * 2, var4 * 2);
+        SetOamMatrix(sprite->data[1], data2, 0, 0, data3);
+        SetOamMatrix(sprite->data[1] + 1, var1, var3, var2, var4);
+        SetOamMatrix(sprite->data[1] + 2, var1, var3, var2 * 2, var4 * 2);
     }
 }
 
 static void sub_813D368(struct Sprite *sprite)
 {
-    SetOamMatrix(sprite->data1, sprite->data6 + 64, 0, 0, sprite->data6 + 64);
-    SetOamMatrix(sprite->data1 + 1, sprite->data6 + 64, 0, 0, sprite->data6 + 64);
-    SetOamMatrix(sprite->data1 + 2, sprite->data6 + 64, 0, 0, sprite->data6 + 64);
-    if (sprite->data4 != 64)
+    SetOamMatrix(sprite->data[1], sprite->data[6] + 64, 0, 0, sprite->data[6] + 64);
+    SetOamMatrix(sprite->data[1] + 1, sprite->data[6] + 64, 0, 0, sprite->data[6] + 64);
+    SetOamMatrix(sprite->data[1] + 2, sprite->data[6] + 64, 0, 0, sprite->data[6] + 64);
+    if (sprite->data[4] != 64)
     {
         u16 data4;
 
-        sprite->data4 -= 8;
-        data4 = sprite->data4;
+        sprite->data[4] -= 8;
+        data4 = sprite->data[4];
         sprite->pos2.x = gSineTable[(u8)(data4 + 64)] / 64;
         sprite->pos2.y = gSineTable[(u8)data4] / 64;
     }
     else
     {
-        sprite->data4 = 0;
+        sprite->data[4] = 0;
         sprite->callback = sub_813D414;
     }
 }
 
 static void sub_813D414(struct Sprite *sprite)
 {
-    if (sprite->data0 != 2)
+    if (sprite->data[0] != 2)
     {
         s16 r2;
 
-        sprite->data4 += 8;
-        r2 = gSineTable[(u8)sprite->data4] / 16 + 64;
+        sprite->data[4] += 8;
+        r2 = gSineTable[(u8)sprite->data[4]] / 16 + 64;
         sprite->pos2.x = gSineTable[(u8)(r2 + 64)] / 64;
         sprite->pos2.y = gSineTable[(u8)r2] / 64;
     }
@@ -1977,19 +1794,19 @@ static void sub_813D414(struct Sprite *sprite)
 
 static void SpriteCB_WaterDropFall(struct Sprite *sprite)
 {
-    if (sprite->pos1.y < sprite->data5)
+    if (sprite->pos1.y < sprite->data[5])
     {
         sprite->pos1.y += 4;
     }
     else
     {
-        sprite->data7 = 1;
+        sprite->data[7] = 1;
         sprite->invisible = TRUE;
         sprite->pos1.x += sprite->pos2.x;
         sprite->pos1.y += sprite->pos2.y;
         StartSpriteAnim(sprite, 3);
-        sprite->data2 = 1024;
-        sprite->data3 = 8 * (sprite->data1 & 3);
+        sprite->data[2] = 1024;
+        sprite->data[3] = 8 * (sprite->data[1] & 3);
         sprite->callback = sub_813D0CC;
         sprite->oam.shape = 1;
         sprite->oam.size = 3;
@@ -2000,19 +1817,19 @@ static void SpriteCB_WaterDropFall(struct Sprite *sprite)
 //Duplicate function
 static void SpriteCB_WaterDropFall_2(struct Sprite *sprite)
 {
-    if (sprite->pos1.y < sprite->data5)
+    if (sprite->pos1.y < sprite->data[5])
     {
         sprite->pos1.y += 4;
     }
     else
     {
-        sprite->data7 = 1;
+        sprite->data[7] = 1;
         sprite->invisible = TRUE;
         sprite->pos1.x += sprite->pos2.x;
         sprite->pos1.y += sprite->pos2.y;
         StartSpriteAnim(sprite, 3);
-        sprite->data2 = 1024;
-        sprite->data3 = 8 * (sprite->data1 & 3);
+        sprite->data[2] = 1024;
+        sprite->data[3] = 8 * (sprite->data[1] & 3);
         sprite->callback = sub_813D0CC;
         sprite->oam.shape = 1;
         sprite->oam.size = 3;
@@ -2026,13 +1843,13 @@ static u8 CreateWaterDrop(s16 x, s16 y, u16 c, u16 d, u16 e, u8 fallImmediately)
     u8 oldSpriteId;
 
     spriteId = CreateSprite(&gSpriteTemplate_840AE20, x, y, 0);
-    gSprites[spriteId].data0 = 0;
-    gSprites[spriteId].data7 = 0;
-    gSprites[spriteId].data1 = d;
-    gSprites[spriteId].data2 = c;
-    gSprites[spriteId].data3 = c;
-    gSprites[spriteId].data5 = e;
-    gSprites[spriteId].data6 = c;
+    gSprites[spriteId].data[0] = 0;
+    gSprites[spriteId].data[7] = 0;
+    gSprites[spriteId].data[1] = d;
+    gSprites[spriteId].data[2] = c;
+    gSprites[spriteId].data[3] = c;
+    gSprites[spriteId].data[5] = e;
+    gSprites[spriteId].data[6] = c;
     gSprites[spriteId].oam.affineMode = 3;
     gSprites[spriteId].oam.matrixNum = d;
     CalcCenterToCornerVec(&gSprites[spriteId], 0, 2, 2);
@@ -2044,16 +1861,16 @@ static u8 CreateWaterDrop(s16 x, s16 y, u16 c, u16 d, u16 e, u8 fallImmediately)
     oldSpriteId = spriteId;
 
     spriteId = CreateSprite(&gSpriteTemplate_840AE20, x, y, 0);
-    gSprites[spriteId].data7 = oldSpriteId;
-    gSprites[spriteId].data1 = d + 1;
+    gSprites[spriteId].data[7] = oldSpriteId;
+    gSprites[spriteId].data[1] = d + 1;
     gSprites[spriteId].oam.affineMode = 3;
     gSprites[spriteId].oam.matrixNum = d + 1;
     CalcCenterToCornerVec(&gSprites[spriteId], 0, 2, 2);
     gSprites[spriteId].callback = sub_813D158;
 
     spriteId = CreateSprite(&gSpriteTemplate_840AE20, x, y, 0);
-    gSprites[spriteId].data7 = oldSpriteId;
-    gSprites[spriteId].data1 = d + 2;
+    gSprites[spriteId].data[7] = oldSpriteId;
+    gSprites[spriteId].data[1] = d + 2;
     StartSpriteAnim(&gSprites[spriteId], 1);
     gSprites[spriteId].oam.affineMode = 3;
     gSprites[spriteId].oam.matrixNum = d + 2;
@@ -2069,7 +1886,7 @@ static u8 CreateWaterDrop(s16 x, s16 y, u16 c, u16 d, u16 e, u8 fallImmediately)
 
 static void sub_813D788(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
         StartSpriteAnimIfDifferent(sprite, 0);
@@ -2121,7 +1938,7 @@ static void sub_813D788(struct Sprite *sprite)
 
 static void sub_813D880(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
         break;
@@ -2129,30 +1946,30 @@ static void sub_813D880(struct Sprite *sprite)
         if (sprite->pos2.x + sprite->pos1.x < 304)
             sprite->pos2.x += 8;
         else
-            sprite->data0 = 2;
+            sprite->data[0] = 2;
         break;
     case 2:
         if (sprite->pos2.x + sprite->pos1.x > 120)
             sprite->pos2.x -= 1;
         else
-            sprite->data0 = 3;
+            sprite->data[0] = 3;
         break;
     case 3:
         if (sprite->pos2.x > 0)
             sprite->pos2.x -= 2;
         break;
     }
-    sprite->pos2.y = Sin((u8)sprite->data1, 8) - gUnknown_0203935A;
-    sprite->data1 += 4;
+    sprite->pos2.y = Sin((u8)sprite->data[1], 8) - gUnknown_0203935A;
+    sprite->data[1] += 4;
 }
 
 static void sub_813D908(struct Sprite *sprite)
 {
-    if (gTasks[sprite->data0].data[0] == 0)
+    if (gTasks[sprite->data[0]].data[0] == 0)
     {
         sprite->invisible = TRUE;
     }
-    else if (gTasks[sprite->data0].data[0] != 4)
+    else if (gTasks[sprite->data[0]].data[0] != 4)
     {
         sprite->invisible = FALSE;
     }
@@ -2170,27 +1987,26 @@ static u8 CreateGameFreakLogo(s16 a, s16 b, u8 c)
     for (i = 0; i < 9; i++)
     {
         spriteId = CreateSprite(&gSpriteTemplate_840AF94, gUnknown_0840AF50[i][1] + a, b - 4, 0);
-        gSprites[spriteId].data0 = c;
+        gSprites[spriteId].data[0] = c;
         StartSpriteAnim(&gSprites[spriteId], gUnknown_0840AF50[i][0]);
     }
     for (i = 0; i < 8; i++)
     {
         spriteId = CreateSprite(&gSpriteTemplate_840AFAC, gUnknown_0840AF74[i][1] + a, b + 12, 0);
-        gSprites[spriteId].data0 = c;
+        gSprites[spriteId].data[0] = c;
         StartSpriteAnim(&gSprites[spriteId], gUnknown_0840AF74[i][0]);
     }
     spriteId = CreateSprite(&gSpriteTemplate_840AFC4, 120, b - 4, 0);
-    gSprites[spriteId].data0 = c;
+    gSprites[spriteId].data[0] = c;
 
     return spriteId;
 }
 
-#ifdef NONMATCHING
 static void sub_813DA64(struct Sprite *sprite)
 {
-    sprite->data7++;
+    sprite->data[7]++;
 
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
     default:
@@ -2198,294 +2014,119 @@ static void sub_813DA64(struct Sprite *sprite)
         sprite->oam.matrixNum = 1;
         CalcCenterToCornerVec(sprite, 1, 3, 3);
         sprite->invisible = FALSE;
-        sprite->data0 = 1;
-        sprite->data1 = 128;
-        sprite->data2 = -24;
-        sprite->data3 = 0;
+        sprite->data[0] = 1;
+        sprite->data[1] = 128;
+        sprite->data[2] = -24;
+        sprite->data[3] = 0;
         break;
     case 1:
     {
-        s16 r3;
-        s16 sin1;
-        s16 r6;
-        s16 foo;
-        s16 r5;
-        s16 r2;
+        s16 sin;
+        s16 cos;
+        s16 a;
+        s16 b;
+        s16 c;
+        s16 d;
 
-        //_0813DAC0
-        if (sprite->data3 < 0x50)
+        if (sprite->data[3] < 0x50)
         {
-            sprite->pos2.y = -Sin((u8)sprite->data3, 0x78);
-            sprite->pos2.x = -Sin((u8)sprite->data3, 0x8C);
-            if (sprite->data3 > 64)
+            sprite->pos2.y = -Sin((u8)sprite->data[3], 0x78);
+            sprite->pos2.x = -Sin((u8)sprite->data[3], 0x8C);
+            if (sprite->data[3] > 64)
                 sprite->oam.priority = 3;
         }
-        //_0813DAF8
-        r3 = gSineTable[(u8)sprite->data2];
-        sin1 = gSineTable[(u8)(sprite->data2 + 64)];
-        r6 = sin1 * sprite->data1 / 256;
-        foo = sin1 * sprite->data1 / 256;
-        r5 = -r3 * sprite->data1 / 256;
-        r2 = r3 * sprite->data1 / 256;
+        sin = gSineTable[(u8)sprite->data[2]];
+        cos = gSineTable[(u8)(sprite->data[2] + 64)];
+        d =  cos * sprite->data[1] / 256;
+        c = -sin * sprite->data[1] / 256;
+        b =  sin * sprite->data[1] / 256;
+        a  = cos * sprite->data[1] / 256;
 
-        SetOamMatrix(1, r6, r2, r5, foo);
+        SetOamMatrix(1, a, b, c, d);
 
-        if (sprite->data1 < 0x100)
-            sprite->data1 += 8;
+        if (sprite->data[1] < 0x100)
+            sprite->data[1] += 8;
         else
-            sprite->data1 += 32;
-        if (sprite->data2 < 0x18)
-            sprite->data2 += 1;
-        if (sprite->data3 < 64)
-            sprite->data3 += 2;
-        else if (!(sprite->data7 & 3))
-            sprite->data3 += 1;
+            sprite->data[1] += 32;
+        if (sprite->data[2] < 0x18)
+            sprite->data[2] += 1;
+        if (sprite->data[3] < 64)
+            sprite->data[3] += 2;
+        else if (!(sprite->data[7] & 3))
+            sprite->data[3] += 1;
         break;
     }
     }
-    //_0813DB92
 }
-#else
-__attribute__((naked))
-static void sub_813DA64(struct Sprite *sprite)
-{
-    asm(".syntax unified\n\
-    push {r4-r6,lr}\n\
-    sub sp, 0x4\n\
-    adds r4, r0, 0\n\
-    ldrh r0, [r4, 0x3C]\n\
-    adds r0, 0x1\n\
-    strh r0, [r4, 0x3C]\n\
-    movs r1, 0x2E\n\
-    ldrsh r0, [r4, r1]\n\
-    cmp r0, 0\n\
-    beq _0813DA7C\n\
-    cmp r0, 0x1\n\
-    beq _0813DAC0\n\
-_0813DA7C:\n\
-    ldrb r0, [r4, 0x1]\n\
-    movs r1, 0x3\n\
-    orrs r0, r1\n\
-    strb r0, [r4, 0x1]\n\
-    ldrb r1, [r4, 0x3]\n\
-    movs r0, 0x3F\n\
-    negs r0, r0\n\
-    ands r0, r1\n\
-    movs r1, 0x2\n\
-    orrs r0, r1\n\
-    strb r0, [r4, 0x3]\n\
-    adds r0, r4, 0\n\
-    movs r1, 0x1\n\
-    movs r2, 0x3\n\
-    movs r3, 0x3\n\
-    bl CalcCenterToCornerVec\n\
-    adds r2, r4, 0\n\
-    adds r2, 0x3E\n\
-    ldrb r1, [r2]\n\
-    movs r0, 0x5\n\
-    negs r0, r0\n\
-    ands r0, r1\n\
-    strb r0, [r2]\n\
-    movs r0, 0x1\n\
-    strh r0, [r4, 0x2E]\n\
-    movs r0, 0x80\n\
-    strh r0, [r4, 0x30]\n\
-    ldr r0, _0813DABC @ =0x0000ffe8\n\
-    strh r0, [r4, 0x32]\n\
-    movs r0, 0\n\
-    b _0813DB92\n\
-    .align 2, 0\n\
-_0813DABC: .4byte 0x0000ffe8\n\
-_0813DAC0:\n\
-    ldrh r1, [r4, 0x34]\n\
-    movs r2, 0x34\n\
-    ldrsh r0, [r4, r2]\n\
-    cmp r0, 0x4F\n\
-    bgt _0813DAF8\n\
-    lsls r0, r1, 24\n\
-    lsrs r0, 24\n\
-    movs r1, 0x78\n\
-    bl Sin\n\
-    negs r0, r0\n\
-    strh r0, [r4, 0x26]\n\
-    ldrh r0, [r4, 0x34]\n\
-    lsls r0, 24\n\
-    lsrs r0, 24\n\
-    movs r1, 0x8C\n\
-    bl Sin\n\
-    negs r0, r0\n\
-    strh r0, [r4, 0x24]\n\
-    movs r1, 0x34\n\
-    ldrsh r0, [r4, r1]\n\
-    cmp r0, 0x40\n\
-    ble _0813DAF8\n\
-    ldrb r0, [r4, 0x5]\n\
-    movs r1, 0xC\n\
-    orrs r0, r1\n\
-    strb r0, [r4, 0x5]\n\
-_0813DAF8:\n\
-    ldr r2, _0813DB60 @ =gSineTable\n\
-    ldrh r1, [r4, 0x32]\n\
-    lsls r0, r1, 24\n\
-    lsrs r0, 23\n\
-    adds r0, r2\n\
-    ldrh r3, [r0]\n\
-    adds r1, 0x40\n\
-    lsls r1, 24\n\
-    lsrs r1, 23\n\
-    adds r1, r2\n\
-    movs r2, 0\n\
-    ldrsh r0, [r1, r2]\n\
-    movs r1, 0x30\n\
-    ldrsh r2, [r4, r1]\n\
-    adds r1, r0, 0\n\
-    muls r1, r2\n\
-    adds r0, r1, 0\n\
-    cmp r1, 0\n\
-    bge _0813DB20\n\
-    adds r0, 0xFF\n\
-_0813DB20:\n\
-    lsls r0, 8\n\
-    lsrs r6, r0, 16\n\
-    lsls r0, r3, 16\n\
-    asrs r3, r0, 16\n\
-    negs r0, r3\n\
-    muls r0, r2\n\
-    cmp r0, 0\n\
-    bge _0813DB32\n\
-    adds r0, 0xFF\n\
-_0813DB32:\n\
-    lsls r0, 8\n\
-    lsrs r5, r0, 16\n\
-    adds r0, r3, 0\n\
-    muls r0, r2\n\
-    cmp r0, 0\n\
-    bge _0813DB40\n\
-    adds r0, 0xFF\n\
-_0813DB40:\n\
-    lsls r0, 8\n\
-    lsrs r2, r0, 16\n\
-    adds r1, r6, 0\n\
-    adds r3, r5, 0\n\
-    str r1, [sp]\n\
-    movs r0, 0x1\n\
-    bl SetOamMatrix\n\
-    ldrh r1, [r4, 0x30]\n\
-    movs r2, 0x30\n\
-    ldrsh r0, [r4, r2]\n\
-    cmp r0, 0xFF\n\
-    bgt _0813DB64\n\
-    adds r0, r1, 0\n\
-    adds r0, 0x8\n\
-    b _0813DB68\n\
-    .align 2, 0\n\
-_0813DB60: .4byte gSineTable\n\
-_0813DB64:\n\
-    adds r0, r1, 0\n\
-    adds r0, 0x20\n\
-_0813DB68:\n\
-    strh r0, [r4, 0x30]\n\
-    ldrh r1, [r4, 0x32]\n\
-    movs r2, 0x32\n\
-    ldrsh r0, [r4, r2]\n\
-    cmp r0, 0x17\n\
-    bgt _0813DB78\n\
-    adds r0, r1, 0x1\n\
-    strh r0, [r4, 0x32]\n\
-_0813DB78:\n\
-    ldrh r2, [r4, 0x34]\n\
-    movs r1, 0x34\n\
-    ldrsh r0, [r4, r1]\n\
-    cmp r0, 0x3F\n\
-    bgt _0813DB86\n\
-    adds r0, r2, 0x2\n\
-    b _0813DB92\n\
-_0813DB86:\n\
-    ldrh r1, [r4, 0x3C]\n\
-    movs r0, 0x3\n\
-    ands r0, r1\n\
-    cmp r0, 0\n\
-    bne _0813DB94\n\
-    adds r0, r2, 0x1\n\
-_0813DB92:\n\
-    strh r0, [r4, 0x34]\n\
-_0813DB94:\n\
-    add sp, 0x4\n\
-    pop {r4-r6}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .syntax divided\n");
-}
-#endif
 
 static void sub_813DB9C(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
     default:
-        if (sprite->data2 != 0)
+        if (sprite->data[2] != 0)
             sprite->hFlip = TRUE;
         else
             sprite->hFlip = FALSE;
-        sprite->data0 = 1;
+        sprite->data[0] = 1;
         //fall through
     case 1:
         if (sprite->pos1.y > 96)
         {
             sprite->pos1.y -= 4;
-            if (sprite->data2 != 0)
+            if (sprite->data[2] != 0)
                 sprite->pos1.x += 2;
             else
                 sprite->pos1.x -= 2;
         }
         else
         {
-            sprite->data0++;
-            sprite->data3 = 8;
+            sprite->data[0]++;
+            sprite->data[3] = 8;
         }
         break;
     case 2:
-        if (sprite->data3 != 0)
+        if (sprite->data[3] != 0)
         {
-            sprite->data3--;
+            sprite->data[3]--;
         }
         else
         {
-            sprite->data0++;
-            sprite->data3 = 0;  //redundant?
+            sprite->data[0]++;
+            sprite->data[3] = 0;  //redundant?
         }
         break;
     case 3:
         sprite->oam.affineMode = 3;
-        sprite->oam.matrixNum = sprite->data1;
+        sprite->oam.matrixNum = sprite->data[1];
         CalcCenterToCornerVec(sprite, 0, 3, 3);
-        if (sprite->data2 != 0)
-            SetOamMatrix(sprite->data1, -256, 0, 0, 256);
+        if (sprite->data[2] != 0)
+            SetOamMatrix(sprite->data[1], -256, 0, 0, 256);
         else
-            SetOamMatrix(sprite->data1, 256, 0, 0, 256);
-        sprite->data0++;
-        sprite->data4 = 0;
+            SetOamMatrix(sprite->data[1], 256, 0, 0, 256);
+        sprite->data[0]++;
+        sprite->data[4] = 0;
         break;
     case 4:
-        sprite->data4++;
+        sprite->data[4]++;
         if (sprite->pos1.y + sprite->pos2.y > -32
          && sprite->pos1.x + sprite->pos2.x > -64)
         {
             u16 r2;
 
-            sprite->pos2.y = -(sprite->data4 * sprite->data4) / 8;
-            if (sprite->data2 != 0)
-                sprite->pos2.x += sprite->data4;
+            sprite->pos2.y = -(sprite->data[4] * sprite->data[4]) / 8;
+            if (sprite->data[2] != 0)
+                sprite->pos2.x += sprite->data[4];
             else
-                sprite->pos2.x -= sprite->data4;
-            if (sprite->data3 < 128)
-                sprite->data3 += 8;
-            r2 = 256 - sprite->data3;
-            if (sprite->data2 != 0)
-                SetOamMatrix(sprite->data1, -r2, 0, 0, r2);
+                sprite->pos2.x -= sprite->data[4];
+            if (sprite->data[3] < 128)
+                sprite->data[3] += 8;
+            r2 = 256 - sprite->data[3];
+            if (sprite->data[2] != 0)
+                SetOamMatrix(sprite->data[1], -r2, 0, 0, r2);
             else
-                SetOamMatrix(sprite->data1, r2, 0, 0, r2);
+                SetOamMatrix(sprite->data[1], r2, 0, 0, r2);
         }
         else
         {
@@ -2496,50 +2137,50 @@ static void sub_813DB9C(struct Sprite *sprite)
 
 static void sub_813DD58(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
     default:
         sprite->invisible = FALSE;
         sprite->oam.affineMode = 1;
-        sprite->oam.matrixNum = sprite->data1;
-        sprite->data3 = 2048;
-        sprite->data0 = 1;
+        sprite->oam.matrixNum = sprite->data[1];
+        sprite->data[3] = 2048;
+        sprite->data[0] = 1;
         //fall through
     case 1:
-        if (sprite->data3 > 256)
+        if (sprite->data[3] > 256)
         {
-            sprite->data3 -= 128;
-            if (sprite->data2 != 0)
-                SetOamMatrix(sprite->data1, -sprite->data3, 0, 0, sprite->data3);
+            sprite->data[3] -= 128;
+            if (sprite->data[2] != 0)
+                SetOamMatrix(sprite->data[1], -sprite->data[3], 0, 0, sprite->data[3]);
             else
-                SetOamMatrix(sprite->data1, sprite->data3, 0, 0, sprite->data3);
+                SetOamMatrix(sprite->data[1], sprite->data[3], 0, 0, sprite->data[3]);
         }
         else
         {
-            if (sprite->data2 != 0)
-                SetOamMatrix(sprite->data1, -256, 0, 0, 256);
+            if (sprite->data[2] != 0)
+                SetOamMatrix(sprite->data[1], -256, 0, 0, 256);
             else
-                SetOamMatrix(sprite->data1, 256, 0, 0, 256);
-            sprite->data0++;
+                SetOamMatrix(sprite->data[1], 256, 0, 0, 256);
+            sprite->data[0]++;
         }
         break;
     case 2:
         break;
     case 3:
-        sprite->data4++;
-        sprite->pos2.y = sprite->data4 * sprite->data4 / 32;
-        if (sprite->data2 != 0)
-            sprite->pos2.x = sprite->data4 / 4;
+        sprite->data[4]++;
+        sprite->pos2.y = sprite->data[4] * sprite->data[4] / 32;
+        if (sprite->data[2] != 0)
+            sprite->pos2.x = sprite->data[4] / 4;
         else
-            sprite->pos2.x = -(sprite->data4 / 4);
+            sprite->pos2.x = -(sprite->data[4] / 4);
         break;
     }
 }
 
 static void sub_813DE70(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
     default:
@@ -2550,24 +2191,24 @@ static void sub_813DE70(struct Sprite *sprite)
         else
         {
             StartSpriteAnim(sprite, 1);
-            sprite->data6 = CreateSprite(&gSpriteTemplate_840B084, 16, 104, 100);
-            sprite->data7 = CreateSprite(&gSpriteTemplate_840B084, 12, 106, 101);
-            sprite->data0 = 1;
+            sprite->data[6] = CreateSprite(&gSpriteTemplate_840B084, 16, 104, 100);
+            sprite->data[7] = CreateSprite(&gSpriteTemplate_840B084, 12, 106, 101);
+            sprite->data[0] = 1;
         }
         break;
     case 1:
         break;
     case 2:
         StartSpriteAnim(sprite, 2);
-        gSprites[sprite->data6].data0 = 1;
-        gSprites[sprite->data7].data0 = 2;
-        sprite->data0++;
+        gSprites[sprite->data[6]].data[0] = 1;
+        gSprites[sprite->data[7]].data[0] = 2;
+        sprite->data[0]++;
         break;
     case 3:
         if (sprite->pos1.y > 160)
         {
             sprite->invisible = 1;
-            sprite->data0 = 1;
+            sprite->data[0] = 1;
         }
         else
         {
@@ -2579,37 +2220,37 @@ static void sub_813DE70(struct Sprite *sprite)
     {
         s16 r4, r5;
 
-        r5 = gSprites[sprite->data6].pos1.x + gSprites[sprite->data6].pos2.x;
-        r4 = gSprites[sprite->data6].pos1.y + gSprites[sprite->data6].pos2.y;
-        DestroySprite(&gSprites[sprite->data6]);
-        sprite->data6 = sub_813CE88(SPECIES_TORCHIC, r5, r4, 2, 1);
-        gSprites[sprite->data6].callback = sub_813DD58;
-        gSprites[sprite->data6].invisible = TRUE;
-        gSprites[sprite->data6].data1 = 1;
-        gSprites[sprite->data6].data2 = 1;
+        r5 = gSprites[sprite->data[6]].pos1.x + gSprites[sprite->data[6]].pos2.x;
+        r4 = gSprites[sprite->data[6]].pos1.y + gSprites[sprite->data[6]].pos2.y;
+        DestroySprite(&gSprites[sprite->data[6]]);
+        sprite->data[6] = sub_813CE88(SPECIES_TORCHIC, r5, r4, 2, 1);
+        gSprites[sprite->data[6]].callback = sub_813DD58;
+        gSprites[sprite->data[6]].invisible = TRUE;
+        gSprites[sprite->data[6]].data[1] = 1;
+        gSprites[sprite->data[6]].data[2] = 1;
         sub_813E580(r5, r4);
 
-        r5 = gSprites[sprite->data7].pos1.x + gSprites[sprite->data7].pos2.x;
-        r4 = gSprites[sprite->data7].pos1.y + gSprites[sprite->data7].pos2.y;
-        DestroySprite(&gSprites[sprite->data7]);
-        sprite->data7 = sub_813CE88(SPECIES_MUDKIP, r5, r4, 3, 1);
-        gSprites[sprite->data7].callback = sub_813DD58;
-        gSprites[sprite->data7].invisible = TRUE;
-        gSprites[sprite->data7].data1 = 2;
-        gSprites[sprite->data7].data2 = 0;
+        r5 = gSprites[sprite->data[7]].pos1.x + gSprites[sprite->data[7]].pos2.x;
+        r4 = gSprites[sprite->data[7]].pos1.y + gSprites[sprite->data[7]].pos2.y;
+        DestroySprite(&gSprites[sprite->data[7]]);
+        sprite->data[7] = sub_813CE88(SPECIES_MUDKIP, r5, r4, 3, 1);
+        gSprites[sprite->data[7]].callback = sub_813DD58;
+        gSprites[sprite->data[7]].invisible = TRUE;
+        gSprites[sprite->data[7]].data[1] = 2;
+        gSprites[sprite->data[7]].data[2] = 0;
         sub_813E580(r5, r4);
 
         BeginNormalPaletteFade(0xFF0000, 0, 16, 16, RGB(31, 23, 31));
-        sprite->data0 = 1;
+        sprite->data[0] = 1;
         break;
     }
     case 5:
-        gSprites[sprite->data6].data0 = 3;
-        gSprites[sprite->data7].data0 = 3;
+        gSprites[sprite->data[6]].data[0] = 3;
+        gSprites[sprite->data[7]].data[0] = 3;
         break;
     case 6:
-        DestroySprite(&gSprites[sprite->data6]);
-        DestroySprite(&gSprites[sprite->data7]);
+        DestroySprite(&gSprites[sprite->data[6]]);
+        DestroySprite(&gSprites[sprite->data[7]]);
         DestroySprite(sprite);
         break;
     }
@@ -2617,7 +2258,7 @@ static void sub_813DE70(struct Sprite *sprite)
 
 static void sub_813E10C(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
     default:
@@ -2628,20 +2269,20 @@ static void sub_813E10C(struct Sprite *sprite)
         }
         else
         {
-            sprite->data6 = sprite->pos1.x;
-            sprite->data7 = sprite->pos1.y;
+            sprite->data[6] = sprite->pos1.x;
+            sprite->data[7] = sprite->pos1.y;
             sprite->pos1.x += sprite->pos2.x;
             sprite->pos1.y += sprite->pos2.y;
             sprite->pos2.x = 0;
             sprite->pos2.y = 0;
-            sprite->data0 = 1;
-            sprite->data1 = 0;
+            sprite->data[0] = 1;
+            sprite->data[1] = 0;
         }
         break;
     case 1:
-        if (!(sprite->data1 & 1))
+        if (!(sprite->data[1] & 1))
         {
-            if (sprite->data1 & 2)
+            if (sprite->data[1] & 2)
             {
                 sprite->pos2.x = -1;
                 sprite->pos2.y = 1;
@@ -2652,18 +2293,18 @@ static void sub_813E10C(struct Sprite *sprite)
                 sprite->pos2.y = 0;
             }
         }
-        sprite->data1++;
+        sprite->data[1]++;
         break;
     case 2:
         sprite->invisible = TRUE;
-        sprite->pos1.x = sprite->data6;
-        sprite->pos1.y = sprite->data7;
+        sprite->pos1.x = sprite->data[6];
+        sprite->pos1.y = sprite->data[7];
         sprite->pos2.x = 0;
         sprite->pos2.y = 0;
         break;
     case 3:
         sprite->invisible = FALSE;
-        sprite->data1++;
+        sprite->data[1]++;
         //fall through
     case 4:
         if (sprite->pos2.x > -56)
@@ -2677,7 +2318,7 @@ static void sub_813E10C(struct Sprite *sprite)
             sprite->pos1.y += sprite->pos2.y;
             sprite->pos2.x = 0;
             sprite->pos2.y = 0;
-            sprite->data0 = 1;
+            sprite->data[0] = 1;
         }
         break;
     }
@@ -2685,7 +2326,7 @@ static void sub_813E10C(struct Sprite *sprite)
 
 static void sub_813E210(struct Sprite *sprite)
 {
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
     default:
@@ -2696,20 +2337,20 @@ static void sub_813E210(struct Sprite *sprite)
         }
         else
         {
-            sprite->data6 = sprite->pos1.x;
-            sprite->data7 = sprite->pos1.y;
+            sprite->data[6] = sprite->pos1.x;
+            sprite->data[7] = sprite->pos1.y;
             sprite->pos1.x += sprite->pos2.x;
             sprite->pos1.y += sprite->pos2.y;
             sprite->pos2.x = 0;
             sprite->pos2.y = 0;
-            sprite->data0 = 1;
-            sprite->data1 = 0;
+            sprite->data[0] = 1;
+            sprite->data[1] = 0;
         }
         break;
     case 1:
-        if (!(sprite->data1 & 1))
+        if (!(sprite->data[1] & 1))
         {
-            if (sprite->data1 & 2)
+            if (sprite->data[1] & 2)
             {
                 sprite->pos2.x = 1;
                 sprite->pos2.y = -1;
@@ -2720,18 +2361,18 @@ static void sub_813E210(struct Sprite *sprite)
                 sprite->pos2.y = 0;
             }
         }
-        sprite->data1++;
+        sprite->data[1]++;
         break;
     case 2:
         sprite->invisible = TRUE;
-        sprite->pos1.x = sprite->data6;
-        sprite->pos1.y = sprite->data7;
+        sprite->pos1.x = sprite->data[6];
+        sprite->pos1.y = sprite->data[7];
         sprite->pos2.x = 0;
         sprite->pos2.y = 0;
         break;
     case 3:
         sprite->invisible = FALSE;
-        sprite->data1++;
+        sprite->data[1]++;
         //fall through
     case 4:
         if (sprite->pos2.x < 56)
@@ -2745,7 +2386,7 @@ static void sub_813E210(struct Sprite *sprite)
             sprite->pos1.y += sprite->pos2.y;
             sprite->pos2.x = 0;
             sprite->pos2.y = 0;
-            sprite->data0 = 1;
+            sprite->data[0] = 1;
         }
         break;
     }
@@ -2755,8 +2396,8 @@ static void sub_813E30C(struct Sprite *sprite)
 {
     u16 r4, r1;
 
-    sprite->data7++;
-    switch (sprite->data0)
+    sprite->data[7]++;
+    switch (sprite->data[0])
     {
     case 0:
     default:
@@ -2764,43 +2405,43 @@ static void sub_813E30C(struct Sprite *sprite)
     case 1:
         sprite->oam.affineMode = 1;
         sprite->oam.matrixNum = 1;
-        sprite->data0 = 10;
-        sprite->data4 = 36;
+        sprite->data[0] = 10;
+        sprite->data[4] = 36;
         //fall through
     case 10:
         if (sprite->pos1.x <= 144)
         {
             sprite->pos1.x += 4;
             sprite->pos1.y -= 1;
-            sprite->pos2.y = -Sin((u8)sprite->data2, 24);
-            sprite->data2 += 4;
+            sprite->pos2.y = -Sin((u8)sprite->data[2], 24);
+            sprite->data[2] += 4;
         }
-        sprite->data3 -= sprite->data4;
-        if ((sprite->data7 & 1) && sprite->data4 != 0)
-            sprite->data4--;
-        r4 = gSineTable[(u8)sprite->data3];
-        r1 = gSineTable[(u8)(sprite->data3 + 64)];
+        sprite->data[3] -= sprite->data[4];
+        if ((sprite->data[7] & 1) && sprite->data[4] != 0)
+            sprite->data[4]--;
+        r4 = gSineTable[(u8)sprite->data[3]];
+        r1 = gSineTable[(u8)(sprite->data[3] + 64)];
         SetOamMatrix(1, r1, r4, -r4, r1);
         break;
     case 2:
         sprite->oam.affineMode = 1;
         sprite->oam.matrixNum = 2;
-        sprite->data0 = 20;
-        sprite->data4 = 36;
+        sprite->data[0] = 20;
+        sprite->data[4] = 36;
         //fall through
     case 20:
         if (sprite->pos1.x <= 96)
         {
             sprite->pos1.x += 3;
             sprite->pos1.y -= 1;
-            sprite->pos2.y = -Sin((u8)sprite->data2, 24);
-            sprite->data2 += 4;
+            sprite->pos2.y = -Sin((u8)sprite->data[2], 24);
+            sprite->data[2] += 4;
         }
-        sprite->data3 -= sprite->data4;
-        if ((sprite->data7 & 1) && sprite->data4 != 0)
-            sprite->data4--;
-        r4 = gSineTable[(u8)sprite->data3];
-        r1 = gSineTable[(u8)(sprite->data3 + 64)];
+        sprite->data[3] -= sprite->data[4];
+        if ((sprite->data[7] & 1) && sprite->data[4] != 0)
+            sprite->data[4]--;
+        r4 = gSineTable[(u8)sprite->data[3]];
+        r1 = gSineTable[(u8)(sprite->data[3] + 64)];
         SetOamMatrix(2, r1, r4, -r4, r1);
         break;
     }
@@ -2812,27 +2453,27 @@ static void sub_813E4B8(struct Sprite *sprite)
     u16 r2;
     u16 r1;
 
-    sprite->data7++;
-    if (sprite->data7 & 1)
+    sprite->data[7]++;
+    if (sprite->data[7] & 1)
         sprite->invisible = FALSE;
     else
         sprite->invisible = TRUE;
-    if (sprite->data2 >= 64)
+    if (sprite->data[2] >= 64)
     {
         DestroySprite(sprite);
         return;
     }
-    sprite->data2 += 2;
-    r4 = Sin((u8)sprite->data2, 40);
-    sprite->pos2.x = Cos((u8)(sprite->data0 * 32), r4);
-    sprite->pos2.y = Sin((u8)(sprite->data0 * 32), r4);
-    if (sprite->data0 == 0)
+    sprite->data[2] += 2;
+    r4 = Sin((u8)sprite->data[2], 40);
+    sprite->pos2.x = Cos((u8)(sprite->data[0] * 32), r4);
+    sprite->pos2.y = Sin((u8)(sprite->data[0] * 32), r4);
+    if (sprite->data[0] == 0)
     {
-        sprite->data3 -= sprite->data1;
-        if ((sprite->data7 & 1) && sprite->data1 != 0)
-            sprite->data1--;
-        r2 = gSineTable[(u8)sprite->data3];
-        r1 = gSineTable[(u8)(sprite->data3 + 64)];
+        sprite->data[3] -= sprite->data[1];
+        if ((sprite->data[7] & 1) && sprite->data[1] != 0)
+            sprite->data[1]--;
+        r2 = gSineTable[(u8)sprite->data[3]];
+        r1 = gSineTable[(u8)(sprite->data[3] + 64)];
         SetOamMatrix(16, r1, r2, -r2, r1);
     }
 }
@@ -2847,8 +2488,8 @@ static void sub_813E580(u16 x, u16 y)
         spriteId = CreateSprite(&gSpriteTemplate_840B0B0, x, y, 0);
         gSprites[spriteId].oam.affineMode = 1;
         gSprites[spriteId].oam.matrixNum = 16;
-        gSprites[spriteId].data0 = i;
-        gSprites[spriteId].data1 = 32;
+        gSprites[spriteId].data[0] = i;
+        gSprites[spriteId].data[1] = 32;
     }
 }
 
@@ -2860,16 +2501,16 @@ static void sub_813E5E0(struct Sprite *sprite)
     }
     else
     {
-        sprite->invisible = gSprites[sprite->data0].invisible;
-        if (sprite->data7 < 12)
-            sprite->data7++;
-        sprite->data6 += 4;
-        sprite->pos1.x = sprite->data4 + gSineTable[(u8)(sprite->data3 + 64)] * sprite->data6 / 256;
+        sprite->invisible = gSprites[sprite->data[0]].invisible;
+        if (sprite->data[7] < 12)
+            sprite->data[7]++;
+        sprite->data[6] += 4;
+        sprite->pos1.x = sprite->data[4] + gSineTable[(u8)(sprite->data[3] + 64)] * sprite->data[6] / 256;
         //This useless '+ 0' is needed to make the asm match
-        sprite->pos1.y = sprite->data5 + gSineTable[(u8)(sprite->data3 + 0)] * sprite->data6 / 256;
-        sprite->pos2.y = gSineTable[(u8)(sprite->data1 + 0)] * sprite->data7 / 256;
-        sprite->data1 += 16;
-        if (sprite->pos1.y > sprite->data2)
+        sprite->pos1.y = sprite->data[5] + gSineTable[(u8)(sprite->data[3] + 0)] * sprite->data[6] / 256;
+        sprite->pos2.y = gSineTable[(u8)(sprite->data[1] + 0)] * sprite->data[7] / 256;
+        sprite->data[1] += 16;
+        if (sprite->pos1.y > sprite->data[2])
             DestroySprite(sprite);
     }
 }
@@ -2887,15 +2528,15 @@ static void sub_813E6C0(struct Sprite *sprite)
     }
     else
     {
-        sprite->data7++;
+        sprite->data[7]++;
         sprite->invisible = TRUE;
-        if (gSprites[sprite->data0].data0 == 1 && !(sprite->data7 & 3))
+        if (gSprites[sprite->data[0]].data[0] == 1 && !(sprite->data[7] & 3))
         {
-            var1 = sprite->data1 + gSprites[sprite->data0].pos1.x;
-            var2 = sprite->data2 + gSprites[sprite->data0].pos1.y;
+            var1 = sprite->data[1] + gSprites[sprite->data[0]].pos1.x;
+            var2 = sprite->data[2] + gSprites[sprite->data[0]].pos1.y;
             for (i = 0; i < 3; i++)
             {
-                u8 r3 = gSprites[sprite->data0].subpriority - 1;
+                u8 r3 = gSprites[sprite->data[0]].subpriority - 1;
                 //Make redundant copies of these variables to get the asm to match
                 s16 _var1 = var1;
                 s16 _var2 = var2;
@@ -2903,13 +2544,13 @@ static void sub_813E6C0(struct Sprite *sprite)
                 spriteId = CreateSprite(&gSpriteTemplate_840B0DC, _var1, _var2, r3);
                 if (spriteId != 64)
                 {
-                    gSprites[spriteId].data0 = sprite->data0;
-                    gSprites[spriteId].data1 = (((sprite->data7 >> 2) & 7) << 5) + i * 85;
-                    gSprites[spriteId].data2 = sprite->data3;
-                    gSprites[spriteId].data3 = 104;
-                    gSprites[spriteId].data4 = var1;
-                    gSprites[spriteId].data5 = var2;
-                    gSprites[spriteId].data6 = 0;
+                    gSprites[spriteId].data[0] = sprite->data[0];
+                    gSprites[spriteId].data[1] = (((sprite->data[7] >> 2) & 7) << 5) + i * 85;
+                    gSprites[spriteId].data[2] = sprite->data[3];
+                    gSprites[spriteId].data[3] = 104;
+                    gSprites[spriteId].data[4] = var1;
+                    gSprites[spriteId].data[5] = var2;
+                    gSprites[spriteId].data[6] = 0;
                 }
             }
         }
@@ -2923,10 +2564,10 @@ static void sub_813E7C0(u8 a)
     spriteId = CreateSprite(&gSpriteTemplate_840B0F4, 0, 0, 0);
     if (spriteId != 64)
     {
-        gSprites[spriteId].data0 = a;
-        gSprites[spriteId].data1 = -12;
-        gSprites[spriteId].data2 = 0;
-        gSprites[spriteId].data3 = 136;
+        gSprites[spriteId].data[0] = a;
+        gSprites[spriteId].data[1] = -12;
+        gSprites[spriteId].data[2] = 0;
+        gSprites[spriteId].data[3] = 136;
     }
 }
 
@@ -2938,20 +2579,20 @@ static void sub_813E804(struct Sprite *sprite)
     }
     else
     {
-        sprite->invisible = gSprites[sprite->data0].invisible;
-        sprite->data7++;
-        if (sprite->data3 < 40)
-            sprite->data3 += 2;
+        sprite->invisible = gSprites[sprite->data[0]].invisible;
+        sprite->data[7]++;
+        if (sprite->data[3] < 40)
+            sprite->data[3] += 2;
         //This useless '+ 0' is needed to make the asm match
-        sprite->pos1.x = gSprites[sprite->data0].pos1.x + gSprites[sprite->data0].pos2.x + gSineTable[(u8)(sprite->data1 + 64)] * sprite->data3 / 256;
-        sprite->pos1.y = gSprites[sprite->data0].pos1.y + gSprites[sprite->data0].pos2.y + gSineTable[(u8)(sprite->data1 + 0)] * sprite->data3 / 512;
-        sprite->data1 += 2;
-        sprite->pos2.y = gSineTable[(u8)(sprite->data2 + 0)] / 32;
-        sprite->data2 += 8;
-        if ((sprite->data1 & 0xFF) < 128)
-            sprite->subpriority = gSprites[sprite->data0].subpriority - 1;
+        sprite->pos1.x = gSprites[sprite->data[0]].pos1.x + gSprites[sprite->data[0]].pos2.x + gSineTable[(u8)(sprite->data[1] + 64)] * sprite->data[3] / 256;
+        sprite->pos1.y = gSprites[sprite->data[0]].pos1.y + gSprites[sprite->data[0]].pos2.y + gSineTable[(u8)(sprite->data[1] + 0)] * sprite->data[3] / 512;
+        sprite->data[1] += 2;
+        sprite->pos2.y = gSineTable[(u8)(sprite->data[2] + 0)] / 32;
+        sprite->data[2] += 8;
+        if ((sprite->data[1] & 0xFF) < 128)
+            sprite->subpriority = gSprites[sprite->data[0]].subpriority - 1;
         else
-            sprite->subpriority = gSprites[sprite->data0].subpriority + 1;
+            sprite->subpriority = gSprites[sprite->data[0]].subpriority + 1;
     }
 }
 
@@ -2965,8 +2606,8 @@ static void sub_813E930(u8 a)
         spriteId = CreateSprite(&gSpriteTemplate_840B124, gSprites[a].pos1.x, gSprites[a].pos1.y, 0);
         if (spriteId != 64)
         {
-            gSprites[spriteId].data0 = a;
-            gSprites[spriteId].data1 = i * 32;
+            gSprites[spriteId].data[0] = a;
+            gSprites[spriteId].data[1] = i * 32;
         }
     }
 }
@@ -2982,17 +2623,17 @@ static void sub_813E980(struct Sprite *sprite)
         u8 r0;
         u16 matrixNum;
 
-        sprite->invisible = gSprites[sprite->data0].invisible;
-        sprite->data7++;
-        sprite->data6 += 8;
-        sprite->pos1.x = sprite->data4 + gSineTable[(u8)(sprite->data3 + 64)] * sprite->data6 / 256;
-        sprite->pos1.y = sprite->data5 + gSineTable[(u8)(sprite->data3 + 0)] * sprite->data6 / 256;
-        r0 = sprite->data6 / 16;
+        sprite->invisible = gSprites[sprite->data[0]].invisible;
+        sprite->data[7]++;
+        sprite->data[6] += 8;
+        sprite->pos1.x = sprite->data[4] + gSineTable[(u8)(sprite->data[3] + 64)] * sprite->data[6] / 256;
+        sprite->pos1.y = sprite->data[5] + gSineTable[(u8)(sprite->data[3] + 0)] * sprite->data[6] / 256;
+        r0 = sprite->data[6] / 16;
         if (r0 > 9)
             r0 = 9;
         matrixNum = (r0 + 18) & 31;
         sprite->oam.matrixNum = matrixNum;
-        if (sprite->data6 > 160)
+        if (sprite->data[6] > 160)
             DestroySprite(sprite);
     }
 }
@@ -3009,26 +2650,26 @@ static void sub_813EA60(struct Sprite *sprite)
     }
     else
     {
-        sprite->data7++;
+        sprite->data[7]++;
         sprite->invisible = TRUE;
-        if (gSprites[sprite->data0].data0 == 1)
+        if (gSprites[sprite->data[0]].data[0] == 1)
         {
-            r6 = (sprite->data7 & 1);
+            r6 = (sprite->data[7] & 1);
             if (!r6)
             {
-                r1 = sprite->data1 + gSprites[sprite->data0].pos1.x;
-                r2 = sprite->data2 + gSprites[sprite->data0].pos1.y;
-                spriteId = CreateSprite(&gSpriteTemplate_840B150, r1, r2, gSprites[sprite->data0].subpriority + 1);
+                r1 = sprite->data[1] + gSprites[sprite->data[0]].pos1.x;
+                r2 = sprite->data[2] + gSprites[sprite->data[0]].pos1.y;
+                spriteId = CreateSprite(&gSpriteTemplate_840B150, r1, r2, gSprites[sprite->data[0]].subpriority + 1);
                 if (spriteId != 64)
                 {
                     gSprites[spriteId].oam.affineMode = 3;
                     gSprites[spriteId].oam.matrixNum = 18;
                     CalcCenterToCornerVec(&gSprites[spriteId], 0, 1, 3);
-                    gSprites[spriteId].data0 = sprite->data0;
-                    gSprites[spriteId].data3 = gUnknown_0840B168[(sprite->data7 >> 1) & 7];
-                    gSprites[spriteId].data4 = r1;
-                    gSprites[spriteId].data5 = r2;
-                    gSprites[spriteId].data6 = r6;
+                    gSprites[spriteId].data[0] = sprite->data[0];
+                    gSprites[spriteId].data[3] = gUnknown_0840B168[(sprite->data[7] >> 1) & 7];
+                    gSprites[spriteId].data[4] = r1;
+                    gSprites[spriteId].data[5] = r2;
+                    gSprites[spriteId].data[6] = r6;
                 }
             }
         }
@@ -3043,10 +2684,10 @@ static void InitIntroTorchicAttackAnim(u8 a)
     spriteId = CreateSprite(&gSpriteTemplate_840B170, 0, 0, 0);
     if (spriteId != 64)
     {
-        gSprites[spriteId].data0 = a;
-        gSprites[spriteId].data1 = 0;
-        gSprites[spriteId].data2 = 8;
-        gSprites[spriteId].data3 = 24;
+        gSprites[spriteId].data[0] = a;
+        gSprites[spriteId].data[1] = 0;
+        gSprites[spriteId].data[2] = 8;
+        gSprites[spriteId].data[3] = 24;
     }
     for (i = 0; i < 10; i++)
     {
@@ -3062,14 +2703,14 @@ static void sub_813EBBC(struct Sprite *sprite)
     }
     else
     {
-        sprite->invisible = gSprites[sprite->data0].invisible;
-        sprite->data7 += 1;
-        sprite->data6 += 8;
-        sprite->pos1.x = sprite->data4 + gSineTable[(u8)(sprite->data3 + 64)] * sprite->data6 / 256;
-        sprite->pos1.y = sprite->data5 + gSineTable[(u8)(sprite->data3 + 0)] * sprite->data6 / 256;
-        sprite->pos2.y = gSineTable[(u8)(sprite->data1 + 0)] / 64;
-        sprite->data1 += 16;
-        if (sprite->pos1.y < sprite->data2)
+        sprite->invisible = gSprites[sprite->data[0]].invisible;
+        sprite->data[7] += 1;
+        sprite->data[6] += 8;
+        sprite->pos1.x = sprite->data[4] + gSineTable[(u8)(sprite->data[3] + 64)] * sprite->data[6] / 256;
+        sprite->pos1.y = sprite->data[5] + gSineTable[(u8)(sprite->data[3] + 0)] * sprite->data[6] / 256;
+        sprite->pos2.y = gSineTable[(u8)(sprite->data[1] + 0)] / 64;
+        sprite->data[1] += 16;
+        if (sprite->pos1.y < sprite->data[2])
             DestroySprite(sprite);
     }
 }
@@ -3087,34 +2728,34 @@ static void sub_813EC90(struct Sprite *sprite)
     }
     else
     {
-        sprite->data7++;
+        sprite->data[7]++;
         sprite->invisible = TRUE;
-        if (gSprites[sprite->data0].data0 == 1)
+        if (gSprites[sprite->data[0]].data[0] == 1)
         {
-            r6 = sprite->data7 & 1;
+            r6 = sprite->data[7] & 1;
             if (!r6)
             {
-                r1 = sprite->data1 + gSprites[sprite->data0].pos1.x;
-                r2 = sprite->data2 + gSprites[sprite->data0].pos1.y;
-                spriteId = CreateSprite(&gSpriteTemplate_840B1B0, r1, r2, gSprites[sprite->data0].subpriority + 1);
+                r1 = sprite->data[1] + gSprites[sprite->data[0]].pos1.x;
+                r2 = sprite->data[2] + gSprites[sprite->data[0]].pos1.y;
+                spriteId = CreateSprite(&gSpriteTemplate_840B1B0, r1, r2, gSprites[sprite->data[0]].subpriority + 1);
                 if (spriteId != 64)
                 {
                     gSprites[spriteId].oam.affineMode = 3;
                     gSprites[spriteId].oam.matrixNum = 17;
                     CalcCenterToCornerVec(&gSprites[spriteId], 0, 1, 3);
-                    gSprites[spriteId].data0 = sprite->data0;
-                    gSprites[spriteId].data1 = ((sprite->data7 >> 2) & 7) << 5;
-                    gSprites[spriteId].data2 = sprite->data3;
-                    gSprites[spriteId].data3 = 232;
-                    gSprites[spriteId].data4 = r1;
-                    gSprites[spriteId].data5 = r2;
-                    gSprites[spriteId].data6 = r6;
+                    gSprites[spriteId].data[0] = sprite->data[0];
+                    gSprites[spriteId].data[1] = ((sprite->data[7] >> 2) & 7) << 5;
+                    gSprites[spriteId].data[2] = sprite->data[3];
+                    gSprites[spriteId].data[3] = 232;
+                    gSprites[spriteId].data[4] = r1;
+                    gSprites[spriteId].data[5] = r2;
+                    gSprites[spriteId].data[6] = r6;
                 }
             }
-            if (sprite->data6 < 112)
-                sprite->data6 += 4;
+            if (sprite->data[6] < 112)
+                sprite->data[6] += 4;
         }
-        foo = 256 - gSineTable[(u8)sprite->data6] / 2;
+        foo = 256 - gSineTable[(u8)sprite->data[6]] / 2;
         SetOamMatrix(17, foo, 0, 0, foo);
     }
 }
@@ -3126,10 +2767,10 @@ static void InitIntroMudkipAttackAnim(u8 a)
     spriteId = CreateSprite(&gSpriteTemplate_840B1C8, 0, 0, 0);
     if (spriteId != 64)
     {
-        gSprites[spriteId].data0 = a;
-        gSprites[spriteId].data1 = 0;
-        gSprites[spriteId].data2 = 12;
-        gSprites[spriteId].data3 = 24;
+        gSprites[spriteId].data[0] = a;
+        gSprites[spriteId].data[1] = 0;
+        gSprites[spriteId].data[2] = 12;
+        gSprites[spriteId].data[3] = 24;
     }
 }
 
@@ -3138,8 +2779,8 @@ static void sub_813EDFC(struct Sprite *sprite)
     u16 foo;
 
     //I'm not sure why a switch statement was used here.
-    //if (sprite->data0 != 1) would have been more appropriate.
-    switch (sprite->data0)
+    //if (sprite->data[0] != 1) would have been more appropriate.
+    switch (sprite->data[0])
     {
     case 0:
     default:
@@ -3147,23 +2788,23 @@ static void sub_813EDFC(struct Sprite *sprite)
         sprite->oam.affineMode = 3;
         sprite->oam.matrixNum = 18;
         CalcCenterToCornerVec(sprite, 0, 3, 3);
-        sprite->data1 = 0;
-        sprite->data0 = 1;
+        sprite->data[1] = 0;
+        sprite->data[0] = 1;
         //fall through
     case 1:
         break;
     }
-    sprite->data7++;
-    if (sprite->data7 & 1)
+    sprite->data[7]++;
+    if (sprite->data[7] & 1)
     {
         sprite->invisible = TRUE;
     }
     else
     {
         sprite->invisible = FALSE;
-        if (sprite->data1 < 64)
-            sprite->data1++;
+        if (sprite->data[1] < 64)
+            sprite->data[1]++;
     }
-    foo = 256 - gSineTable[(u8)sprite->data1] / 2;
+    foo = 256 - gSineTable[(u8)sprite->data[1]] / 2;
     SetOamMatrix(18, foo, 0, 0, foo);
 }

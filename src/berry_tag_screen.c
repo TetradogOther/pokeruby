@@ -1,14 +1,17 @@
 #include "global.h"
 #include "berry_tag_screen.h"
-#include "asm.h"
 #include "berry.h"
 #include "decompress.h"
-#include "items.h"
+#include "event_object_movement.h"
+#include "item_menu.h"
+#include "constants/items.h"
+#include "item_use.h"
 #include "main.h"
 #include "menu.h"
+#include "menu_helpers.h"
 #include "palette.h"
-#include "rom4.h"
-#include "songs.h"
+#include "overworld.h"
+#include "constants/songs.h"
 #include "sound.h"
 #include "sprite.h"
 #include "string_util.h"
@@ -25,26 +28,28 @@ struct Struct2000000
     /*0x1FFFF*/ u8 var_1FFFF;
 };
 
-struct BerryTagStatus
-{
-    s16 circles[5];
-};
+extern struct Struct2000000 gSharedMem;
+extern u16 gBattle_BG1_Y;
 
-extern struct Struct2000000 unk_2000000;
-extern u8 gUnknown_0203932C;
-extern struct BerryTagStatus gUnknown_0203932E;
-extern u16 gScriptItemId;
-extern u16 gUnknown_030041B4;
+static EWRAM_DATA u8 gUnknown_0203932C = 0;
+static EWRAM_DATA s16 gUnknown_0203932E[5] = {0};
 
-extern const struct SpriteSheet gUnknown_083C1F74;
-extern const struct SpritePalette gUnknown_083C1F7C;
-
-extern u8 *gUnknown_0841192C[];
+extern const struct CompressedSpriteSheet gUnknown_083C1F74;
+extern const struct CompressedSpritePalette gUnknown_083C1F7C;
 
 extern u8 gBerryCheck_Gfx[];
 extern u8 gBerryCheck_Pal[];
 extern u8 gUnknown_08E788E4[];
 extern u8 gUnknown_08E78A84[];
+
+const u8 *const gUnknown_0841192C[] =
+{
+    ContestStatsText_VerySoft,
+    ContestStatsText_Soft,
+    ContestStatsText_Hard,
+    ContestStatsText_VeryHard,
+    ContestStatsText_SuperHard,
+};
 
 static void sub_8146014(void);
 static void sub_814602C(void);
@@ -56,9 +61,9 @@ static void sub_8146440(u8 taskId);
 static void sub_8146480(u8 taskid);
 static void sub_81464E4(void);
 static void sub_8146600(u8 berry);
-// static void sub_81466A0(void);
+static void sub_81466A0(void);
 static void sub_81466E8(u8 taskId, s8 direction);
-// static void sub_8146798(u8 berry);
+static void sub_8146798(u8 berry);
 static void sub_8146810(s8 berry);
 static void sub_81468BC(void);
 
@@ -72,8 +77,8 @@ static void sub_8146014(void)
 
 static void sub_814602C(void)
 {
-    REG_BG0VOFS = gUnknown_030041B4;
-    REG_BG1VOFS = gUnknown_030041B4;
+    REG_BG0VOFS = gBattle_BG1_Y;
+    REG_BG1VOFS = gBattle_BG1_Y;
 
     LoadOam();
     ProcessSpriteCopyRequests();
@@ -88,7 +93,7 @@ static bool8 sub_8146058(void)
     switch (gMain.state)
     {
     case 0:
-        sub_80F9438();
+        ClearVideoCallbacks();
         sub_80F9368();
         sub_8146288();
         REG_BLDCNT = 0;
@@ -104,23 +109,23 @@ static bool8 sub_8146058(void)
         gMain.state += 1;
         break;
     case 3:
-        SetUpWindowConfig(&gWindowConfig_81E6E18);
+        Text_LoadWindowTemplate(&gWindowTemplate_81E6E18);
         gMain.state += 1;
         break;
     case 4:
-        MultistepInitMenuWindowBegin(&gWindowConfig_81E6E18);
+        MultistepInitMenuWindowBegin(&gWindowTemplate_81E6E18);
         gMain.state += 1;
         break;
     case 5:
         if (!MultistepInitMenuWindowContinue())
             break;
-        unk_2000000.var_1FFFF = 0;
+        gSharedMem.var_1FFFF = 0;
         gMain.state += 1;
         break;
     case 6:
         if (!sub_81462B8())
             break;
-        unk_2000000.var_1FFFF = 0;
+        gSharedMem.var_1FFFF = 0;
         gMain.state += 1;
         break;
     case 7:
@@ -128,12 +133,12 @@ static bool8 sub_8146058(void)
         gMain.state += 1;
         break;
     case 8:
-        berry = gScriptItemId + OFFSET_7B;
-        gUnknown_0203932C = sub_80A7D8C(berry, 56, 64);
+        berry = gSpecialVar_ItemId + OFFSET_7B;
+        gUnknown_0203932C = CreateBerrySprite(berry, 56, 64);
         gMain.state += 1;
         break;
     case 9:
-        sub_8146600(gScriptItemId + OFFSET_7B);
+        sub_8146600(gSpecialVar_ItemId + OFFSET_7B);
         gMain.state += 1;
         break;
     case 10:
@@ -152,7 +157,7 @@ static bool8 sub_8146058(void)
         gMain.state += 1;
         break;
     case 12:
-        BeginNormalPaletteFade(-1, 0, 0x10, 0, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
         gPaletteFade.bufferTransferDisabled = 0;
         SetMainCallback2(sub_8146014);
         return TRUE;
@@ -178,27 +183,26 @@ static void sub_8146288(void)
     REG_BG1CNT = BGCNT_PRIORITY(2) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(5) | BGCNT_16COLOR | BGCNT_TXT256x256;
     REG_BG2CNT = BGCNT_PRIORITY(0) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(6) | BGCNT_16COLOR | BGCNT_TXT256x256;
     REG_BG3CNT = BGCNT_PRIORITY(3) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(7) | BGCNT_16COLOR | BGCNT_TXT256x256;
-    gUnknown_030041B4 = 0;
+    gBattle_BG1_Y = 0;
 }
 
 bool8 sub_81462B8(void)
 {
     u16 i;
-    void *addr;
 
-    switch (unk_2000000.var_1FFFF)
+    switch (gSharedMem.var_1FFFF)
     {
     case 0:
         LZDecompressVram(gBerryCheck_Gfx, (void *)VRAM);
-        unk_2000000.var_1FFFF += 1;
+        gSharedMem.var_1FFFF += 1;
         break;
     case 1:
         LZDecompressVram(gUnknown_08E788E4, (void *)VRAM + 0x2800);
-        unk_2000000.var_1FFFF += 1;
+        gSharedMem.var_1FFFF += 1;
         break;
     case 2:
         LZDecompressVram(gUnknown_08E78A84, (void *)VRAM + 0x3000);
-        unk_2000000.var_1FFFF += 1;
+        gSharedMem.var_1FFFF += 1;
         break;
     case 3:
         for (i = 0; i < 0x400; i++)
@@ -208,21 +212,20 @@ bool8 sub_81462B8(void)
             else
                 gBGTilemapBuffers[2][i] = 0x5042;
         }
-        addr = (void *)(VRAM + 0x3800);
-        DmaCopy16(3, gBGTilemapBuffers[2], addr, 0x800);
-        unk_2000000.var_1FFFF += 1;
+        DmaCopy16Defvars(3, gBGTilemapBuffers[2], (void *)(VRAM + 0x3800), 0x800);
+        gSharedMem.var_1FFFF += 1;
         break;
     case 4:
         LoadCompressedPalette(gBerryCheck_Pal, 0, 96 * 2);
-        unk_2000000.var_1FFFF += 1;
+        gSharedMem.var_1FFFF += 1;
         break;
     case 5:
         LoadCompressedObjectPic(&gUnknown_083C1F74);
-        unk_2000000.var_1FFFF += 1;
+        gSharedMem.var_1FFFF += 1;
         break;
     case 6:
         LoadCompressedObjectPalette(&gUnknown_083C1F7C);
-        unk_2000000.var_1FFFF = 0;
+        gSharedMem.var_1FFFF = 0;
         return TRUE;
     }
 
@@ -235,7 +238,7 @@ static void sub_814640C(u8 taskId)
     {
         SetMainCallback2(sub_80A5B40);
         sub_80A7DD4();
-        gpu_pal_allocator_reset__manage_upper_four();
+        FreeAndReserveObjectSpritePalettes();
         DestroyTask(taskId);
     }
 }
@@ -243,7 +246,7 @@ static void sub_814640C(u8 taskId)
 static void sub_8146440(u8 taskId)
 {
     PlaySE(SE_SELECT);
-    BeginNormalPaletteFade(-1, 0, 0, 0x10, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
     gTasks[taskId].func = sub_814640C;
 }
 
@@ -272,21 +275,21 @@ static void sub_81464E4(void)
     u8 buffer[16];
 #endif
 
-    berryInfo = GetBerryInfo(gScriptItemId + OFFSET_7B + 1);
+    berryInfo = GetBerryInfo(gSpecialVar_ItemId + OFFSET_7B + 1);
 
-    ConvertIntToDecimalStringN(gStringVar1, gScriptItemId - FIRST_BERRY + 1, STR_CONV_MODE_LEADING_ZEROS, 2);
-    MenuPrint(gStringVar1, 12, 4);
+    ConvertIntToDecimalStringN(gStringVar1, gSpecialVar_ItemId - FIRST_BERRY + 1, STR_CONV_MODE_LEADING_ZEROS, 2);
+    Menu_PrintText(gStringVar1, 12, 4);
 
 #if ENGLISH
-    MenuPrint(berryInfo->name, 14, 4);
+    Menu_PrintText(berryInfo->name, 14, 4);
 #elif GERMAN
     StringCopy(buffer, berryInfo->name);
     StringAppend(buffer, gOtherText_Berry2);
-    MenuPrint(buffer, 14, 4);
+    Menu_PrintText(buffer, 14, 4);
 #endif
 
-    MenuPrint(berryInfo->description1, 4, 14);
-    MenuPrint(berryInfo->description2, 4, 16);
+    Menu_PrintText(berryInfo->description1, 4, 14);
+    Menu_PrintText(berryInfo->description2, 4, 16);
 
 #ifdef UNITS_IMPERIAL
     size = (berryInfo->size * 1000) / 254;
@@ -296,7 +299,7 @@ static void sub_81464E4(void)
     sizeMajor = size / 100;
 #endif
 
-    MenuPrint(gOtherText_Size, 11, 7);
+    Menu_PrintText(gOtherText_Size, 11, 7);
     if (berryInfo->size != 0)
     {
 #ifdef UNITS_IMPERIAL
@@ -306,18 +309,18 @@ static void sub_81464E4(void)
         ConvertIntToDecimalStringN(gStringVar1, berryInfo->size / 10, STR_CONV_MODE_LEFT_ALIGN, 2);
         ConvertIntToDecimalStringN(gStringVar2, berryInfo->size % 10, STR_CONV_MODE_LEFT_ALIGN, 2);
 #endif
-        MenuPrint(gContestStatsText_Unknown1, 16, 7);
+        Menu_PrintText(gContestStatsText_Unknown1, 16, 7);
     }
     else
     {
-        MenuPrint(gOtherText_ThreeQuestions2, 16, 7);
+        Menu_PrintText(gOtherText_ThreeQuestions2, 16, 7);
     }
 
-    MenuPrint(gOtherText_Firm, 11, 9);
+    Menu_PrintText(gOtherText_Firm, 11, 9);
     if (berryInfo->firmness != 0)
-        MenuPrint(gUnknown_0841192C[berryInfo->firmness - 1], 16, 9);
+        Menu_PrintText(gUnknown_0841192C[berryInfo->firmness - 1], 16, 9);
     else
-        MenuPrint(gOtherText_ThreeQuestions2, 16, 9);
+        Menu_PrintText(gOtherText_ThreeQuestions2, 16, 9);
 }
 
 static void sub_8146600(u8 berry)
@@ -327,249 +330,124 @@ static void sub_8146600(u8 berry)
 
     berryInfo = GetBerryInfo(berry + 1);
     for (i = 0; i < 5; i++)
-        gUnknown_0203932E.circles[i] = (u16)gUnknown_0203932E.circles[i] | 0xFFFF;
+        gUnknown_0203932E[i] = (u16)gUnknown_0203932E[i] | 0xFFFF;
 
     // argument is the center of the circle
     if (berryInfo->spicy)
-        gUnknown_0203932E.circles[0] = sub_80A7E5C(48);
+        gUnknown_0203932E[0] = sub_80A7E5C(48);
     if (berryInfo->dry)
-        gUnknown_0203932E.circles[1] = sub_80A7E5C(88);
+        gUnknown_0203932E[1] = sub_80A7E5C(88);
     if (berryInfo->sweet)
-        gUnknown_0203932E.circles[2] = sub_80A7E5C(128);
+        gUnknown_0203932E[2] = sub_80A7E5C(128);
     if (berryInfo->bitter)
-        gUnknown_0203932E.circles[3] = sub_80A7E5C(168);
+        gUnknown_0203932E[3] = sub_80A7E5C(168);
     if (berryInfo->sour)
-        gUnknown_0203932E.circles[4] = sub_80A7E5C(208);
+        gUnknown_0203932E[4] = sub_80A7E5C(208);
 }
 
-void sub_81466A0(void)
+static void sub_81466A0(void)
 {
     u16 i;
 
     for (i = 0; i < 5; i++)
     {
-        if (gUnknown_0203932E.circles[i] != -1)
+        if (gUnknown_0203932E[i] != -1)
         {
-            DestroySprite(&gSprites[gUnknown_0203932E.circles[i]]);
-            gUnknown_0203932E.circles[i] = -1;
+            DestroySprite(&gSprites[gUnknown_0203932E[i]]);
+            gUnknown_0203932E[i] = -1;
         }
     }
 }
 
-__attribute__((naked))
 static void sub_81466E8(u8 taskId, s8 direction)
 {
-    asm(".syntax unified\n\
-    push {r4-r7,lr}\n\
-    mov r7, r8\n\
-    push {r7}\n\
-    lsls r0, 24\n\
-    lsrs r7, r0, 24\n\
-    lsls r1, 24\n\
-    lsrs r2, r1, 24\n\
-    lsls r0, r7, 2\n\
-    adds r0, r7\n\
-    lsls r0, 3\n\
-    ldr r1, _08146748 @ =gTasks + 0x8\n\
-    adds r6, r0, r1\n\
-    ldr r4, _0814674C @ =gUnknown_03005D10\n\
-    movs r0, 0xC\n\
-    adds r0, r4\n\
-    mov r8, r0\n\
-    ldrb r1, [r0, 0x1]\n\
-    ldrb r0, [r4, 0xC]\n\
-    adds r1, r0\n\
-    cmp r1, 0\n\
-    bne _08146718\n\
-    lsls r0, r2, 24\n\
-    cmp r0, 0\n\
-    blt _0814678C\n\
-_08146718:\n\
-    adds r0, r1, 0x1\n\
-    lsls r5, r2, 24\n\
-    mov r1, r8\n\
-    ldrb r1, [r1, 0x2]\n\
-    cmp r0, r1\n\
-    bne _08146728\n\
-    cmp r5, 0\n\
-    bgt _0814678C\n\
-_08146728:\n\
-    movs r0, 0x5\n\
-    bl PlaySE\n\
-    mov r2, r8\n\
-    ldrb r3, [r2, 0x1]\n\
-    ldrb r4, [r4, 0xC]\n\
-    mov r12, r4\n\
-    adds r0, r3, r4\n\
-    asrs r2, r5, 24\n\
-    adds r1, r0, r2\n\
-    cmp r1, 0\n\
-    bge _08146750\n\
-    negs r0, r0\n\
-    strh r0, [r6, 0x2]\n\
-    b _08146766\n\
-    .align 2, 0\n\
-_08146748: .4byte gTasks + 0x8\n\
-_0814674C: .4byte gUnknown_03005D10\n\
-_08146750:\n\
-    mov r4, r8\n\
-    ldrb r0, [r4, 0x2]\n\
-    cmp r1, r0\n\
-    blt _08146764\n\
-    subs r0, r3\n\
-    mov r1, r12\n\
-    subs r0, r1\n\
-    subs r0, 0x1\n\
-    strh r0, [r6, 0x2]\n\
-    b _08146766\n\
-_08146764:\n\
-    strh r2, [r6, 0x2]\n\
-_08146766:\n\
-    ldr r0, _08146780 @ =gTasks\n\
-    lsls r1, r7, 2\n\
-    adds r1, r7\n\
-    lsls r1, 3\n\
-    adds r1, r0\n\
-    ldr r0, _08146784 @ =sub_8146798\n\
-    str r0, [r1]\n\
-    cmp r5, 0\n\
-    bge _08146788\n\
-    movs r2, 0x10\n\
-    negs r2, r2\n\
-    adds r0, r2, 0\n\
-    b _0814678A\n\
-    .align 2, 0\n\
-_08146780: .4byte gTasks\n\
-_08146784: .4byte sub_8146798\n\
-_08146788:\n\
-    movs r0, 0x10\n\
-_0814678A:\n\
-    strh r0, [r6]\n\
-_0814678C:\n\
-    pop {r3}\n\
-    mov r8, r3\n\
-    pop {r4-r7}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .syntax divided\n");
+    u8 berryPocket = 3;
+    s16 *data = gTasks[taskId].data;
+
+    if (gBagPocketScrollStates[berryPocket].scrollTop + gBagPocketScrollStates[berryPocket].cursorPos == 0
+     && direction < 0)
+        return;
+    if (gBagPocketScrollStates[berryPocket].scrollTop + gBagPocketScrollStates[berryPocket].cursorPos + 1 == gBagPocketScrollStates[berryPocket].numSlots
+     && direction > 0)
+        return;
+
+    PlaySE(SE_SELECT);
+    if (gBagPocketScrollStates[berryPocket].scrollTop + gBagPocketScrollStates[berryPocket].cursorPos + direction < 0)
+        data[1] = -(gBagPocketScrollStates[berryPocket].scrollTop + gBagPocketScrollStates[berryPocket].cursorPos);
+    else if (gBagPocketScrollStates[berryPocket].scrollTop + gBagPocketScrollStates[berryPocket].cursorPos + direction >= gBagPocketScrollStates[berryPocket].numSlots)
+        data[1] = gBagPocketScrollStates[berryPocket].numSlots - gBagPocketScrollStates[berryPocket].scrollTop - gBagPocketScrollStates[berryPocket].cursorPos - 1;
+    else
+        data[1] = direction;
+
+    gTasks[taskId].func = sub_8146798;
+
+    if (direction < 0)
+        data[0] = -16;
+    else
+        data[0] = 16;
+
 }
 
-void sub_8146798(u8 taskId)
+static void sub_8146798(u8 taskId)
 {
     s16 *taskData = gTasks[taskId].data;
 
-    gUnknown_030041B4 = (gUnknown_030041B4 + taskData[0]) & 0xFF;
-    if ((taskData[0] > 0 && gUnknown_030041B4 == 144)
-     || (taskData[0] < 0 && gUnknown_030041B4 == 112))
+    gBattle_BG1_Y = (gBattle_BG1_Y + taskData[0]) & 0xFF;
+    if ((taskData[0] > 0 && gBattle_BG1_Y == 144)
+     || (taskData[0] < 0 && gBattle_BG1_Y == 112))
     {
         sub_8146810(gTasks[taskId].data[1]);
         sub_81468BC();
     }
-    if (gUnknown_030041B4 == 0)
+    if (gBattle_BG1_Y == 0)
     {
-        gTasks[taskId].data[0] = gUnknown_030041B4;
-        gTasks[taskId].data[1] = gUnknown_030041B4;
+        gTasks[taskId].data[0] = gBattle_BG1_Y;
+        gTasks[taskId].data[1] = gBattle_BG1_Y;
         gTasks[taskId].func = sub_8146480;
     }
 }
 
-__attribute__((naked))
 static void sub_8146810(s8 berry)
 {
-    asm(".syntax unified\n\
-    push {r4-r6,lr}\n\
-    lsls r0, 24\n\
-    lsrs r3, r0, 24\n\
-    adds r4, r3, 0\n\
-    lsls r0, r3, 24\n\
-    asrs r1, r0, 24\n\
-    cmp r1, 0\n\
-    ble _08146848\n\
-    ldr r0, _08146840 @ =gUnknown_03005D10\n\
-    adds r4, r0, 0\n\
-    adds r4, 0xC\n\
-    ldrb r2, [r0, 0xC]\n\
-    adds r1, r2, r1\n\
-    adds r6, r0, 0\n\
-    cmp r1, 0x7\n\
-    ble _08146844\n\
-    adds r0, r3, 0\n\
-    adds r0, 0xF9\n\
-    adds r0, r2, r0\n\
-    ldrb r1, [r4, 0x1]\n\
-    adds r0, r1\n\
-    strb r0, [r4, 0x1]\n\
-    movs r0, 0x7\n\
-    b _0814686E\n\
-    .align 2, 0\n\
-_08146840: .4byte gUnknown_03005D10\n\
-_08146844:\n\
-    adds r0, r2, r3\n\
-    b _0814686E\n\
-_08146848:\n\
-    ldr r0, _08146868 @ =gUnknown_03005D10\n\
-    adds r5, r0, 0\n\
-    adds r5, 0xC\n\
-    ldrb r2, [r0, 0xC]\n\
-    adds r1, r2, r1\n\
-    adds r6, r0, 0\n\
-    cmp r1, 0\n\
-    bge _0814686C\n\
-    adds r0, r2, r3\n\
-    ldrb r1, [r5, 0x1]\n\
-    adds r0, r1\n\
-    movs r1, 0\n\
-    strb r0, [r5, 0x1]\n\
-    strb r1, [r6, 0xC]\n\
-    b _08146870\n\
-    .align 2, 0\n\
-_08146868: .4byte gUnknown_03005D10\n\
-_0814686C:\n\
-    adds r0, r2, r4\n\
-_0814686E:\n\
-    strb r0, [r6, 0xC]\n\
-_08146870:\n\
-    ldr r2, _081468AC @ =gScriptItemId\n\
-    movs r0, 0x3\n\
-    lsls r0, 2\n\
-    adds r0, r6\n\
-    ldrb r1, [r0, 0x1]\n\
-    ldrb r0, [r0]\n\
-    adds r1, r0\n\
-    ldr r0, _081468B0 @ =gUnknown_03005D24\n\
-    ldr r0, [r0]\n\
-    lsls r1, 2\n\
-    adds r1, r0\n\
-    ldrh r0, [r1]\n\
-    strh r0, [r2]\n\
-    ldr r0, _081468B4 @ =gUnknown_0203932C\n\
-    ldrb r1, [r0]\n\
-    lsls r0, r1, 4\n\
-    adds r0, r1\n\
-    lsls r0, 2\n\
-    ldr r1, _081468B8 @ =gSprites\n\
-    adds r0, r1\n\
-    bl DestroySprite\n\
-    bl sub_81466A0\n\
-    bl sub_80A7DD4\n\
-    pop {r4-r6}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_081468AC: .4byte gScriptItemId\n\
-_081468B0: .4byte gUnknown_03005D24\n\
-_081468B4: .4byte gUnknown_0203932C\n\
-_081468B8: .4byte gSprites\n\
-    .syntax divided\n");
+    u8 berryPocket = 3;
+
+    if (berry > 0)
+    {
+        if (gBagPocketScrollStates[berryPocket].cursorPos + berry > 7)
+        {
+            gBagPocketScrollStates[berryPocket].scrollTop += gBagPocketScrollStates[berryPocket].cursorPos - 7 + berry;
+            gBagPocketScrollStates[berryPocket].cursorPos = 7;
+        }
+        else
+        {
+            gBagPocketScrollStates[berryPocket].cursorPos += berry;
+        }
+    }
+    else
+    {
+        if (gBagPocketScrollStates[berryPocket].cursorPos + berry < 0)
+        {
+            gBagPocketScrollStates[berryPocket].scrollTop += gBagPocketScrollStates[berryPocket].cursorPos + berry;
+            gBagPocketScrollStates[berryPocket].cursorPos = 0;
+        }
+        else
+        {
+            gBagPocketScrollStates[berryPocket].cursorPos += berry;
+        }
+    }
+    gSpecialVar_ItemId = gCurrentBagPocketItemSlots[gBagPocketScrollStates[berryPocket].scrollTop + gBagPocketScrollStates[berryPocket].cursorPos].itemId;
+    DestroySprite(&gSprites[gUnknown_0203932C]);
+    sub_81466A0();
+    sub_80A7DD4();
 }
 
 static void sub_81468BC(void)
 {
-    MenuZeroFillWindowRect(0, 4, 29, 19);
+    Menu_EraseWindowRect(0, 4, 29, 19);
     sub_81464E4();
 
     // center of berry sprite
-    gUnknown_0203932C = sub_80A7D8C(gScriptItemId + OFFSET_7B, 56, 64);
+    gUnknown_0203932C = CreateBerrySprite(gSpecialVar_ItemId + OFFSET_7B, 56, 64);
 
-    sub_8146600(gScriptItemId + OFFSET_7B);
+    sub_8146600(gSpecialVar_ItemId + OFFSET_7B);
 }

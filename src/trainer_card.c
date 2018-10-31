@@ -1,138 +1,194 @@
 #include "global.h"
 #include "trainer_card.h"
-#include "asm.h"
+#include "easy_chat.h"
 #include "event_data.h"
+#include "field_effect.h"
+#include "graphics.h"
 #include "link.h"
+#include "m4a.h"
 #include "main.h"
 #include "menu.h"
 #include "money.h"
 #include "palette.h"
 #include "pokedex.h"
-#include "rom4.h"
+#include "overworld.h"
 #include "script_pokemon_80C4.h"
-#include "songs.h"
+#include "constants/songs.h"
 #include "sound.h"
 #include "sprite.h"
 #include "string_util.h"
 #include "strings2.h"
 #include "task.h"
+#include "scanline_effect.h"
+#include "util.h"
+#include "ewram.h"
 
 typedef void (*Callback)(void);
 
 struct Struct2000000
 {
-    /*0x00*/ u8 var_0;
-    /*0x01*/ bool8 var_1;
-    /*0x02*/ u8 var_2;
-    /*0x03*/ bool8 var_3;
+    /*0x00*/ u8 current_state;
+    /*0x01*/ bool8 isShowingLinkCard;
+    /*0x02*/ u8 starCount;
+    /*0x03*/ bool8 backSideShown;
     /*0x04*/ u8 var_4;
-    /*0x05*/ u8 var_5;
-    /*0x06*/ u8 var_6;
-    /*0x07*/ bool8 var_7;
-    /*0x08*/ bool8 var_8;
-    /*0x09*/ bool8 var_9;
-    /*0x0A*/ bool8 var_a;
-    /*0x0B*/ bool8 var_b;
-    /*0x0C*/ bool8 var_c;
-    /*0x0D*/ bool8 var_d;
-    /*0x0E*/ u8 var_e[8];
+    /*0x05*/ bool8 showColon;
+    /*0x06*/ u8 frameCounter; /* Used to flash colon */
+    /*0x07*/ bool8 showPokedexCount;
+    /*0x08*/ bool8 showHallOfFame;
+    /*0x09*/ bool8 showLinkBattleStatus;
+    /*0x0A*/ bool8 showBattleTowerStatus;
+    /*0x0B*/ bool8 showContestRecord;
+    /*0x0C*/ bool8 showMixingRecord;
+    /*0x0D*/ bool8 showTradingRecord;
+    /*0x0E*/ bool8 ownedBadges[8];
     /*0x16*/ u8 filler_16[10];
-    /*0x20*/ u8 var_20[4][0x10];
+    /*0x20*/ u8 easyChatPhrase[4][0x10];
     /*0x60*/ Callback *var_60;
-    /*0x64*/ struct TrainerCard var_64;
+    /*0x64*/ struct TrainerCard displayedCard;
     /*0x9C*/ u8 language; // 0x9C
 };
 
-extern u8 ewram[];
-#define ewram0 (*(struct Struct2000000 *)(ewram))
+extern struct LinkPlayerEventObject gLinkPlayerEventObjects[];
 
-extern struct LinkPlayerMapObject gLinkPlayerMapObjects[];
-extern struct TrainerCard gTrainerCards[4];
+EWRAM_DATA struct TrainerCard gTrainerCards[4] = {0};
 
-struct UnknownStruct1
+extern const u16 gUnknown_083B5F0C[];
+extern const u16 gBadgesPalette[];
+extern const u16 gUnknown_083B5F4C[];
+extern const u16 gUnknown_083B5F6C[];
+extern const u16 gTrainerCardBadgesMap[][4];
+
+const u8 gBadgesTiles[] = INCBIN_U8("graphics/trainer_card/badges.4bpp");
+// XXX: what is this?
+u8 *const ewram_ = gSharedMem;
+
+#if DEBUG
+const struct TrainerCard sTestTrainerCard =
 {
-    u8 filler0[0x780];
-    u16 unk780[160];
+    .gender = FEMALE,
+    .stars = 4,
+    .hasPokedex = TRUE,
+    .var_3 = TRUE,
+    .var_4 = TRUE,
+    .firstHallOfFameA = 999,
+    .firstHallOfFameB = 99,
+    .firstHallOfFameC = 99,
+    .pokedexSeen = 411,
+    .trainerId = 12345,
+    .playTimeHours = 99,
+    .playTimeMinutes = 99,
+    .linkBattleWins = 9999,
+    .linkBattleLosses = 9999,
+    .battleTowerWins = 9999,
+    .battleTowerLosses = 9999,
+    .contestsWithFriends = 999,
+    .pokeblocksWithFriends = 0xFFFF,
+    .pokemonTrades = 0xFFFF,
+    .money = 99999,
+    .var_28 = {1, 2, 3, 4},
+    .playerName = _("てすと"),  // "test"
 };
-extern struct UnknownStruct1 gUnknown_03004DE0;
+#endif
 
-extern u8 gUnknown_083B5EF4[];
-extern u16 *gUnknown_083B5EF8[5];
-extern u16 gUnknown_083B5F0C[];
-extern u16 gBadgesPalette[];
-extern u16 gUnknown_083B5F4C[];
+bool8 TrainerCard_Init(struct Task *);
+bool8 TrainerCard_WaitForFadeInToFinish(struct Task *);
+bool8 TrainerCard_WaitForKeys(struct Task *);
+bool8 TrainerCard_StartFlipAntimation(struct Task *);
+bool8 TrainerCard_WaitForFlipToFinish(struct Task *);
+bool8 TrainerCard_FadeOut(struct Task *);
+bool8 TrainerCard_WaitForFadeOutToFinishAndQuit(struct Task *);
 
-extern u16 gUnknown_08E8CFC0[];
-extern u16 gUnknown_08E8D9C0[];
+bool8 (*const TrainerCard_StateMachine[])(struct Task *) =
+{
+    TrainerCard_Init,
+    TrainerCard_WaitForFadeInToFinish,
+    TrainerCard_WaitForKeys,
+    TrainerCard_StartFlipAntimation,
+    TrainerCard_WaitForFlipToFinish,
+    TrainerCard_FadeOut,
+    TrainerCard_WaitForFadeOutToFinishAndQuit,
+};
 
-extern bool8 (*const gUnknown_083B5EBC[])(struct Task *);
-extern bool8 (*const gUnknown_083B5ED8[])(struct Task *);
+bool8 TrainerCard_InitFlipAnimation(struct Task *);
+bool8 TrainerCard_ScaleDownFlipAnimation(struct Task *);
+bool8 TrainerCard_SwitchToNewSide(struct Task *);
+bool8 TrainerCard_ScaleUpFlipAnimation(struct Task *);
+bool8 TrainerCard_FinishFlipAnimation(struct Task *);
 
-// Other signature than on save_menu_util.h
+bool8 (*const TrainerCard_FlipAnimationStateMachine[])(struct Task *) =
+{
+    TrainerCard_InitFlipAnimation,
+    TrainerCard_ScaleDownFlipAnimation,
+    TrainerCard_SwitchToNewSide,
+    TrainerCard_ScaleUpFlipAnimation,
+    TrainerCard_FinishFlipAnimation,
+};
+
+// FIXME: Other signature than on save_menu_util.h
 void FormatPlayTime(u8 *playtime, u16 hours, u16 minutes, s16 colon);
-
 u16 GetPokedexSeenCount(void);
 
 enum
 {
-    TD_0,
-    TD_1,
+    TD_SHOWING_LINK_CARD,
+    TD_CARD_INDEX,
     TD_CALLBACK,
 };
 
 static void sub_8093174(void);
 static void sub_809323C(void);
 static void sub_8093254(void);
-static void sub_80932AC(Callback callBack);
-static void sub_80932E4(u8 arg1, Callback callBack);
-void sub_8093324(void);
+static void TrainerCard_InitScreenForPlayer(Callback callBack);
+static void TrainerCard_InitScreenForLinkPlayer(u8 arg1, Callback callBack);
+void TrainerCard_FillTrainerCardStruct(void);
 static void nullsub_60(u8);
 static u32 sav12_xor_get_clamped_above(u8 index, u32 maxVal);
-static u8 sub_80934F4(struct TrainerCard *);
+static u8 TrainerCard_GetStarCount(struct TrainerCard *);
 static void sub_8093534(void);
 static void sub_8093550(void);
 static void sub_8093598(void);
 static void sub_80935EC(void);
 static void sub_8093610(void);
 static void sub_8093688(void);
-void sub_80936D4(void);
+static void TrainerCard_FillFlags(void);
 static void sub_80937A4(void);
 static void sub_80937BC(void);
 static void sub_80937D8(void);
 static void sub_80937F0(void);
 static void nullsub_15(void);
 static void sub_8093800(void);
-static void sub_809380C();
-static void sub_809382C(u8 taskId);
-static void sub_80939A4(void);
-static void sub_80939C0(void);
-static void sub_80939DC(u8 taskId);
-static void sub_8093A28(void);
-static u8 sub_8093A48(void);
-static void sub_8093A68(u8 taskId);
-void sub_8093D7C(void);
-static void sub_8093DAC(void);
-static void sub_8093DC8(void);
-static void sub_8093DEC(void);
-static void sub_8093E04(void);
-static void sub_8093E28(void);
-void sub_8093EA0(void);
-static void sub_8093EF8(void);
+static void TrainerCard_CreateStateMachine(void);
+static void TrainerCard_RunStateMachine(u8 taskId);
+static void TrainerCard_CreatePrintPlayTimeTask(void);
+static void TrainerCard_DestoryPlayTimeTask(void);
+static void TrainerCard_Front_PrintPlayTime(u8 taskId);
+static void TrainerCard_CreateFlipAnimationTask(void);
+static u8 TrainerCard_HasFlipAnimationFinished(void);
+static void TrainerCard_RunFlipAnimationStateMachine(u8 taskId);
+static void TrainerCard_FlipAnimationHBlankCallback(void);
+static void TrainerCard_DrawCard(void);
+static void TrainerCard_DrawCardFront(void);
+static void TrainerCard_DrawCardBack(void);
+static void TrainerCard_ResetOffsetRegisters(void);
+static void TrainerCard_CopyGraphics(void);
+static void TrainerCard_LoadPalettes(void);
+static void TrainerCard_LoadTrainerGraphics(void);
 static void sub_8093F14(void);
 static void sub_8093F48(void);
 static void sub_8093F64(void);
-static void sub_8093F80(void);
-static void sub_8093FD0(void);
-static void sub_8094038(void);
-static void sub_80940E4(void);
-static void sub_8094110(void);
-static void sub_8094140(void);
-static void sub_8094188(void);
+static void TrainerCard_LoadTrainerTilemap(void);
+static void TrainerCard_DrawStars(void);
+static void TrainerCard_DisplayBadges(void);
+static void TrainerCard_ClearTrainerGraphics(void);
+static void TrainerCard_ClearPokedexLabel(void);
+static void TrainerCard_Front_PrintTexts(void);
+static void TrainerCard_Back_PrintTexts(void);
 static void TrainerCard_Front_PrintTrainerID(void);
 static void TrainerCard_Front_PrintMoney(void);
 static void TrainerCard_Front_PrintPokedexCount(void);
-static void TrainerCard_Front_PrintPlayTime(u8 *arg1, s16 colon);
-static void sub_809429C(void);
+static void TrainerCard_Front_GetPlayTimeString(u8 *arg1, s16 colon);
+static void TrainerCard_PrintEasyChatPhrase(void);
 static void TrainerCard_Back_PrintName(void);
 static void TrainerCard_Back_PrintHallOfFameTime_Label(void);
 static void TrainerCard_Back_PrintHallOfFameTime(void);
@@ -148,19 +204,56 @@ static void TrainerCard_Back_PrintPokemonTrades_Label(void);
 static void TrainerCard_Back_PrintPokemonTrades(void);
 void unref_sub_8094588(u16 left, u16 top);
 
-void sub_8093110(Callback arg1)
+#if DEBUG
+static u8 gDebug_03000748;
+#endif
+
+void TrainerCard_ShowPlayerCard(Callback arg1)
 {
-    sub_80932AC(arg1);
+#if DEBUG
+    gDebug_03000748 = 0;
+#endif
+    TrainerCard_InitScreenForPlayer(arg1);
     SetMainCallback2(sub_8093174);
-    ewram0.language = GAME_LANGUAGE;
+    ewram0_2.language = GAME_LANGUAGE;
 }
 
-void sub_8093130(u8 playerIndex, Callback arg2)
+void TrainerCard_ShowLinkCard(u8 playerIndex, Callback arg2)
 {
-    sub_80932E4(playerIndex, arg2);
+#if DEBUG
+    gDebug_03000748 = 0;
+#endif
+    TrainerCard_InitScreenForLinkPlayer(playerIndex, arg2);
     SetMainCallback2(sub_8093174);
-    ewram0.language = gLinkPlayers[gLinkPlayerMapObjects[playerIndex].linkPlayerId].language;
+    ewram0_2.language = gLinkPlayers[gLinkPlayerEventObjects[playerIndex].linkPlayerId].language;
 }
+
+#if DEBUG
+void debug_sub_80A0710(Callback callback)
+{
+    gDebug_03000748 = TRUE;
+    TrainerCard_InitScreenForPlayer(callback);
+    SetMainCallback2(sub_8093174);
+    ewram0_2.language = GAME_LANGUAGE;
+}
+
+void debug_sub_80A073C(Callback callback)
+{
+    memcpy(&gTrainerCards[0], &sTestTrainerCard, sizeof(struct TrainerCard));
+    gDebug_03000748=TRUE;
+    TrainerCard_InitScreenForLinkPlayer(0, callback);
+    SetMainCallback2(sub_8093174);
+    ewram0_2.language = GAME_LANGUAGE;
+}
+
+void debug_sub_80A0780()
+{
+    int i;
+
+    for (i = 0; i < 4; i++)
+        memcpy(&gTrainerCards[i], &sTestTrainerCard, sizeof(struct TrainerCard));
+}
+#endif
 
 static void sub_8093174(void)
 {
@@ -169,38 +262,35 @@ static void sub_8093174(void)
     case 0:
         sub_8093534();
         sub_8093688();
-        gMain.state += 1;
+        gMain.state++;
         break;
     case 1:
         sub_8093598();
-        gMain.state += 1;
+        gMain.state++;
         break;
     case 2:
         sub_80935EC();
-        gMain.state += 1;
+        gMain.state++;
         break;
     case 3:
         sub_8093610();
         sub_80937A4();
-        gMain.state += 1;
+        gMain.state++;
         break;
     case 4:
         sub_80937BC();
-        gMain.state += 1;
+        gMain.state++;
     case 5:
-        if (MultistepInitMenuWindowContinue() == FALSE)
-        {
-            return;
-        }
-        gMain.state += 1;
+        if (MultistepInitMenuWindowContinue())
+            gMain.state++;
         break;
     case 6:
         sub_80937F0();
-        gMain.state += 1;
+        gMain.state++;
         break;
     case 7:
         sub_80937D8();
-        gMain.state += 1;
+        gMain.state++;
         break;
     case 8:
         nullsub_15();
@@ -224,52 +314,49 @@ static void sub_8093254(void)
     LoadOam();
     ProcessSpriteCopyRequests();
     TransferPlttBuffer();
-    ewram0.var_6++;
-    if (ewram0.var_6 >= 60)
+    ewram0_2.frameCounter++;
+    if (ewram0_2.frameCounter >= 60)
     {
-        ewram0.var_6 = 0;
-        ewram0.var_5 ^= 1;
+        ewram0_2.frameCounter = 0;
+        ewram0_2.showColon ^= 1;
     }
-    if (ewram0.var_4)
-        DmaCopy16(3, gUnknown_03004DE0.filler0, gUnknown_03004DE0.unk780, sizeof(gUnknown_03004DE0.unk780));
+    if (ewram0_2.var_4)
+        DmaCopy16(3, &gScanlineEffectRegBuffers[0], &gScanlineEffectRegBuffers[1], 0x140);
 }
 
-static void sub_80932AC(Callback callBack)
+static void TrainerCard_InitScreenForPlayer(Callback callBack)
 {
     u8 taskId = CreateTask(nullsub_60, 0xFF);
     struct Task *task = &gTasks[taskId];
-    task->data[TD_0] = FALSE;
+    task->data[TD_SHOWING_LINK_CARD] = FALSE;
     StoreWordInTwoHalfwords(&task->data[TD_CALLBACK], (u32)callBack);
 }
 
-static void sub_80932E4(u8 arg1, Callback callBack)
+static void TrainerCard_InitScreenForLinkPlayer(u8 arg1, Callback callBack)
 {
     u8 taskId = CreateTask(nullsub_60, 0xFF);
 
     struct Task *task = &gTasks[taskId];
-    task->data[TD_0] = TRUE;
-    task->data[TD_1] = arg1;
+    task->data[TD_SHOWING_LINK_CARD] = TRUE;
+    task->data[TD_CARD_INDEX] = arg1;
     StoreWordInTwoHalfwords(&task->data[TD_CALLBACK], (u32)callBack);
 }
 
-void sub_8093324(void)
+void TrainerCard_FillTrainerCardStruct(void)
 {
     u8 taskId = FindTaskIdByFunc(nullsub_60);
     struct Task *task = &gTasks[taskId];
-    ewram0.var_1 = task->data[TD_0];
+    ewram0_2.isShowingLinkCard = task->data[TD_SHOWING_LINK_CARD];
 
-    LoadWordFromTwoHalfwords((u16 *)&task->data[TD_CALLBACK], (u32 *)&ewram0.var_60);
+    LoadWordFromTwoHalfwords((u16 *)&task->data[TD_CALLBACK], (u32 *)&ewram0_2.var_60);
 
-    if (ewram0.var_1)
+    if (ewram0_2.isShowingLinkCard)
     {
-        struct TrainerCard(*trainerCards)[4] = &gTrainerCards;
-        s16 var = task->data[TD_1];
-        struct TrainerCard *dest = &(*trainerCards)[var];
-        memcpy(&ewram0.var_64, dest, sizeof(struct TrainerCard));
+        ewram0_2.displayedCard = gTrainerCards[task->data[TD_CARD_INDEX]];
     }
     else
     {
-        sub_8093390(&ewram0.var_64);
+        TrainerCard_GenerateCardForPlayer(&ewram0_2.displayedCard);
     }
 }
 
@@ -277,16 +364,16 @@ static void nullsub_60(u8 taskid)
 {
 }
 
-void sub_8093390(struct TrainerCard *arg1)
+void TrainerCard_GenerateCardForPlayer(struct TrainerCard *trainerCard)
 {
     u32 playTime;
     bool32 enteredHallOfFame;
     bool8 r4;
     u8 i;
 
-    arg1->gender = gSaveBlock2.playerGender;
-    arg1->playTimeHours = gSaveBlock2.playTimeHours;
-    arg1->playTimeMinutes = gSaveBlock2.playTimeMinutes;
+    trainerCard->gender = gSaveBlock2.playerGender;
+    trainerCard->playTimeHours = gSaveBlock2.playTimeHours;
+    trainerCard->playTimeMinutes = gSaveBlock2.playTimeMinutes;
 
     playTime = GetGameStat(GAME_STAT_FIRST_HOF_PLAY_TIME);
     enteredHallOfFame = GetGameStat(GAME_STAT_ENTERED_HOF);
@@ -294,39 +381,39 @@ void sub_8093390(struct TrainerCard *arg1)
     {
         playTime = 0;
     }
-    arg1->firstHallOfFameA = playTime >> 16;
-    arg1->firstHallOfFameB = (playTime >> 8) & 0xFF;
-    arg1->firstHallOfFameC = playTime & 0xFF;
+    trainerCard->firstHallOfFameA = playTime >> 16;
+    trainerCard->firstHallOfFameB = (playTime >> 8) & 0xFF;
+    trainerCard->firstHallOfFameC = playTime & 0xFF;
 
-    arg1->hasPokedex = FlagGet(SYS_POKEDEX_GET);
-    arg1->var_3 = sub_8090FC0();
-    arg1->pokedexSeen = GetPokedexSeenCount();
+    trainerCard->hasPokedex = FlagGet(FLAG_SYS_POKEDEX_GET);
+    trainerCard->var_3 = CompletedHoennPokedex();
+    trainerCard->pokedexSeen = GetPokedexSeenCount();
 
-    arg1->trainerId = (gSaveBlock2.playerTrainerId[1] << 8) | gSaveBlock2.playerTrainerId[0];
+    trainerCard->trainerId = (gSaveBlock2.playerTrainerId[1] << 8) | gSaveBlock2.playerTrainerId[0];
 
     // Link Cable Battles
-    arg1->linkBattleWins = sav12_xor_get_clamped_above(GAME_STAT_LINK_BATTLE_WINS, 9999);
-    arg1->linkBattleLosses = sav12_xor_get_clamped_above(GAME_STAT_LINK_BATTLE_LOSSES, 9999);
+    trainerCard->linkBattleWins = sav12_xor_get_clamped_above(GAME_STAT_LINK_BATTLE_WINS, 9999);
+    trainerCard->linkBattleLosses = sav12_xor_get_clamped_above(GAME_STAT_LINK_BATTLE_LOSSES, 9999);
 
     // Contests w/ Friends
-    arg1->contestsWithFriends = sav12_xor_get_clamped_above(GAME_STAT_WON_LINK_CONTEST, 999);
+    trainerCard->contestsWithFriends = sav12_xor_get_clamped_above(GAME_STAT_WON_LINK_CONTEST, 999);
 
     // Pokéblocks w/ Friends
-    arg1->pokeblocksWithFriends = sav12_xor_get_clamped_above(GAME_STAT_POKEBLOCKS_WITH_FRIENDS, 0xFFFF);
+    trainerCard->pokeblocksWithFriends = sav12_xor_get_clamped_above(GAME_STAT_POKEBLOCKS_WITH_FRIENDS, 0xFFFF);
 
     // Pokémon Trades
-    arg1->pokemonTrades = sav12_xor_get_clamped_above(GAME_STAT_POKEMON_TRADES, 0xFFFF);
+    trainerCard->pokemonTrades = sav12_xor_get_clamped_above(GAME_STAT_POKEMON_TRADES, 0xFFFF);
 
-    // Battle tower?
-    arg1->battleTowerWins = gSaveBlock2.filler_A8.var_4C8;
-    arg1->battleTowerLosses = gSaveBlock2.filler_A8.var_4CA;
-    if (arg1->battleTowerWins > 9999)
+    // Battle Tower
+    trainerCard->battleTowerWins = gSaveBlock2.battleTower.totalBattleTowerWins;
+    trainerCard->battleTowerLosses = gSaveBlock2.battleTower.bestBattleTowerWinStreak;
+    if (trainerCard->battleTowerWins > 9999)
     {
-        arg1->battleTowerWins = 9999;
+        trainerCard->battleTowerWins = 9999;
     }
-    if (arg1->battleTowerLosses > 9999)
+    if (trainerCard->battleTowerLosses > 9999)
     {
-        arg1->battleTowerLosses = 9999;
+        trainerCard->battleTowerLosses = 9999;
     }
 
     r4 = FALSE;
@@ -334,21 +421,21 @@ void sub_8093390(struct TrainerCard *arg1)
     {
         r4 = TRUE;
     }
-    arg1->var_4 = r4;
+    trainerCard->var_4 = r4;
 
-    arg1->money = gSaveBlock1.money;
+    trainerCard->money = gSaveBlock1.money;
 
     for (i = 0; i < 4; i++)
     {
-        arg1->var_28[i] = gSaveBlock1.unk2B1C[i];
+        trainerCard->var_28[i] = gSaveBlock1.easyChats.unk2B1C[i];
     }
 
     for (i = 0; i < 8; i++)
     {
-        arg1->playerName[i] = gSaveBlock2.playerName[i];
+        trainerCard->playerName[i] = gSaveBlock2.playerName[i];
     }
 
-    arg1->stars = sub_80934F4(arg1);
+    trainerCard->stars = TrainerCard_GetStarCount(trainerCard);
 }
 
 u8 sub_80934C4(u8 id)
@@ -368,28 +455,28 @@ static u32 sav12_xor_get_clamped_above(u8 index, u32 maxVal)
     return value;
 }
 
-static u8 sub_80934F4(struct TrainerCard *trainerCard)
+static u8 TrainerCard_GetStarCount(struct TrainerCard *trainerCard)
 {
     u8 value = 0;
 
     if (trainerCard->firstHallOfFameA != 0 || trainerCard->firstHallOfFameB != 0 || trainerCard->firstHallOfFameC != 0)
     {
-        value += 1;
+        value++;
     }
 
     if (trainerCard->var_3)
     {
-        value += 1;
+        value++;
     }
 
     if (trainerCard->battleTowerLosses > 49)
     {
-        value += 1;
+        value++;
     }
 
     if (trainerCard->var_4)
     {
-        value += 1;
+        value++;
     }
 
     return value;
@@ -419,27 +506,12 @@ static void sub_8093550(void)
 
 void sub_8093598(void)
 {
-    u8 *addr = (void *)VRAM;
-    u32 size = 0x10000;
-
-    while (1)
-    {
-        DmaFill16(3, 0, addr, 0x1000);
-        addr += 0x1000;
-        size -= 0x1000;
-        if (size <= 0x1000)
-        {
-            DmaFill16(3, 0, addr, size);
-            break;
-        }
-    }
+    DmaFill16Large(3, 0, (void *)VRAM, 0x10000, 0x1000);
 }
 
 void sub_80935EC(void)
 {
-    void *addr = (void *)OAM;
-
-    DmaFill16(3, 0, addr, 0x400);
+    DmaFill16Defvars(3, 0, (void *)OAM, 0x400);
 }
 
 void sub_8093610(void)
@@ -467,95 +539,83 @@ static void sub_8093688(void)
 {
     u8 i;
 
-    sub_8093324();
-
-    ewram0.var_0 = FALSE;
-    ewram0.var_3 = FALSE;
-    ewram0.var_4 = FALSE;
-
-    ewram0.var_2 = ewram0.var_64.stars;
-
-    ewram0.var_5 = FALSE;
-    ewram0.var_6 = FALSE;
-
+    TrainerCard_FillTrainerCardStruct();
+    ewram0_2.current_state = 0;
+    ewram0_2.backSideShown = FALSE;
+    ewram0_2.var_4 = FALSE;
+    ewram0_2.starCount = ewram0_2.displayedCard.stars;
+    ewram0_2.showColon = 0;
+    ewram0_2.frameCounter = 0;
     for (i = 0; i < 4; i++)
-    {
-        sub_80EB3FC(ewram0.var_20[i], ewram0.var_64.var_28[i]);
-    }
-
-    sub_80936D4();
+        EasyChat_GetWordText(ewram0_2.easyChatPhrase[i], ewram0_2.displayedCard.var_28[i]);
+    TrainerCard_FillFlags();
 }
 
-void sub_80936D4(void)
+static void TrainerCard_FillFlags(void)
 {
-    ewram0.var_7 = 0;
-    ewram0.var_8 = 0;
-    ewram0.var_9 = 0;
-    ewram0.var_a = 0;
-    ewram0.var_b = 0;
-    ewram0.var_c = 0;
-    ewram0.var_d = 0;
+    ewram0_2.showPokedexCount = 0;
+    ewram0_2.showHallOfFame = 0;
+    ewram0_2.showLinkBattleStatus = 0;
+    ewram0_2.showBattleTowerStatus = 0;
+    ewram0_2.showContestRecord = 0;
+    ewram0_2.showMixingRecord = 0;
+    ewram0_2.showTradingRecord = 0;
+    memset(ewram0_2.ownedBadges, 0, sizeof(ewram0_2.ownedBadges));
 
-    memset(ewram0.var_e, 0, sizeof(ewram0.var_e));
+    if (ewram0_2.displayedCard.hasPokedex)
+        ewram0_2.showPokedexCount++;
 
-    if (ewram0.var_64.hasPokedex)
-    {
-        ewram0.var_7 += 1;
-    }
+    if (ewram0_2.displayedCard.firstHallOfFameA != 0
+     || ewram0_2.displayedCard.firstHallOfFameB != 0
+     || ewram0_2.displayedCard.firstHallOfFameC != 0)
+        ewram0_2.showHallOfFame++;
 
-    if (ewram0.var_64.firstHallOfFameA != 0 || ewram0.var_64.firstHallOfFameB != 0 ||
-        ewram0.var_64.firstHallOfFameC != 0)
-    {
-        ewram0.var_8 += 1;
-    }
+    if (ewram0_2.displayedCard.linkBattleWins != 0 || ewram0_2.displayedCard.linkBattleLosses != 0)
+        ewram0_2.showLinkBattleStatus++;
 
-    if (ewram0.var_64.linkBattleWins != 0 || ewram0.var_64.linkBattleLosses != 0)
-    {
-        ewram0.var_9 += 1;
-    }
+    if (ewram0_2.displayedCard.battleTowerWins != 0 || ewram0_2.displayedCard.battleTowerLosses != 0)
+        ewram0_2.showBattleTowerStatus++;
 
-    if (ewram0.var_64.battleTowerWins != 0 || ewram0.var_64.battleTowerLosses != 0)
-    {
-        ewram0.var_a += 1;
-    }
+    if (ewram0_2.displayedCard.contestsWithFriends != 0)
+        ewram0_2.showContestRecord++;
 
-    if (ewram0.var_64.contestsWithFriends != 0)
-    {
-        ewram0.var_b += 1;
-    }
+    if (ewram0_2.displayedCard.pokeblocksWithFriends != 0)
+        ewram0_2.showMixingRecord++;
 
-    if (ewram0.var_64.pokeblocksWithFriends != 0)
-    {
-        ewram0.var_c += 1;
-    }
+    if (ewram0_2.displayedCard.pokemonTrades != 0)
+        ewram0_2.showTradingRecord++;
 
-    if (ewram0.var_64.pokemonTrades != 0)
-    {
-        ewram0.var_d += 1;
-    }
-
-    if (!ewram0.var_1)
+    if (!ewram0_2.isShowingLinkCard)
     {
         u32 badgeFlag;
-        int i;
+        int i = 0;
 
-        i = 0;
-        badgeFlag = BADGE01_GET;
+        badgeFlag = FLAG_BADGE01_GET;
         while (1)
         {
             if (FlagGet(badgeFlag))
-            {
-                ewram0.var_e[i] += 1;
-            }
-
-            badgeFlag += 1;
-            i += 1;
-            if (badgeFlag > BADGE08_GET)
+                ewram0_2.ownedBadges[i]++;
+            badgeFlag++;
+            i++;
+            if (badgeFlag > FLAG_BADGE08_GET)
             {
                 break;
             }
         }
     }
+
+#if DEBUG
+    if (gDebug_03000748 != 0)
+    {
+        ewram0_2.showHallOfFame = TRUE;
+        ewram0_2.showLinkBattleStatus = TRUE;
+        ewram0_2.showBattleTowerStatus = TRUE;
+        ewram0_2.showContestRecord = TRUE;
+        ewram0_2.showMixingRecord = TRUE;
+        ewram0_2.showTradingRecord = TRUE;
+        memset(ewram0_2.ownedBadges, TRUE, sizeof(ewram0_2.ownedBadges));
+    }
+#endif
 }
 
 void sub_80937A4()
@@ -568,21 +628,21 @@ void sub_80937A4()
 
 void sub_80937BC()
 {
-    SetUpWindowConfig(&WindowConfig_TrainerCard_Back_Values);
-    MultistepInitMenuWindowBegin(&WindowConfig_TrainerCard_Back_Values);
+    Text_LoadWindowTemplate(&gWindowTemplate_TrainerCard_Back_Values);
+    MultistepInitMenuWindowBegin(&gWindowTemplate_TrainerCard_Back_Values);
 }
 
 static void sub_80937D8()
 {
-    sub_8093E04();
-    sub_8093E28();
+    TrainerCard_ResetOffsetRegisters();
+    TrainerCard_CopyGraphics();
     sub_8093F64();
-    sub_8093DAC();
+    TrainerCard_DrawCard();
 }
 
 static void sub_80937F0()
 {
-    sub_8093EF8();
+    TrainerCard_LoadTrainerGraphics();
 }
 
 static void nullsub_15(void)
@@ -591,175 +651,221 @@ static void nullsub_15(void)
 
 static void sub_8093800()
 {
-    sub_809380C();
+    TrainerCard_CreateStateMachine();
 }
 
-static void sub_809380C()
+static void TrainerCard_CreateStateMachine(void)
 {
     u8 taskId;
 
-    taskId = CreateTask(sub_809382C, 0);
-    sub_809382C(taskId);
+    taskId = CreateTask(TrainerCard_RunStateMachine, 0);
+    TrainerCard_RunStateMachine(taskId);
 }
 
-static void sub_809382C(u8 taskId)
+static void TrainerCard_RunStateMachine(u8 taskId)
 {
-    while (gUnknown_083B5EBC[ewram0.var_0](&gTasks[taskId]) != 0)
+    while (TrainerCard_StateMachine[ewram0_2.current_state](&gTasks[taskId]) != 0)
         ;
 }
 
-bool8 sub_8093864(struct Task *task)
+bool8 TrainerCard_Init(struct Task *task)
 {
-    ewram0.var_5 = gSaveBlock2.playTimeSeconds & 1;
-    ewram0.var_6 = gSaveBlock2.playTimeVBlanks;
-    sub_80939A4();
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, 0);
-    ewram0.var_0 += 1;
+    ewram0_2.showColon = gSaveBlock2.playTimeSeconds & 1;
+    ewram0_2.frameCounter = gSaveBlock2.playTimeVBlanks;
+    TrainerCard_CreatePrintPlayTimeTask();
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
+    ewram0_2.current_state++; /* Advance state machine */
     return FALSE;
 }
 
-bool8 sub_80938A8(struct Task *task)
+bool8 TrainerCard_WaitForFadeInToFinish(struct Task *task)
 {
     if (!gPaletteFade.active)
-        ewram0.var_0 += 1;
+        ewram0_2.current_state++; /* Advance state machine */
     return FALSE;
 }
 
-bool8 sub_80938CC(struct Task *task)
+bool8 TrainerCard_WaitForKeys(struct Task *task)
 {
     if (gMain.newKeys & B_BUTTON)
     {
-        ewram0.var_0 = 5;
+        ewram0_2.current_state = 5; /* Jump to fadeout state */
         return TRUE;
     }
     else if (gMain.newKeys & A_BUTTON)
     {
-        if (ewram0.var_3 != 0)
+        /* It appears that it was previously possible to return the the front side
+           after viewing the back side. This was probably removed due to being
+           unintuitive. */
+        if (ewram0_2.backSideShown)
         {
-            ewram0.var_0 = 5;
-            return TRUE;
+            ewram0_2.current_state = 5; /* Jump to fadeout state */
         }
         else
         {
-            ewram0.var_3 ^= 1;
-            ewram0.var_0 = 3;
-            return TRUE;
+            ewram0_2.backSideShown ^= 1; /* Switch to back side  */
+            ewram0_2.current_state = 3; /* Jump to start flip animation state */
         }
+        return TRUE;
     }
-
-    return FALSE;
-}
-
-bool8 sub_8093918(struct Task *task)
-{
-    sub_8093A28();
-    PlaySE(SE_CARD);
-
-    ewram0.var_0 += 1;
-
-    return FALSE;
-}
-
-bool8 sub_8093938(struct Task *task)
-{
-    if (sub_8093A48())
+#if DEBUG
+    else if (gDebug_03000748 && gMain.newKeys & R_BUTTON)
     {
-        ewram0.var_0 = 2;
+        ewram0_2.starCount++;
+        ewram0_2.starCount %= 5;
+        TrainerCard_LoadPalettes();
+        if (ewram0_2.backSideShown == 0)
+            TrainerCard_DrawStars();
     }
+#endif
 
     return FALSE;
 }
 
-bool8 sub_8093954(struct Task *task)
+bool8 TrainerCard_StartFlipAntimation(struct Task *task)
 {
-    sub_80939C0();
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, 0);
-    ewram0.var_0 += 1;
+    TrainerCard_CreateFlipAnimationTask();
+    PlaySE(SE_CARD);
+    ewram0_2.current_state++; /* Advance state machine */
     return FALSE;
 }
 
-bool8 sub_8093980(struct Task *task)
+bool8 TrainerCard_WaitForFlipToFinish(struct Task *task)
+{
+    if (TrainerCard_HasFlipAnimationFinished())
+        ewram0_2.current_state = 2; /* Return to wait for keys state */
+    return FALSE;
+}
+
+bool8 TrainerCard_FadeOut(struct Task *task)
+{
+    TrainerCard_DestoryPlayTimeTask();
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
+    ewram0_2.current_state++; /* Advance state machine */
+    return FALSE;
+}
+
+bool8 TrainerCard_WaitForFadeOutToFinishAndQuit(struct Task *task)
 {
     if (!gPaletteFade.active)
-    {
-        SetMainCallback2((MainCallback)ewram0.var_60);
-    }
-
+        SetMainCallback2((MainCallback)ewram0_2.var_60);
     return FALSE;
 }
 
-static void sub_80939A4(void)
+static void TrainerCard_CreatePrintPlayTimeTask(void)
 {
-    CreateTask(sub_80939DC, 0);
-    BasicInitMenuWindow(&WindowConfig_TrainerCard_Back_Values);
+    CreateTask(TrainerCard_Front_PrintPlayTime, 0);
+    BasicInitMenuWindow(&gWindowTemplate_TrainerCard_Back_Values);
 }
 
-static void sub_80939C0(void)
+static void TrainerCard_DestoryPlayTimeTask(void)
 {
-    u8 taskId;
-
-    taskId = FindTaskIdByFunc(sub_80939DC);
+    u8 taskId = FindTaskIdByFunc(TrainerCard_Front_PrintPlayTime);
 
     if (taskId != 0xFF)
-    {
         DestroyTask(taskId);
-    }
 }
 
-static void sub_80939DC(u8 taskId)
+static void TrainerCard_Front_PrintPlayTime(u8 taskId)
 {
     u8 buffer[32];
-    struct Task *task;
-    task = &gTasks[taskId];
+    struct Task *task = &gTasks[taskId];
 
-    if (ewram0.var_5 != task->data[TD_1])
+    if (ewram0_2.showColon != task->data[TD_CARD_INDEX])
     {
-        task->data[TD_1] = ewram0.var_5;
-        task->data[TD_0] ^= TRUE;
+        task->data[TD_CARD_INDEX] = ewram0_2.showColon;
+        task->data[TD_SHOWING_LINK_CARD] ^= TRUE;
     }
-
-    TrainerCard_Front_PrintPlayTime(buffer, task->data[TD_0]);
-    MenuPrint(buffer, 10, 12);
+    TrainerCard_Front_GetPlayTimeString(buffer, task->data[TD_SHOWING_LINK_CARD]);
+    Menu_PrintText(buffer, 10, 12);
 }
 
-static void sub_8093A28(void)
+static void TrainerCard_CreateFlipAnimationTask(void)
 {
     u8 taskId;
 
-    taskId = CreateTask(sub_8093A68, 0);
-    sub_8093A68(taskId);
+    taskId = CreateTask(TrainerCard_RunFlipAnimationStateMachine, 0);
+    TrainerCard_RunFlipAnimationStateMachine(taskId);
 }
 
-static u8 sub_8093A48(void)
+static u8 TrainerCard_HasFlipAnimationFinished(void)
 {
-    if (FindTaskIdByFunc(sub_8093A68) == 0xFF)
+    if (FindTaskIdByFunc(TrainerCard_RunFlipAnimationStateMachine) == 0xFF)
         return TRUE;
     else
         return FALSE;
 }
 
-static void sub_8093A68(u8 taskId)
+static void TrainerCard_RunFlipAnimationStateMachine(u8 taskId)
 {
-    while (gUnknown_083B5ED8[gTasks[taskId].data[0]](&gTasks[taskId]) != 0)
+    while (TrainerCard_FlipAnimationStateMachine[gTasks[taskId].data[0]](&gTasks[taskId]) != 0)
         ;
 }
 
-bool8 sub_8093AA0(struct Task *task)
+bool8 TrainerCard_InitFlipAnimation(struct Task *task)
 {
-    s32 i;
+    u32 i;
 
-    ewram0.var_4 = 0;
-    dp12_8087EA4();
-    for (i = 0; i < ARRAY_COUNT(gUnknown_03004DE0.unk780); i++)
-        gUnknown_03004DE0.unk780[i] = -4;
-    SetHBlankCallback(sub_8093D7C);
-    ewram0.var_4 = 1;
+    ewram0_2.var_4 = FALSE;
+    ScanlineEffect_Clear();
+    for (i = 0; i < 0xA0; i++)
+        gScanlineEffectRegBuffers[1][i] = -4;
+    SetHBlankCallback(TrainerCard_FlipAnimationHBlankCallback);
+    ewram0_2.var_4 = TRUE;
     task->data[0]++;
     return FALSE;
 }
 
-__attribute__((naked))
-bool8 sub_8093AF0()
+/*
+bool8 TrainerCard_ScaleDownFlipAnimation(struct Task *task)
+{
+    u32 r7;
+    u16 r9;
+    u32 r6;
+    u32 r5;
+    u32 r4;
+    u32 r10;
+    u32 sp0;
+    s16 i;
+
+    ewram0_2.var_4 = 0;
+    task->data[1] += 3;
+    if (task->data[1] > 79)
+        task->data[1] = 79;
+
+    r7 = task->data[1];
+    r9 = 160 - r7;
+    r4 = r9 - r7;
+    r6 = -r7 << 16;
+    r5 = (160 << 16) / r4;
+    r5 -= 1 << 16;
+    r10 = r5 * r4 + r6;
+    sp0 = r5 / r4;
+    r5 *= 2;
+
+    for (i = 0; i < r7; i++)
+    {
+        gScanlineEffectRegBuffers.filler0[i] = -4 - (u32)i;
+    }
+    //_08093B74
+    for (; i < r9; i++)
+    {
+        u16 var = r6 >> 16;
+        r6 += r5;
+        r5 -= sp0;
+        gScanlineEffectRegBuffers.filler0[i] = -4 + var;
+    }
+    for (; i < 160; i++)
+        gScanlineEffectRegBuffers.filler0[i] = -4 + (u16)(r10 >> 16);
+    ewram0_2.var_4 = 1;
+    if (task->data[1] > 0x4A)
+        task->data[0]++;
+    return FALSE;
+}
+*/
+
+NAKED
+bool8 TrainerCard_ScaleDownFlipAnimation(struct Task *task)
 {
     asm(".syntax unified\n\
     push {r4-r7,lr}\n\
@@ -769,7 +875,7 @@ bool8 sub_8093AF0()
     push {r5-r7}\n\
     sub sp, 0x4\n\
     mov r8, r0\n\
-    ldr r1, _08093BFC @ =0x02000000\n\
+    ldr r1, _08093BFC @ =gSharedMem\n\
     movs r0, 0\n\
     strb r0, [r1, 0x4]\n\
     mov r2, r8\n\
@@ -811,7 +917,7 @@ _08093B18:\n\
     movs r3, 0\n\
     cmp r3, r7\n\
     bcs _08093B74\n\
-    ldr r2, _08093C04 @ =gUnknown_03004DE0\n\
+    ldr r2, _08093C04 @ =gScanlineEffectRegBuffers\n\
     mov r12, r2\n\
     ldr r0, _08093C08 @ =0x0000fffc\n\
     adds r4, r0, 0\n\
@@ -837,7 +943,7 @@ _08093B74:\n\
     lsrs r7, r4, 16\n\
     cmp r2, r0\n\
     bge _08093BAE\n\
-    ldr r0, _08093C04 @ =gUnknown_03004DE0\n\
+    ldr r0, _08093C04 @ =gScanlineEffectRegBuffers\n\
     mov r9, r0\n\
     ldr r4, _08093C08 @ =0x0000fffc\n\
     mov r12, r4\n\
@@ -865,7 +971,7 @@ _08093BAE:\n\
     asrs r0, 16\n\
     cmp r0, 0x9F\n\
     bgt _08093BD4\n\
-    ldr r4, _08093C04 @ =gUnknown_03004DE0\n\
+    ldr r4, _08093C04 @ =gScanlineEffectRegBuffers\n\
     ldr r0, _08093C08 @ =0x0000fffc\n\
     adds r2, r1, r0\n\
 _08093BBE:\n\
@@ -882,7 +988,7 @@ _08093BBE:\n\
     ble _08093BBE\n\
 _08093BD4:\n\
     movs r0, 0x1\n\
-    ldr r1, _08093BFC @ =0x02000000\n\
+    ldr r1, _08093BFC @ =gSharedMem\n\
     strb r0, [r1, 0x4]\n\
     mov r2, r8\n\
     movs r4, 0xA\n\
@@ -903,30 +1009,27 @@ _08093BEA:\n\
     pop {r1}\n\
     bx r1\n\
     .align 2, 0\n\
-_08093BFC: .4byte 0x02000000\n\
+_08093BFC: .4byte gSharedMem\n\
 _08093C00: .4byte 0xffff0000\n\
-_08093C04: .4byte gUnknown_03004DE0\n\
+_08093C04: .4byte gScanlineEffectRegBuffers\n\
 _08093C08: .4byte 0x0000fffc\n\
     .syntax divided\n");
 }
 
-bool8 sub_8093C0C(struct TrainerCard *trainerCard)
+bool8 TrainerCard_SwitchToNewSide(struct Task *task)
 {
-    sub_80939C0();
-    sub_8093DAC();
-
-    if (!ewram0.var_3)
-    {
-        sub_80939A4();
+    TrainerCard_DestoryPlayTimeTask();
+    TrainerCard_DrawCard();
+    if (!ewram0_2.backSideShown) {
+        /* This code never runs because it is impossible to flip the back side back to the front side */
+        TrainerCard_CreatePrintPlayTimeTask();
     }
-
-    trainerCard->firstHallOfFameB += 1;
-
+    task->data[0]++;
     return TRUE;
 }
 
-__attribute__((naked))
-bool8 sub_8093C38()
+NAKED
+bool8 TrainerCard_ScaleUpFlipAnimation(struct Task *task)
 {
     asm(".syntax unified\n\
     push {r4-r7,lr}\n\
@@ -936,7 +1039,7 @@ bool8 sub_8093C38()
     push {r5-r7}\n\
     sub sp, 0x4\n\
     mov r8, r0\n\
-    ldr r1, _08093D40 @ =0x02000000\n\
+    ldr r1, _08093D40 @ =gSharedMem\n\
     movs r2, 0\n\
     strb r2, [r1, 0x4]\n\
     ldrh r0, [r0, 0xA]\n\
@@ -976,7 +1079,7 @@ _08093C5C:\n\
     movs r3, 0\n\
     cmp r3, r7\n\
     bcs _08093CB8\n\
-    ldr r2, _08093D48 @ =gUnknown_03004DE0\n\
+    ldr r2, _08093D48 @ =gScanlineEffectRegBuffers\n\
     mov r12, r2\n\
     ldr r0, _08093D4C @ =0x0000fffc\n\
     adds r4, r0, 0\n\
@@ -1002,7 +1105,7 @@ _08093CB8:\n\
     lsrs r7, r4, 16\n\
     cmp r2, r0\n\
     bge _08093CF2\n\
-    ldr r0, _08093D48 @ =gUnknown_03004DE0\n\
+    ldr r0, _08093D48 @ =gScanlineEffectRegBuffers\n\
     mov r9, r0\n\
     ldr r3, _08093D4C @ =0x0000fffc\n\
     mov r12, r3\n\
@@ -1030,7 +1133,7 @@ _08093CF2:\n\
     asrs r0, 16\n\
     cmp r0, 0x9F\n\
     bgt _08093D18\n\
-    ldr r4, _08093D48 @ =gUnknown_03004DE0\n\
+    ldr r4, _08093D48 @ =gScanlineEffectRegBuffers\n\
     ldr r0, _08093D4C @ =0x0000fffc\n\
     adds r2, r1, r0\n\
 _08093D02:\n\
@@ -1047,7 +1150,7 @@ _08093D02:\n\
     ble _08093D02\n\
 _08093D18:\n\
     movs r0, 0x1\n\
-    ldr r1, _08093D40 @ =0x02000000\n\
+    ldr r1, _08093D40 @ =gSharedMem\n\
     strb r0, [r1, 0x4]\n\
     mov r2, r8\n\
     movs r3, 0xA\n\
@@ -1068,216 +1171,119 @@ _08093D2E:\n\
     pop {r1}\n\
     bx r1\n\
     .align 2, 0\n\
-_08093D40: .4byte 0x02000000\n\
+_08093D40: .4byte gSharedMem\n\
 _08093D44: .4byte 0xffff0000\n\
-_08093D48: .4byte gUnknown_03004DE0\n\
+_08093D48: .4byte gScanlineEffectRegBuffers\n\
 _08093D4C: .4byte 0x0000fffc\n\
     .syntax divided\n");
 }
 
-bool8 sub_8093D50(void)
+bool8 TrainerCard_FinishFlipAnimation(struct Task *task)
 {
     u8 taskId;
 
-    ewram0.var_4 = FALSE;
+    ewram0_2.var_4 = FALSE;
     SetHBlankCallback(NULL);
-    sub_8093E04();
-
-    taskId = FindTaskIdByFunc(sub_8093A68);
+    TrainerCard_ResetOffsetRegisters();
+    taskId = FindTaskIdByFunc(TrainerCard_RunFlipAnimationStateMachine);
     DestroyTask(taskId);
-
     return FALSE;
 }
 
-__attribute__((naked))
-void sub_8093D7C(void)
+static void TrainerCard_FlipAnimationHBlankCallback(void)
 {
-    asm(".syntax unified\n\
-    ldr r1, _08093DA0 @ =gUnknown_03004DE0\n\
-    ldr r0, _08093DA4 @ =REG_VCOUNT\n\
-    ldrh r2, [r0]\n\
-    movs r0, 0xFF\n\
-    ands r0, r2\n\
-    lsls r0, 1\n\
-    movs r2, 0xF0\n\
-    lsls r2, 3\n\
-    adds r1, r2\n\
-    adds r0, r1\n\
-    ldrh r1, [r0]\n\
-    ldr r0, _08093DA8 @ =REG_BG0VOFS\n\
-    strh r1, [r0]\n\
-    adds r0, 0x4\n\
-    strh r1, [r0]\n\
-    adds r0, 0x4\n\
-    strh r1, [r0]\n\
-    bx lr\n\
-    .align 2, 0\n\
-_08093DA0: .4byte gUnknown_03004DE0\n\
-_08093DA4: .4byte 0x4000006 @ REG_VCOUNT\n\
-_08093DA8: .4byte 0x4000012 @ REG_BG0VOFS\n\
-    .syntax divided\n");
+    u16 bgVOffset = gScanlineEffectRegBuffers[1][REG_VCOUNT & 0xFF];
+
+    REG_BG0VOFS = bgVOffset;
+    REG_BG1VOFS = bgVOffset;
+    REG_BG2VOFS = bgVOffset;
 }
 
-static void sub_8093DAC(void)
+static void TrainerCard_DrawCard(void)
 {
-    if (ewram0.var_3)
-    {
-        sub_8093DEC();
-    }
+    if (ewram0_2.backSideShown)
+        TrainerCard_DrawCardBack();
     else
-    {
-        sub_8093DC8();
-    }
+        TrainerCard_DrawCardFront();
 }
 
-static void sub_8093DC8(void)
+static void TrainerCard_DrawCardFront(void)
 {
-    MenuZeroFillScreen();
-    sub_80940E4();
+    Menu_EraseScreen();
+    TrainerCard_ClearTrainerGraphics();
     sub_8093F14();
-    sub_8093F80();
-    sub_8093FD0();
-    sub_8094038();
-    sub_8094140();
+    TrainerCard_LoadTrainerTilemap();
+    TrainerCard_DrawStars();
+    TrainerCard_DisplayBadges();
+    TrainerCard_Front_PrintTexts();
 }
 
-static void sub_8093DEC(void)
+static void TrainerCard_DrawCardBack(void)
 {
-    MenuZeroFillScreen();
-    sub_80940E4();
+    Menu_EraseScreen();
+    TrainerCard_ClearTrainerGraphics();
     sub_8093F48();
-    sub_8094188();
+    TrainerCard_Back_PrintTexts();
 }
 
-__attribute__((naked))
-static void sub_8093E04()
+static void TrainerCard_ResetOffsetRegisters(void)
 {
-    asm(".syntax unified\n\
-    ldr r0, _08093E20 @ =REG_BG0VOFS\n\
-    ldr r2, _08093E24 @ =0x0000fffc\n\
-    adds r1, r2, 0\n\
-    strh r1, [r0]\n\
-    adds r0, 0x2\n\
-    movs r2, 0\n\
-    strh r2, [r0]\n\
-    adds r0, 0x2\n\
-    strh r1, [r0]\n\
-    adds r0, 0x2\n\
-    strh r2, [r0]\n\
-    adds r0, 0x2\n\
-    strh r1, [r0]\n\
-    bx lr\n\
-    .align 2, 0\n\
-_08093E20: .4byte 0x4000012 @ REG_BG0VOFS\n\
-_08093E24: .4byte 0x0000fffc\n\
-    .syntax divided\n");
+    REG_BG0VOFS = -4;
+    REG_BG1HOFS = 0;
+    REG_BG1VOFS = -4;
+    REG_BG2HOFS = 0;
+    REG_BG2VOFS = -4;
 }
 
-__attribute__((naked))
-static void sub_8093E28(void)
+static void TrainerCard_CopyGraphics(void)
 {
-    asm(".syntax unified\n\
-    push {r4-r7,lr}\n\
-    bl sub_8093EA0\n\
-    ldr r0, _08093E84 @ =gUnknown_083B5F6C\n\
-    movs r1, 0xE0\n\
-    movs r2, 0x20\n\
-    bl LoadPalette\n\
-    ldr r3, _08093E88 @ =gMenuTrainerCard_Gfx\n\
-    movs r4, 0xC0\n\
-    lsls r4, 19\n\
-    movs r5, 0xA4\n\
-    lsls r5, 5\n\
-    ldr r1, _08093E8C @ =0x040000d4\n\
-    ldr r6, _08093E90 @ =0x80000800\n\
-    movs r2, 0x80\n\
-    lsls r2, 5\n\
-    movs r7, 0x80\n\
-    lsls r7, 24\n\
-_08093E4E:\n\
-    str r3, [r1]\n\
-    str r4, [r1, 0x4]\n\
-    str r6, [r1, 0x8]\n\
-    ldr r0, [r1, 0x8]\n\
-    adds r3, r2\n\
-    adds r4, r2\n\
-    subs r5, r2\n\
-    cmp r5, r2\n\
-    bhi _08093E4E\n\
-    str r3, [r1]\n\
-    str r4, [r1, 0x4]\n\
-    lsrs r0, r5, 1\n\
-    orrs r0, r7\n\
-    str r0, [r1, 0x8]\n\
-    ldr r0, [r1, 0x8]\n\
-    ldr r1, _08093E94 @ =gBadgesTiles\n\
-    ldr r2, _08093E98 @ =0x06001480\n\
-    ldr r0, _08093E8C @ =0x040000d4\n\
-    str r1, [r0]\n\
-    str r2, [r0, 0x4]\n\
-    ldr r1, _08093E9C @ =0x80000200\n\
-    str r1, [r0, 0x8]\n\
-    ldr r0, [r0, 0x8]\n\
-    pop {r4-r7}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_08093E84: .4byte gUnknown_083B5F6C\n\
-_08093E88: .4byte gMenuTrainerCard_Gfx\n\
-_08093E8C: .4byte 0x040000d4\n\
-_08093E90: .4byte 0x80000800\n\
-_08093E94: .4byte gBadgesTiles\n\
-_08093E98: .4byte 0x06001480\n\
-_08093E9C: .4byte 0x80000200\n\
-    .syntax divided\n");
+    TrainerCard_LoadPalettes();
+    LoadPalette(gUnknown_083B5F6C, 0xE0, 32);
+    DmaCopyLarge16(3, gMenuTrainerCard_Gfx, (void *)VRAM, 0x1480, 0x1000);
+    DmaCopy16Defvars(3, gBadgesTiles, (void *)(VRAM + 0x1480), 0x400);
 }
 
-void sub_8093EA0(void)
+extern const u16 *const gTrainerCardPalettes[];
+
+static void TrainerCard_LoadPalettes(void)
 {
-    LoadPalette(gUnknown_083B5EF8[ewram0.var_2], 0, 48 * 2);
+    LoadPalette(gTrainerCardPalettes[ewram0_2.starCount], 0, 48 * 2);
     LoadPalette(gBadgesPalette, 48, 16 * 2);
     LoadPalette(gUnknown_083B5F4C, 64, 16 * 2);
-
-    if (ewram0.var_64.gender != MALE)
-    {
+    if (ewram0_2.displayedCard.gender != MALE)
         LoadPalette(gUnknown_083B5F0C, 16, 16 * 2);
-    }
 }
 
-static void sub_8093EF8(void)
+static void TrainerCard_LoadTrainerGraphics(void)
 {
-    LoadTrainerGfx_TrainerCard(ewram0.var_64.gender, 80, (void *)(VRAM + 0x1880));
+    LoadTrainerGfx_TrainerCard(ewram0_2.displayedCard.gender, 80, (void *)(VRAM + 0x1880));
 }
 
-__attribute__((naked))
 static void sub_8093F14(void)
 {
-    asm(".syntax unified\n\
-    push {lr}\n\
-    sub sp, 0x8\n\
-    ldr r0, _08093F3C @ =gUnknown_083B5EEC\n\
-    ldr r1, [r0, 0x4]\n\
-    ldr r0, [r0]\n\
-    str r0, [sp]\n\
-    str r1, [sp, 0x4]\n\
-    ldr r0, _08093F40 @ =0x02000000\n\
-    ldrb r0, [r0, 0x1]\n\
-    lsls r0, 2\n\
-    add r0, sp\n\
-    ldr r0, [r0]\n\
-    ldr r1, _08093F44 @ =0x06004800\n\
-    movs r2, 0xA0\n\
-    lsls r2, 1\n\
-    bl CpuFastSet\n\
-    add sp, 0x8\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_08093F3C: .4byte gUnknown_083B5EEC\n\
-_08093F40: .4byte 0x02000000\n\
-_08093F44: .4byte 0x06004800\n\
-    .syntax divided\n");
+    const void *arr[] = {gUnknown_08E8CAC0, gUnknown_08E8D4C0};
+
+    CpuFastSet(arr[ewram0_2.isShowingLinkCard], (void *)(VRAM + 0x4800), 0x140);
 }
+
+// I don't really know where to put the data. It's in such a weird order.
+
+const u8 gUnknown_083B5EF4[] = _(" : ");
+
+const u16 *const gTrainerCardPalettes[] =
+{
+    gMenuTrainerCard0Star_Pal,
+    gMenuTrainerCard1Star_Pal,
+    gMenuTrainerCard2Star_Pal,
+    gMenuTrainerCard3Star_Pal,
+    gMenuTrainerCard4Star_Pal,
+};
+
+const u16 gUnknown_083B5F0C[] = INCBIN_U16("graphics/trainer_card/83B5F0C.gbapal");
+const u16 gBadgesPalette[] = INCBIN_U16("graphics/trainer_card/badges.gbapal");
+const u16 gUnknown_083B5F4C[] = INCBIN_U16("graphics/trainer_card/83B5F4C.gbapal");
+const u16 gUnknown_083B5F6C[] = INCBIN_U16("graphics/trainer_card/83B5F6C.gbapal");
+const u16 gTrainerCardBadgesMap[][4] = INCBIN_U16("graphics/trainer_card/83B5F8C_map.bin");
 
 static void sub_8093F48(void)
 {
@@ -1289,287 +1295,100 @@ static void sub_8093F64(void)
     CpuFastSet(gUnknown_08E8D9C0, (void *)(VRAM + 0x5000), 320);
 }
 
-__attribute__((naked))
-static void sub_8093F80(void)
+static void TrainerCard_LoadTrainerTilemap(void)
 {
-    asm(".syntax unified\n\
-    push {r4-r7,lr}\n\
-    movs r5, 0xC4\n\
-    ldr r7, _08093FCC @ =0x06004000\n\
-    movs r1, 0x5\n\
-    movs r0, 0xA0\n\
-    lsls r0, 7\n\
-    adds r6, r0, 0\n\
-_08093F8E:\n\
-    movs r0, 0x13\n\
-    lsls r3, r1, 16\n\
-    asrs r4, r3, 11\n\
-_08093F94:\n\
-    lsls r2, r0, 16\n\
-    asrs r2, 16\n\
-    adds r1, r4, r2\n\
-    lsls r1, 1\n\
-    adds r1, r7\n\
-    adds r0, r5, 0\n\
-    orrs r0, r6\n\
-    strh r0, [r1]\n\
-    adds r2, 0x1\n\
-    lsls r2, 16\n\
-    adds r0, r5, 0x1\n\
-    lsls r0, 16\n\
-    lsrs r5, r0, 16\n\
-    lsrs r0, r2, 16\n\
-    asrs r2, 16\n\
-    cmp r2, 0x1A\n\
-    ble _08093F94\n\
-    movs r1, 0x80\n\
-    lsls r1, 9\n\
-    adds r0, r3, r1\n\
-    lsrs r1, r0, 16\n\
-    asrs r0, 16\n\
-    cmp r0, 0xC\n\
-    ble _08093F8E\n\
-    pop {r4-r7}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_08093FCC: .4byte 0x06004000\n\
-    .syntax divided\n");
+    u16 r5 = 0xC4;
+    u16 *ptr = (u16 *)(VRAM + 0x4000);
+    s16 i;
+    s16 j;
+
+    for (i = 5; i < 13; i++)
+    {
+        for (j = 19; j < 27; j++, r5++)
+            ptr[i * 32 + j] = r5 | 0x5000;
+    }
 }
 
-__attribute__((naked))
-static void sub_8093FD0(void)
+static void TrainerCard_DrawStars(void)
 {
-    asm(".syntax unified\n\
-    push {r4-r6,lr}\n\
-    ldr r4, _0809402C @ =0x06004000\n\
-    movs r2, 0xF\n\
-    ldr r0, _08094030 @ =0x02000000\n\
-    ldrb r0, [r0, 0x2]\n\
-    adds r0, 0xF\n\
-    cmp r2, r0\n\
-    bge _08094002\n\
-    movs r6, 0xC0\n\
-    lsls r6, 1\n\
-    ldr r1, _08094034 @ =0x0000408f\n\
-    adds r5, r1, 0\n\
-    adds r3, r0, 0\n\
-_08093FEA:\n\
-    lsls r1, r2, 16\n\
-    asrs r1, 16\n\
-    lsls r0, r1, 1\n\
-    adds r0, r4\n\
-    adds r0, r6\n\
-    strh r5, [r0]\n\
-    adds r1, 0x1\n\
-    lsls r1, 16\n\
-    lsrs r2, r1, 16\n\
-    asrs r1, 16\n\
-    cmp r1, r3\n\
-    blt _08093FEA\n\
-_08094002:\n\
-    lsls r1, r2, 16\n\
-    asrs r0, r1, 16\n\
-    cmp r0, 0x12\n\
-    bgt _08094024\n\
-    movs r3, 0xC0\n\
-    lsls r3, 1\n\
-    movs r2, 0\n\
-_08094010:\n\
-    asrs r0, r1, 16\n\
-    lsls r1, r0, 1\n\
-    adds r1, r4\n\
-    adds r1, r3\n\
-    strh r2, [r1]\n\
-    adds r0, 0x1\n\
-    lsls r1, r0, 16\n\
-    asrs r0, r1, 16\n\
-    cmp r0, 0x12\n\
-    ble _08094010\n\
-_08094024:\n\
-    pop {r4-r6}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_0809402C: .4byte 0x06004000\n\
-_08094030: .4byte 0x02000000\n\
-_08094034: .4byte 0x0000408f\n\
-    .syntax divided\n");
+    u16 *ptr = (u16 *)(VRAM + 0x4000);
+    s16 i = 15;
+    s16 var = 15 + ewram0_2.starCount;
+
+    while (i < var)
+    {
+        ptr[6 * 32 + i] = 0x408F;
+        i++;
+    }
+    while (i < 0x13)
+    {
+        ptr[6 * 32 + i] = 0;
+        i++;
+    }
 }
 
-__attribute__((naked))
-static void sub_8094038(void)
+static void TrainerCard_DisplayBadges(void)
 {
-    asm(".syntax unified\n\
-    push {r4-r7,lr}\n\
-    mov r7, r9\n\
-    mov r6, r8\n\
-    push {r6,r7}\n\
-    ldr r1, _080940D0 @ =0x02000000\n\
-    ldrb r0, [r1, 0x1]\n\
-    cmp r0, 0\n\
-    bne _080940C2\n\
-    ldr r0, _080940D4 @ =0x06004000\n\
-    mov r9, r0\n\
-    movs r0, 0\n\
-    movs r2, 0x4\n\
-    adds r1, 0xE\n\
-    mov r8, r1\n\
-    ldr r7, _080940D8 @ =gUnknown_083B5F8C\n\
-    movs r1, 0xC0\n\
-    lsls r1, 6\n\
-    adds r6, r1, 0\n\
-    adds r1, r7, 0x6\n\
-    mov r12, r1\n\
-_08094060:\n\
-    lsls r0, 16\n\
-    asrs r4, r0, 16\n\
-    mov r1, r8\n\
-    adds r0, r4, r1\n\
-    ldrb r0, [r0]\n\
-    lsls r5, r2, 16\n\
-    cmp r0, 0\n\
-    beq _080940AE\n\
-    asrs r1, r5, 15\n\
-    add r1, r9\n\
-    movs r2, 0xF0\n\
-    lsls r2, 2\n\
-    adds r3, r1, r2\n\
-    lsls r2, r4, 3\n\
-    adds r0, r2, r7\n\
-    ldrh r0, [r0]\n\
-    orrs r0, r6\n\
-    strh r0, [r3]\n\
-    ldr r0, _080940DC @ =0x000003c2\n\
-    adds r3, r1, r0\n\
-    adds r0, r7, 0x2\n\
-    adds r0, r2, r0\n\
-    ldrh r0, [r0]\n\
-    orrs r0, r6\n\
-    strh r0, [r3]\n\
-    movs r0, 0x80\n\
-    lsls r0, 3\n\
-    adds r3, r1, r0\n\
-    adds r0, r7, 0x4\n\
-    adds r0, r2, r0\n\
-    ldrh r0, [r0]\n\
-    orrs r0, r6\n\
-    strh r0, [r3]\n\
-    ldr r0, _080940E0 @ =0x00000402\n\
-    adds r1, r0\n\
-    add r2, r12\n\
-    ldrh r0, [r2]\n\
-    orrs r0, r6\n\
-    strh r0, [r1]\n\
-_080940AE:\n\
-    adds r1, r4, 0x1\n\
-    lsls r1, 16\n\
-    movs r2, 0xC0\n\
-    lsls r2, 10\n\
-    adds r0, r5, r2\n\
-    lsrs r2, r0, 16\n\
-    lsrs r0, r1, 16\n\
-    asrs r1, 16\n\
-    cmp r1, 0x7\n\
-    ble _08094060\n\
-_080940C2:\n\
-    pop {r3,r4}\n\
-    mov r8, r3\n\
-    mov r9, r4\n\
-    pop {r4-r7}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_080940D0: .4byte 0x02000000\n\
-_080940D4: .4byte 0x06004000\n\
-_080940D8: .4byte gUnknown_083B5F8C\n\
-_080940DC: .4byte 0x000003c2\n\
-_080940E0: .4byte 0x00000402\n\
-    .syntax divided\n");
+    if (!ewram0_2.isShowingLinkCard)
+    {
+        u16 *ptr = (u16 *)(VRAM + 0x4000);
+        s16 i;
+        s16 r2;
+
+        for (i = 0, r2 = 4; i < 8; i++, r2 += 3)
+        {
+            if (ewram0_2.ownedBadges[i] != 0)
+            {
+                ptr[15 * 32 + r2 + 0] = gTrainerCardBadgesMap[i][0] | 0x3000;
+                ptr[15 * 32 + r2 + 1] = gTrainerCardBadgesMap[i][1] | 0x3000;
+                ptr[16 * 32 + r2 + 0] = gTrainerCardBadgesMap[i][2] | 0x3000;
+                ptr[16 * 32 + r2 + 1] = gTrainerCardBadgesMap[i][3] | 0x3000;
+            }
+        }
+    }
 }
 
-__attribute__((naked))
-static void sub_80940E4()
+static void TrainerCard_ClearTrainerGraphics(void)
 {
-    asm(".syntax unified\n\
-    push {r4,lr}\n\
-    movs r2, 0\n\
-    ldr r1, _08094108 @ =0x06004000\n\
-    movs r4, 0\n\
-    ldr r3, _0809410C @ =0x000003ff\n\
-_080940EE:\n\
-    strh r4, [r1]\n\
-    lsls r0, r2, 16\n\
-    movs r2, 0x80\n\
-    lsls r2, 9\n\
-    adds r0, r2\n\
-    adds r1, 0x2\n\
-    lsrs r2, r0, 16\n\
-    asrs r0, 16\n\
-    cmp r0, r3\n\
-    ble _080940EE\n\
-    pop {r4}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_08094108: .4byte 0x06004000\n\
-_0809410C: .4byte 0x000003ff\n\
-    .syntax divided\n");
+    s16 i;
+    u16 *ptr;
+
+    for (i = 0, ptr = (u16 *)(VRAM + 0x4000); i < 0x400; i++, ptr++)
+        *ptr = 0;
 }
 
-__attribute__((naked))
-static void sub_8094110()
+static void TrainerCard_ClearPokedexLabel(void)
 {
-    asm(".syntax unified\n\
-    push {r4-r6,lr}\n\
-    ldr r6, _0809413C @ =0x06004800\n\
-    movs r2, 0x3\n\
-    movs r5, 0xA0\n\
-    lsls r5, 2\n\
-    movs r3, 0x1\n\
-    movs r4, 0xB0\n\
-    lsls r4, 2\n\
-_08094120:\n\
-    lsls r0, r2, 1\n\
-    adds r0, r6\n\
-    adds r1, r0, r5\n\
-    strh r3, [r1]\n\
-    adds r0, r4\n\
-    strh r3, [r0]\n\
-    adds r0, r2, 0x1\n\
-    lsls r0, 16\n\
-    lsrs r2, r0, 16\n\
-    cmp r2, 0x10\n\
-    bls _08094120\n\
-    pop {r4-r6}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_0809413C: .4byte 0x06004800\n\
-    .syntax divided\n");
+    u16 *ptr = (u16 *)(VRAM + 0x4800);
+    u16 i;
+
+    for (i = 3; i < 17; i++)
+    {
+        ptr[10 * 32 + i] = 1;
+        ptr[11 * 32 + i] = 1;
+    }
 }
 
-
-static void sub_8094140(void)
+static void TrainerCard_Front_PrintTexts(void)
 {
     u8 *buffer;
 
-    BasicInitMenuWindow(&WindowConfig_TrainerCard_Back_Values);
+    BasicInitMenuWindow(&gWindowTemplate_TrainerCard_Back_Values);
 
     buffer = gStringVar1;
-    StringCopy(buffer, ewram0.var_64.playerName);
-    ConvertInternationalString(buffer, ewram0.language);
-    MenuPrint(buffer, 7, 5);
+    StringCopy(buffer, ewram0_2.displayedCard.playerName);
+    ConvertInternationalString(buffer, ewram0_2.language);
+    Menu_PrintText(buffer, 7, 5);
 
     TrainerCard_Front_PrintTrainerID();
     TrainerCard_Front_PrintMoney();
     TrainerCard_Front_PrintPokedexCount();
-    sub_809429C();
+    TrainerCard_PrintEasyChatPhrase();
 }
 
-static void sub_8094188(void)
+static void TrainerCard_Back_PrintTexts(void)
 {
-    BasicInitMenuWindow(&WindowConfig_TrainerCard_Back_Values);
+    BasicInitMenuWindow(&gWindowTemplate_TrainerCard_Back_Values);
     TrainerCard_Back_PrintName();
     TrainerCard_Back_PrintHallOfFameTime_Label();
     TrainerCard_Back_PrintLinkBattlesLabel();
@@ -1578,7 +1397,7 @@ static void sub_8094188(void)
     TrainerCard_Back_PrintLinkPokeblocks_Label();
     TrainerCard_Back_PrintPokemonTrades_Label();
 
-    BasicInitMenuWindow(&WindowConfig_TrainerCard_Back_Labels);
+    BasicInitMenuWindow(&gWindowTemplate_TrainerCard_Back_Labels);
     TrainerCard_Back_PrintHallOfFameTime();
     TrainerCard_Back_PrintLinkBattles();
     TrainerCard_Back_PrintBattleTower();
@@ -1591,30 +1410,35 @@ static void TrainerCard_Front_PrintTrainerID(void)
 {
     u8 buffer[8];
 
-    ConvertIntToDecimalStringN(buffer, ewram0.var_64.trainerId, STR_CONV_MODE_LEADING_ZEROS, 5);
-    MenuPrint(buffer, 20, 2);
+    ConvertIntToDecimalStringN(buffer, ewram0_2.displayedCard.trainerId, STR_CONV_MODE_LEADING_ZEROS, 5);
+    Menu_PrintText(buffer, 20, 2);
 }
 
 static void TrainerCard_Front_PrintMoney(void)
 {
-    sub_80B7AEC(ewram0.var_64.money, 16, 8);
+    sub_80B7AEC(ewram0_2.displayedCard.money, 16, 8);
 }
 
 static void TrainerCard_Front_PrintPokedexCount(void)
 {
     u8 buffer[16];
 
-    if (ewram0.var_7 == FALSE)
+    if (
+#if DEBUG
+     gDebug_03000748 == 0 &&
+#endif
+     !ewram0_2.showPokedexCount)
     {
-        sub_8094110();
-        return;
+        TrainerCard_ClearPokedexLabel();
     }
-
-    ConvertIntToDecimalStringN(buffer, ewram0.var_64.pokedexSeen, STR_CONV_MODE_LEFT_ALIGN, 3);
-    MenuPrint_RightAligned(buffer, 16, 10);
+    else
+    {
+        ConvertIntToDecimalStringN(buffer, ewram0_2.displayedCard.pokedexSeen, STR_CONV_MODE_LEFT_ALIGN, 3);
+        MenuPrint_RightAligned(buffer, 16, 10);
+    }
 }
 
-static void TrainerCard_Front_PrintPlayTime(u8 *arg1, s16 colon)
+static void TrainerCard_Front_GetPlayTimeString(u8 *arg1, s16 colon)
 {
     u8 buffer[16];
     u16 playTimeHours;
@@ -1622,39 +1446,35 @@ static void TrainerCard_Front_PrintPlayTime(u8 *arg1, s16 colon)
 
     playTimeHours = gSaveBlock2.playTimeHours;
     playTimeMinutes = gSaveBlock2.playTimeMinutes;
-
-    if (ewram0.var_1 != 0)
+    if (ewram0_2.isShowingLinkCard != 0)
     {
-        playTimeHours = ewram0.var_64.playTimeHours;
-        playTimeMinutes = ewram0.var_64.playTimeMinutes;
+        playTimeHours = ewram0_2.displayedCard.playTimeHours;
+        playTimeMinutes = ewram0_2.displayedCard.playTimeMinutes;
     }
-
     FormatPlayTime(buffer, playTimeHours, playTimeMinutes, colon);
-    sub_8072C74(arg1, buffer, 48, 1);
+    AlignStringInMenuWindow(arg1, buffer, 48, 1);
 }
 
-static void sub_809429C(void)
+static void TrainerCard_PrintEasyChatPhrase(void)
 {
     u8 *str;
 
-    if (ewram0.var_1 == FALSE)
+    if (ewram0_2.isShowingLinkCard != 0)
     {
-        return;
+        str = gStringVar1;
+        str = StringCopy(str, ewram0_2.easyChatPhrase[0]);
+        str[0] = 00;
+        str++;
+        str = StringCopy(str, ewram0_2.easyChatPhrase[1]);
+        Menu_PrintText(gStringVar1, 2, 14);
+
+        str = gStringVar1;
+        str = StringCopy(str, ewram0_2.easyChatPhrase[2]);
+        str[0] = 00;
+        str++;
+        str = StringCopy(str, ewram0_2.easyChatPhrase[3]);
+        Menu_PrintText(gStringVar1, 2, 16);
     }
-
-    str = gStringVar1;
-    str = StringCopy(str, ewram0.var_20[0]);
-    str[0] = 00;
-    str++;
-    str = StringCopy(str, ewram0.var_20[1]);
-    MenuPrint(gStringVar1, 2, 14);
-
-    str = gStringVar1;
-    str = StringCopy(str, ewram0.var_20[2]);
-    str[0] = 00;
-    str++;
-    str = StringCopy(str, ewram0.var_20[3]);
-    MenuPrint(gStringVar1, 2, 16);
 }
 
 static void TrainerCard_Back_PrintName(void)
@@ -1662,162 +1482,129 @@ static void TrainerCard_Back_PrintName(void)
     u8 *str;
 
     str = gStringVar1;
-    StringCopy(str, ewram0.var_64.playerName);
-    ConvertInternationalString(str, ewram0.language);
+    StringCopy(str, ewram0_2.displayedCard.playerName);
+    ConvertInternationalString(str, ewram0_2.language);
 
+#if ENGLISH
     StringAppend(str, gOtherText_TrainersTrainerCard);
+#elif GERMAN
+    de_sub_8073174(str, gOtherText_TrainersTrainerCard);
+#endif
 
     MenuPrint_RightAligned(gStringVar1, 28, 2);
 }
 
 static void TrainerCard_Back_PrintHallOfFameTime_Label(void)
 {
-    if (ewram0.var_8 == FALSE)
-    {
-        return;
-    }
-
-    MenuPrint(gOtherText_FirstHOF, 3, 5);
+    if (ewram0_2.showHallOfFame != 0)
+        Menu_PrintText(gOtherText_FirstHOF, 3, 5);
 }
 
 static void TrainerCard_Back_PrintHallOfFameTime(void)
 {
     u8 *str;
 
-    if (ewram0.var_8 == FALSE)
+    if (ewram0_2.showHallOfFame != 0)
     {
-        return;
+        str = gStringVar1;
+        str = ConvertIntToDecimalStringN(str, ewram0_2.displayedCard.firstHallOfFameA, STR_CONV_MODE_RIGHT_ALIGN, 3);
+        str = StringCopy(str, gUnknown_083B5EF4);
+        str = ConvertIntToDecimalStringN(str, ewram0_2.displayedCard.firstHallOfFameB, STR_CONV_MODE_LEADING_ZEROS, 2);
+        str = StringCopy(str, gUnknown_083B5EF4);
+        str = ConvertIntToDecimalStringN(str, ewram0_2.displayedCard.firstHallOfFameC, STR_CONV_MODE_LEADING_ZEROS, 2);
+        MenuPrint_RightAligned(gStringVar1, 28, 5);
     }
-
-    str = gStringVar1;
-    str = ConvertIntToDecimalStringN(str, ewram0.var_64.firstHallOfFameA, STR_CONV_MODE_RIGHT_ALIGN, 3);
-    str = StringCopy(str, gUnknown_083B5EF4);
-    str = ConvertIntToDecimalStringN(str, ewram0.var_64.firstHallOfFameB, STR_CONV_MODE_LEADING_ZEROS, 2);
-    str = StringCopy(str, gUnknown_083B5EF4);
-    str = ConvertIntToDecimalStringN(str, ewram0.var_64.firstHallOfFameC, STR_CONV_MODE_LEADING_ZEROS, 2);
-
-    MenuPrint_RightAligned(gStringVar1, 28, 5);
 }
 
 static void TrainerCard_Back_PrintLinkBattlesLabel(void)
 {
-    if (ewram0.var_9 == FALSE)
-    {
-        return;
-    }
-
-    MenuPrint(gOtherText_LinkCableBattles, 3, 7);
+    if (ewram0_2.showLinkBattleStatus != 0)
+        Menu_PrintText(gOtherText_LinkCableBattles, 3, 7);
 }
 
 static void TrainerCard_Back_PrintLinkBattles(void)
 {
     u8 buffer[16];
 
-    if (ewram0.var_9 == FALSE)
+    if (ewram0_2.showLinkBattleStatus != 0)
     {
-        return;
+        ConvertIntToDecimalString(buffer, ewram0_2.displayedCard.linkBattleWins);
+        MenuPrint_RightAligned(buffer, 22, 7);
+
+        ConvertIntToDecimalString(buffer, ewram0_2.displayedCard.linkBattleLosses);
+        MenuPrint_RightAligned(buffer, 28, 7);
     }
-
-    ConvertIntToDecimalString(buffer, ewram0.var_64.linkBattleWins);
-    MenuPrint_RightAligned(buffer, 22, 7);
-
-    ConvertIntToDecimalString(buffer, ewram0.var_64.linkBattleLosses);
-    MenuPrint_RightAligned(buffer, 28, 7);
 }
 
 static void TrainerCard_Back_PrintBattleTower_Label(void)
 {
-    if (ewram0.var_a == FALSE)
-    {
-        return;
-    }
-
-    MenuPrint(gOtherText_BattleTowerWinRecord, 3, 15);
+    if (ewram0_2.showBattleTowerStatus != 0)
+        Menu_PrintText(gOtherText_BattleTowerWinRecord, 3, 15);
 }
 
 static void TrainerCard_Back_PrintBattleTower(void)
 {
     u8 buffer[16];
 
-    if (ewram0.var_a == FALSE)
+    if (ewram0_2.showBattleTowerStatus != 0)
     {
-        return;
+        AlignInt2InMenuWindow(buffer, ewram0_2.displayedCard.battleTowerWins, 24, 1);
+        Menu_PrintTextPixelCoords(buffer, 112, 120, 0);
+
+        AlignInt2InMenuWindow(buffer, ewram0_2.displayedCard.battleTowerLosses, 24, 1);
+        Menu_PrintTextPixelCoords(buffer, 149, 120, 0);
     }
-
-    sub_8072C44(buffer, ewram0.var_64.battleTowerWins, 24, 1);
-    MenuPrint_PixelCoords(buffer, 112, 120, 0);
-
-    sub_8072C44(buffer, ewram0.var_64.battleTowerLosses, 24, 1);
-    MenuPrint_PixelCoords(buffer, 149, 120, 0);
 }
 
 static void TrainerCard_Back_PrintLinkContests_Label(void)
 {
-    if (ewram0.var_b == FALSE)
-    {
-        return;
-    }
-
-    MenuPrint(gOtherText_ContestRecord, 3, 13);
+    if (ewram0_2.showContestRecord != 0)
+        Menu_PrintText(gOtherText_ContestRecord, 3, 13);
 }
 
 static void TrainerCard_Back_PrintLinkContests(void)
 {
     u8 buffer[8];
 
-    if (ewram0.var_b == FALSE)
+    if (ewram0_2.showContestRecord != 0)
     {
-        return;
+        ConvertIntToDecimalStringN(buffer, ewram0_2.displayedCard.contestsWithFriends, STR_CONV_MODE_RIGHT_ALIGN, 3);
+        MenuPrint_RightAligned(buffer, 28, 13);
     }
-
-    ConvertIntToDecimalStringN(buffer, ewram0.var_64.contestsWithFriends, STR_CONV_MODE_RIGHT_ALIGN, 3);
-    MenuPrint_RightAligned(buffer, 28, 13);
 }
 
 static void TrainerCard_Back_PrintLinkPokeblocks_Label(void)
 {
-    if (ewram0.var_c == FALSE)
-    {
-        return;
-    }
-
-    MenuPrint(gOtherText_MixingRecord, 3, 11);
+    if (ewram0_2.showMixingRecord != 0)
+        Menu_PrintText(gOtherText_MixingRecord, 3, 11);
 }
 
 static void TrainerCard_Back_PrintLinkPokeblocks(void)
 {
     u8 buffer[8];
 
-    if (ewram0.var_c == FALSE)
+    if (ewram0_2.showMixingRecord != 0)
     {
-        return;
+        ConvertIntToDecimalStringN(buffer, ewram0_2.displayedCard.pokeblocksWithFriends, STR_CONV_MODE_RIGHT_ALIGN, 5);
+        MenuPrint_RightAligned(buffer, 28, 11);
     }
-
-    ConvertIntToDecimalStringN(buffer, ewram0.var_64.pokeblocksWithFriends, STR_CONV_MODE_RIGHT_ALIGN, 5);
-    MenuPrint_RightAligned(buffer, 28, 11);
 }
 
 static void TrainerCard_Back_PrintPokemonTrades_Label(void)
 {
-    if (ewram0.var_d == FALSE)
-    {
-        return;
-    }
-
-    MenuPrint(gOtherText_TradeRecord, 3, 9);
+    if (ewram0_2.showTradingRecord != 0)
+        Menu_PrintText(gOtherText_TradeRecord, 3, 9);
 }
 
 static void TrainerCard_Back_PrintPokemonTrades(void)
 {
     u8 buffer[8];
 
-    if (ewram0.var_d == FALSE)
+    if (ewram0_2.showTradingRecord != 0)
     {
-        return;
+        ConvertIntToDecimalStringN(buffer, ewram0_2.displayedCard.pokemonTrades, STR_CONV_MODE_RIGHT_ALIGN, 5);
+        MenuPrint_RightAligned(buffer, 28, 9);
     }
-
-    ConvertIntToDecimalStringN(buffer, ewram0.var_64.pokemonTrades, STR_CONV_MODE_RIGHT_ALIGN, 5);
-    MenuPrint_RightAligned(buffer, 28, 9);
 }
 
 void unref_sub_8094588(u16 left, u16 top)
@@ -1825,9 +1612,6 @@ void unref_sub_8094588(u16 left, u16 top)
     const u8 *text = gOtherText_Boy;
 
     if (gSaveBlock2.playerGender == FEMALE)
-    {
         text = gOtherText_Girl;
-    }
-
-    MenuPrint(text, (u8)left, (u8)top);
+    Menu_PrintText(text, left, top);
 }

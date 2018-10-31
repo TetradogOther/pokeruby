@@ -1,21 +1,23 @@
 #include "global.h"
 #include "mystery_event_menu.h"
-#include "asm.h"
 #include "link.h"
 #include "main.h"
 #include "menu.h"
+#include "mystery_event_script.h"
 #include "palette.h"
 #include "save.h"
-#include "songs.h"
+#include "constants/songs.h"
 #include "sound.h"
 #include "sprite.h"
 #include "string_util.h"
 #include "strings2.h"
 #include "task.h"
 #include "text.h"
+#include "title_screen.h"
+#include "ewram.h"
+#include "debug.h"
 
-extern u8 unk_2000000[];
-extern u8 gUnknown_02039338;
+static EWRAM_DATA u8 gUnknown_02039338 = 0;
 
 static void VBlankCB(void);
 static bool8 CheckLanguageMatch(void);
@@ -45,9 +47,9 @@ void CB2_InitMysteryEventMenu(void)
     FreeAllSpritePalettes();
     ResetTasks();
     SetVBlankCallback(VBlankCB);
-    SetUpWindowConfig(&gWindowConfig_81E6CE4);
-    InitMenuWindow(&gWindowConfig_81E6CE4);
-    MenuZeroFillScreen();
+    Text_LoadWindowTemplate(&gMenuTextWindowTemplate);
+    InitMenuWindow(&gMenuTextWindowTemplate);
+    Menu_EraseScreen();
     REG_DISPCNT = DISPCNT_MODE_0 | DISPCNT_OBJ_1D_MAP | DISPCNT_BG0_ON;
     REG_BLDCNT = 0;
     CreateTask(Task_DestroySelf, 0);
@@ -86,18 +88,18 @@ static void CB2_MysteryEventMenu(void)
     switch (gMain.state)
     {
     case 0:
-        MenuDrawTextWindow(0, 14, 29, 19);
-        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0x10, 0, 0);
+        Menu_DrawStdWindowFrame(0, 14, 29, 19);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
         gMain.state++;
         break;
     case 1:
         if (gPaletteFade.active)
             break;
-        sub_8072044(gSystemText_LinkStandby);
+        MenuPrintMessageDefaultCoords(gSystemText_LinkStandby);
         gMain.state++;
         break;
     case 2:
-        if (MenuUpdateWindowText())
+        if (Menu_UpdateWindowText())
         {
             gMain.state++;
             gLinkType = 21761;
@@ -108,7 +110,7 @@ static void CB2_MysteryEventMenu(void)
         if ((gLinkStatus & 0x20) && (gLinkStatus & 0x1C) > 4)
         {
             PlaySE(SE_PIN);
-            sub_8072044(gSystemText_LoadEventPressA);
+            MenuPrintMessageDefaultCoords(gSystemText_LoadEventPressA);
             gMain.state++;
         }
         if (gMain.newKeys & B_BUTTON)
@@ -119,7 +121,7 @@ static void CB2_MysteryEventMenu(void)
         }
         break;
     case 4:
-        if (MenuUpdateWindowText())
+        if (Menu_UpdateWindowText())
             gMain.state++;
         break;
 #ifdef NONMATCHING
@@ -127,7 +129,7 @@ static void CB2_MysteryEventMenu(void)
         if (GetLinkPlayerCount_2() != 2)
         {
             GetEventLoadMessage(gStringVar4, 1);
-            sub_8072044(gStringVar4);
+            MenuPrintMessageDefaultCoords(gStringVar4);
             gMain.state = 13;
             break;
         }
@@ -135,8 +137,8 @@ static void CB2_MysteryEventMenu(void)
         {
             PlaySE(SE_SELECT);
             sub_8007F4C();
-            MenuDrawTextWindow(6, 5, 23, 8);
-            MenuPrint(gSystemText_LoadingEvent, 7, 6);
+            Menu_DrawStdWindowFrame(6, 5, 23, 8);
+            Menu_PrintText(gSystemText_LoadingEvent, 7, 6);
             gMain.state++;
         }
         else if (gMain.newKeys & B_BUTTON)
@@ -155,24 +157,24 @@ static void CB2_MysteryEventMenu(void)
             if (GetLinkPlayerDataExchangeStatusTimed() == 3)
             {
                 sub_800832C();
-                MenuZeroFillWindowRect(6, 5, 23, 8);
+                Menu_EraseWindowRect(6, 5, 23, 8);
                 GetEventLoadMessage(gStringVar4, 1);
-                sub_8072044(gStringVar4);
+                MenuPrintMessageDefaultCoords(gStringVar4);
                 gMain.state = 13;
                 break;
             }
             else if (CheckLanguageMatch())
             {
-                sub_8072044(gSystemText_DontCutLink);
+                MenuPrintMessageDefaultCoords(gSystemText_DontCutLink);
                 gMain.state++;
                 break;
             }
             else
             {
                 CloseLink();
-                MenuZeroFillWindowRect(6, 5, 23, 8);
+                Menu_EraseWindowRect(6, 5, 23, 8);
                 GetEventLoadMessage(gStringVar4, 1);
-                sub_8072044(gStringVar4);
+                MenuPrintMessageDefaultCoords(gStringVar4);
                 gMain.state = 13;
                 break;
             }
@@ -195,8 +197,8 @@ static void CB2_MysteryEventMenu(void)
         {
             PlaySE(SE_SELECT);
             sub_8007F4C();
-            MenuDrawTextWindow(6, 5, 23, 8);
-            MenuPrint(gSystemText_LoadingEvent, 7, 6);
+            Menu_DrawStdWindowFrame(6, 5, 23, 8);
+            Menu_PrintText(gSystemText_LoadingEvent, 7, 6);
             gMain.state++;
         }
         else if (gMain.newKeys & B_BUTTON)
@@ -219,9 +221,9 @@ static void CB2_MysteryEventMenu(void)
             if (GetLinkPlayerDataExchangeStatusTimed() == 3)
             {
                 sub_800832C();
-                MenuZeroFillWindowRect(6, 5, 23, 8);
+                Menu_EraseWindowRect(6, 5, 23, 8);
                 GetEventLoadMessage(gStringVar4, 1);
-                sub_8072044(gStringVar4);
+                MenuPrintMessageDefaultCoords(gStringVar4);
                 ptr = (u8 *)&gMain;
                 offset1 = offsetof(struct Main, state);
                 asm("" ::: "r1");
@@ -233,7 +235,7 @@ static void CB2_MysteryEventMenu(void)
                 register u8 *ptr2 asm("r1");
                 register int offset3 asm("r0");
                 register int dummy asm("r2");
-                sub_8072044(gSystemText_DontCutLink);
+                MenuPrintMessageDefaultCoords(gSystemText_DontCutLink);
                 ptr2 = (u8 *)&gMain;
                 offset3 = offsetof(struct Main, state);
                 if (dummy)
@@ -245,10 +247,10 @@ static void CB2_MysteryEventMenu(void)
             else
             {
                 CloseLink();
-                MenuZeroFillWindowRect(6, 5, 23, 8);
+                Menu_EraseWindowRect(6, 5, 23, 8);
             label:
                 GetEventLoadMessage(gStringVar4, 1);
-                sub_8072044(gStringVar4);
+                MenuPrintMessageDefaultCoords(gStringVar4);
                 ptr = (u8 *)&gMain;
                 offset2 = offsetof(struct Main, state);
                 ptr += offset2;
@@ -266,7 +268,7 @@ static void CB2_MysteryEventMenu(void)
         break;
 #endif
     case 7:
-        if (MenuUpdateWindowText())
+        if (Menu_UpdateWindowText())
             gMain.state++;
         break;
     case 8:
@@ -286,19 +288,19 @@ static void CB2_MysteryEventMenu(void)
     case 11:
         if (gReceivedRemoteLinkPlayers)
             break;
-        unkVal = sub_812613C(unk_2000000);
-        CpuFill32(0, unk_2000000, 0x7D4);
+        unkVal = RunMysteryEventScript(gSharedMem);
+        CpuFill32(0, gSharedMem, 0x7D4);
         if (!GetEventLoadMessage(gStringVar4, unkVal))
-            TrySavingData(NORMAL_SAVE);
+            Save_WriteData(SAVE_NORMAL);
         gMain.state++;
         break;
     case 12:
-        sub_8072044(gStringVar4);
+        MenuPrintMessageDefaultCoords(gStringVar4);
         gMain.state++;
         break;
     case 13:
-        MenuZeroFillWindowRect(6, 5, 23, 8);
-        if (MenuUpdateWindowText())
+        Menu_EraseWindowRect(6, 5, 23, 8);
+        if (Menu_UpdateWindowText())
         {
             gMain.state++;
             gUnknown_02039338 = 0;
@@ -312,7 +314,7 @@ static void CB2_MysteryEventMenu(void)
         }
         break;
     case 15:
-        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 0x10, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
         gMain.state++;
         break;
     case 16:
@@ -326,9 +328,9 @@ static void CB2_MysteryEventMenu(void)
         if (!IsLinkMaster())
         {
             CloseLink();
-            MenuZeroFillWindowRect(6, 5, 23, 8);
+            Menu_EraseWindowRect(6, 5, 23, 8);
             GetEventLoadMessage(gStringVar4, 1);
-            sub_8072044(gStringVar4);
+            MenuPrintMessageDefaultCoords(gStringVar4);
             gMain.state = 13;
         }
     }
@@ -338,3 +340,154 @@ static void CB2_MysteryEventMenu(void)
     BuildOamBuffer();
     UpdatePaletteFade();
 }
+
+#if DEBUG
+
+static const u8 Str_843DA70[] = _("CARDーE　emulation。。。");
+static const u8 Str_843DA84[] = _("LR:　select　A:　send。");
+static const u8 Str_843DA98[] = _("sending。。。");
+static const u8 Str_843DAA3[] = _("completed。");
+
+
+void debug_sub_815D1D8();
+
+void debug_sub_815D04C(u8 taskId)
+{
+    if (gTasks[taskId].data[0] == 0)
+    {
+        Menu_DrawStdWindowFrame(4, 4, 13, 7);
+        Menu_PrintText(gUnknown_Debug_842E2D0[gTasks[taskId].data[1]].text, 5, 5);
+        gTasks[taskId].data[0]++;
+    }
+
+    if (gMain.newKeys & 0x20)
+    {
+        if (gTasks[taskId].data[1] == 0)
+            gTasks[taskId].data[1] = gUnknown_Debug_842E350 - 1;
+        else
+            gTasks[taskId].data[1]--;
+        gTasks[taskId].data[0] = 0;
+    }
+    if (gMain.newKeys & 0x10)
+    {
+        if (gTasks[taskId].data[1] == gUnknown_Debug_842E350 - 1)
+            gTasks[taskId].data[1] = 0;
+        else
+            gTasks[taskId].data[1]++;
+        gTasks[taskId].data[0] = 0;
+    }
+    if (gMain.newKeys & A_BUTTON)
+    {
+        // TODO: fix this
+        s32 var = gTasks[taskId].data[1];
+        asm(""::"r"(var * 8));
+        gUnknown_Debug_842E2D0[var].func(gSharedMem + 0x4000);
+
+        gMain.state++;
+        DestroyTask(taskId);
+    }
+}
+
+void debug_sub_815D15C(void)
+{
+    ResetSpriteData();
+    FreeAllSpritePalettes();
+    ResetTasks();
+    SetVBlankCallback(VBlankCB);
+    Text_LoadWindowTemplate(&gMenuTextWindowTemplate);
+    InitMenuWindow(&gMenuTextWindowTemplate);
+    Menu_EraseScreen();
+    REG_DISPCNT = DISPCNT_BG0_ON | DISPCNT_OBJ_1D_MAP | DISPCNT_MODE_0;
+    REG_BLDCNT = 0;
+
+    CreateTask(Task_DestroySelf, 0);
+    StopMapMusic();
+    RunTasks();
+    AnimateSprites();
+    BuildOamBuffer();
+    UpdatePaletteFade();
+    FillPalette(0, 0, 2);
+    SetMainCallback2(debug_sub_815D1D8);
+}
+
+void debug_sub_815D1D8(void)
+{
+    switch (gMain.state)
+    {
+    case 0:
+        Menu_DrawStdWindowFrame(3, 14, 27, 19);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
+        gMain.state++;
+        break;
+    case 1:
+        if (!gPaletteFade.active)
+        {
+            if (gMain.heldKeys & 0x100)
+                gUnknown_Debug_30030E0++;
+            MenuPrintMessage(Str_843DA70, 4, 15);
+            gMain.state++;
+        }
+        break;
+    case 2:
+        if (Menu_UpdateWindowText())
+        {
+            gMain.state++;
+            gLinkType = 0x5501;
+            OpenLink();
+        }
+        break;
+    case 3:
+        if (gReceivedRemoteLinkPlayers != 0)
+        {
+            gMain.state++;
+            MenuPrintMessage(Str_843DA84, 4, 15);
+        }
+        break;
+    case 4:
+        if (Menu_UpdateWindowText())
+        {
+            CreateTask(debug_sub_815D04C, 10);
+            gMain.state++;
+        }
+        break;
+    case 6:
+        MenuPrintMessage(Str_843DA98, 4, 15);
+        SendBlock(0, gSharedMem + 0x4000, 0x2004);
+        gMain.state++;
+        break;
+    case 7:
+        Menu_UpdateWindowText();
+        if (IsLinkTaskFinished())
+            gMain.state++;
+        break;
+    case 8:
+        sub_800832C();
+        gMain.state++;
+        break;
+    case 9:
+        if (gReceivedRemoteLinkPlayers == 0)
+        {
+            Menu_BlankWindowRect(4, 15, 26, 18);
+            Menu_PrintText(Str_843DAA3, 4, 15);
+            gMain.state++;
+        }
+        break;
+    case 10:
+        if (gMain.newKeys & A_BUTTON)
+        {
+            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
+            gMain.state++;
+        }
+        break;
+    case 11:
+        if (!gPaletteFade.active)
+            SetMainCallback2(CB2_InitTitleScreen);
+        break;
+    }
+    RunTasks();
+    AnimateSprites();
+    BuildOamBuffer();
+    UpdatePaletteFade();
+}
+
+#endif

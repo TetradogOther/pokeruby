@@ -28,25 +28,13 @@ struct TrainerCard {
     /*0x30*/ u8 playerName[8];
 };
 
-void sub_8093110(void (*)(void));
-void sub_8093130(u8, void (*)(void));
-void sub_8093390(struct TrainerCard *);
+void TrainerCard_ShowPlayerCard(void (*)(void));
+void TrainerCard_ShowLinkCard(u8, void (*)(void));
+void TrainerCard_GenerateCardForPlayer(struct TrainerCard *);
 u8 sub_80934C4(u8 id);
+void debug_sub_80A0710(void (*)(void));
+void debug_sub_80A073C(void (*)(void));
 
-// gUnknown_083B5EBC:: @ 83B5EBC
-bool8 sub_8093864();
-bool8 sub_80938A8();
-bool8 sub_80938CC();
-bool8 sub_8093918();
-bool8 sub_8093938();
-bool8 sub_8093954();
-bool8 sub_8093980();
-
-// gUnknown_083B5ED8:: @ 83B5ED8
-bool8 sub_8093AA0();
-bool8 sub_8093AF0();
-bool8 sub_8093C0C(struct TrainerCard *trainerCard);
-bool8 sub_8093C38();
-bool8 sub_8093D50(void);
+extern struct TrainerCard gTrainerCards[4];
 
 #endif // GUARD_TRAINER_CARD_H

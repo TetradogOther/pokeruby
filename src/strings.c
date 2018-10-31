@@ -1,6 +1,8 @@
 #include "global.h"
+#include "strings.h"
 
 #if ENGLISH
+
 // placeholder strings
 const u8 gExpandedPlaceholder_Empty[] = _("");
 const u8 gExpandedPlaceholder_Kun[] = _("");
@@ -158,7 +160,7 @@ const u8 OtherText_CheckTag[] = _("CHECK TAG");
 const u8 OtherText_Confirm[] = _("CONFIRM");
 const u8 gOtherText_Walk[] = _("WALK");
 
-const u8 gUnknownText_Exit[] = _("EXIT");
+const u8 gOtherText_Exit[] = _("EXIT");
 const u8 gOtherText_CancelNoTerminator[] = _("CANCEL");
 const u8 gOtherText_CancelWithTerminator[] = _("$CANCEL"); // with terminator at beginning?
 
@@ -172,13 +174,15 @@ const u8 gOtherText_None[] = _("NONE");
 
 const u8 gOtherText_ThreeQuestions2[] = _("???");
 
-const u8 gOtherText_FiveQuestionsAndSlash[] = _("?????$/");
+const u8 gOtherText_FiveQuestions[] = _("?????");
+const u8 gOtherText_Slash[] = _("/");
 
 const u8 gOtherText_OneDash[] = _("-");
 const u8 gOtherText_TwoDashes[] = _("--");
 const u8 gOtherText_ThreeDashes2[] = _("---");
 const u8 gOtherText_MaleSymbol2[] = _("♂");
-const u8 gOtherText_FemaleSymbolAndLv[] = _("♀$Lv.");
+const u8 gOtherText_FemaleSymbol2[] = _("♀");
+const u8 gOtherText_Lv[] = _("Lv.");
 const u8 gOtherText_TallPlusAndRightArrow[] = _("{TALL_PLUS}${RIGHT_ARROW}");
 const u8 gMenuText_GoBackToPrev[] = _("Go back to the\nprevious menu.");
 const u8 gOtherText_WhatWillYouDo[] = _("What would you like to do?");
@@ -196,7 +200,7 @@ const u8 OtherText_TheField[] = _("the field.");
 const u8 OtherText_TheField2[] = _("the field.");
 const u8 OtherText_ThePC[] = _("the PC.");
 
-const struct TextStruct gUnknown_0840E740[7] =
+const u8 *const gUnknown_0840E740[7] =
 {
     OtherText_TheField3,
     OtherText_TheBattle,
@@ -266,7 +270,9 @@ const u8 gContestStatsText_Spicy[] = _("SPICY");
 const u8 gContestStatsText_Dry[] = _("DRY");
 const u8 gContestStatsText_Sweet[] = _("SWEET");
 const u8 gContestStatsText_Bitter[] = _("BITTER");
-const u8 gContestStatsText_Sour[] = _("SOUR$TASTY$FEEL"); // tasty is unused, feel might not be
+const u8 gContestStatsText_Sour[] = _("SOUR");
+const u8 gContestStatsText_Tasty[] = _("TASTY");
+const u8 gContestStatsText_Feel[] = _("FEEL");
 
 const u8 gContestStatsText_StowCase[] = _("Stow CASE.");
 const u8 gContestStatsText_ThrowAwayPrompt[] = _("Throw away this\n{STR_VAR_1}?");
@@ -408,7 +414,7 @@ const u8 OtherText_Switch[] = _("SWITCH");
 const u8 OtherText_PokeInfo[] = _("POKéMON INFO");
 const u8 OtherText_PokeSkills[] = _("POKéMON SKILLS");
 const u8 OtherText_BattleMoves[] = _("BATTLE MOVES");
-const u8 OtherText_ContestMoves[] = _("C0NTEST MOVES"); // why the l33t 0, that's stupid
+const u8 OtherText_ContestMoves[] = _("C0NTEST MOVES"); // The "O" in "CONTEST" is actually a 0.
 const u8 OtherText_Info[] = _("INFO");
 
 const u8 gOtherText_EggLongTime[] = _("It looks like this EGG will\ntake a long time to hatch.");
@@ -860,7 +866,7 @@ const u8 gOtherText_AtBattleStart[] = _("At the battle’s start.");
 const u8 gOtherText_UponWinningBattle[] = _("Upon winning a battle.");
 const u8 gOtherText_UponLosingBattle[] = _("Upon losing a battle.");
 
-// mauville_old_man?
+// mauville_man?
 const u8 gOtherText_TheBardsSong[] = _("The BARD’s Song");
 const u8 gOtherText_WhatsHipHappening[] = _("What’s hip and happening?");
 const u8 gOtherText_Interview[] = _("Interview");
@@ -922,8 +928,8 @@ const u8 gSystemText_SaveFailed[] = _("Save failed...");
 const u8 gSystemText_NoSaveFileNoTime[] = _("There is no save file, so the time\ncan’t be set.");
 const u8 gSystemText_ClockAdjustmentUsable[] = _("The in-game clock adjustment system\nis now useable.");
 const u8 gSystemText_Saving[] = _("SAVING...\nDON’T TURN OFF THE POWER.");
+
 #elif GERMAN
-#include "global.h"
 
 // placeholder strings
 const u8 gExpandedPlaceholder_Empty[] = _("");
@@ -976,7 +982,7 @@ const u8 gBirchText_Girl[] = _("MÄDEL");
 const u8 gBirchText_NewName[] = _("NEUER NAME");
 
 #ifdef SAPPHIRE
-const u8 gDefaultBoyName1[] = _("SEAN");
+const u8 gDefaultBoyName1[] = _("SEBOLD");
 #else
 const u8 gDefaultBoyName1[] = _("ROLAND");
 #endif
@@ -985,7 +991,7 @@ const u8 gDefaultBoyName3[] = _("HELGE");
 const u8 gDefaultBoyName4[] = _("JAN");
 
 #ifdef SAPPHIRE
-const u8 gDefaultGirlName1[] = _("MARINA");
+const u8 gDefaultGirlName1[] = _("MARTINA");
 #else
 const u8 gDefaultGirlName1[] = _("PETRA");
 #endif
@@ -1082,7 +1088,7 @@ const u8 OtherText_CheckTag[] = _("PRÜFEN");
 const u8 OtherText_Confirm[] = _("O.K.");
 const u8 gOtherText_Walk[] = _("LAUFEN");
 
-const u8 gUnknownText_Exit[] = _("BEENDEN");
+const u8 gOtherText_Exit[] = _("BEENDEN");
 const u8 gOtherText_CancelNoTerminator[] = _("ZURÜCK");
 const u8 gOtherText_CancelWithTerminator[] = _("$ZURÜCK");
 
@@ -1096,13 +1102,15 @@ const u8 gOtherText_None[] = _("KEINES");
 
 const u8 gOtherText_ThreeQuestions2[] = _("???");
 
-const u8 gOtherText_FiveQuestionsAndSlash[] = _("?????$/");
+const u8 gOtherText_FiveQuestions[] = _("?????");
+const u8 gOtherText_Slash[] = _("/");
 
 const u8 gOtherText_OneDash[] = _("-");
 const u8 gOtherText_TwoDashes[] = _("--");
 const u8 gOtherText_ThreeDashes2[] = _("---");
 const u8 gOtherText_MaleSymbol2[] = _("♂");
-const u8 gOtherText_FemaleSymbolAndLv[] = _("♀$Lv.");
+const u8 gOtherText_FemaleSymbol2[] = _("♀");
+const u8 gOtherText_Lv[] = _("Lv.");
 const u8 gOtherText_TallPlusAndRightArrow[] = _("{TALL_PLUS}${RIGHT_ARROW}");
 const u8 gMenuText_GoBackToPrev[] = _("Kehre zurück zum\nvorherigen Menü.");
 const u8 gOtherText_WhatWillYouDo[] = _("Was möchtest du tun?");
@@ -1120,7 +1128,7 @@ const u8 OtherText_TheField[] = _("zum Hauptmenü.");
 const u8 OtherText_TheField2[] = _("zum Hauptmenü.");
 const u8 OtherText_ThePC[] = _("zum PC.");
 
-const struct TextStruct gUnknown_0840E740[7] =
+const u8 *const gUnknown_0840E740[7] =
 {
     OtherText_TheField3,
     OtherText_TheBattle,
@@ -1149,7 +1157,7 @@ const u8 gOtherText_OkayToThrowAwayPrompt[] = _("Willst du wirklich\n{STR_VAR_2}
 const u8 gOtherText_DadsAdvice[] = _("VATI sagt immer...\n{PLAYER}, dies ist weder der rechte\lOrt noch der rechte Zeitpunkt dafür!{PAUSE_UNTIL_PRESS}");
 const u8 gOtherText_CantGetOffBike[] = _("Du kannst hier nicht vom RAD steigen.{PAUSE_UNTIL_PRESS}");
 const u8 gOtherText_ItemfinderResponding[] = _("Oh!\nDas Gerät zeigt etwas an!\pHier muss ein Item vergraben sein!{PAUSE_UNTIL_PRESS}");
-const u8     gOtherText_ItemfinderItemUnderfoot[] = _("Das Gerät macht direkt unter\ndeinen Füßen etwas aus!{PAUSE_UNTIL_PRESS}");
+const u8 gOtherText_ItemfinderItemUnderfoot[] = _("Das Gerät macht direkt unter\ndeinen Füßen etwas aus!{PAUSE_UNTIL_PRESS}");
 const u8 gOtherText_NoResponse[] = _("... ... ... ... Nichts!\nKeine Anzeige.{PAUSE_UNTIL_PRESS}");
 const u8 gOtherText_Coins3[] = _("Deine MÜNZEN:\n{STR_VAR_1}{PAUSE_UNTIL_PRESS}");
 const u8 gOtherText_BootedTM[] = _("Eine TM wurde aktiviert.");
@@ -1190,7 +1198,9 @@ const u8 gContestStatsText_Spicy[] = _("SCHARF");
 const u8 gContestStatsText_Dry[] = _("TROCKEN");
 const u8 gContestStatsText_Sweet[] = _("SÜSS");
 const u8 gContestStatsText_Bitter[] = _("BITTER");
-const u8 gContestStatsText_Sour[] = _("SAUER$LECKER$WÜRZE");
+const u8 gContestStatsText_Sour[] = _("SAUER");
+const u8 gContestStatsText_Tasty[] = _("LECKER");
+const u8 gContestStatsText_Feel[] = _("WÜRZE");
 
 const u8 gContestStatsText_StowCase[] = _("BOX verstauen.");
 const u8 gContestStatsText_ThrowAwayPrompt[] = _("{STR_VAR_1}\nwegwerfen?");
@@ -1781,7 +1791,7 @@ const u8 gOtherText_AtBattleStart[] = _("Zum Kampfbeginn");
 const u8 gOtherText_UponWinningBattle[] = _("Über den Sieg");
 const u8 gOtherText_UponLosingBattle[] = _("Über die Niederlage");
 
-// mauville_old_man?
+// mauville_man?
 const u8 gOtherText_TheBardsSong[] = _("Das BARDEN-Lied");
 const u8 gOtherText_WhatsHipHappening[] = _("Was ist hip? Was ist top?");
 const u8 gOtherText_Interview[] = _("Interview");

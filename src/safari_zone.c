@@ -1,10 +1,10 @@
 #include "global.h"
 #include "safari_zone.h"
-#include "asm.h"
 #include "event_data.h"
+#include "field_fadetransition.h"
 #include "field_player_avatar.h"
 #include "main.h"
-#include "rom4.h"
+#include "overworld.h"
 #include "script.h"
 #include "string_util.h"
 #include "text.h"
@@ -23,13 +23,13 @@ struct PokeblockFeeder
 static void ClearAllPokeblockFeeders(void);
 static void DecrementFeederStepCounters(void);
 
-extern u8 gUnknown_02024D26;
+extern u8 gBattleOutcome;
 
 EWRAM_DATA u8 gNumSafariBalls = 0;
-EWRAM_DATA static u16 gSafariZoneStepCounter = 0;
+EWRAM_DATA u16 gSafariZoneStepCounter = 0;
 EWRAM_DATA static struct PokeblockFeeder gPokeblockFeeders[NUM_POKEBLOCK_FEEDERS] = {0};
 
-extern void (*gUnknown_0300485C)(void);
+extern void (*gFieldCallback)(void);
 
 extern u8 gUnknown_081C340A;
 extern u8 gUnknown_081C342D;
@@ -37,26 +37,26 @@ extern u8 gUnknown_081C3448;
 extern u8 gUnknown_081C3459;
 extern u8 *gPokeblockNames[];
 
-extern u16 gScriptResult;
+extern u16 gSpecialVar_Result;
 
 bool32 GetSafariZoneFlag(void)
 {
-    return FlagGet(SYS_SAFARI_MODE);
+    return FlagGet(FLAG_SYS_SAFARI_MODE);
 }
 
 void SetSafariZoneFlag(void)
 {
-    FlagSet(SYS_SAFARI_MODE);
+    FlagSet(FLAG_SYS_SAFARI_MODE);
 }
 
 void ResetSafariZoneFlag(void)
 {
-    FlagReset(SYS_SAFARI_MODE);
+    FlagClear(FLAG_SYS_SAFARI_MODE);
 }
 
 void EnterSafariMode(void)
 {
-    IncrementGameStat(0x11);
+    IncrementGameStat(GAME_STAT_ENTERED_SAFARI_ZONE);
     SetSafariZoneFlag();
     ClearAllPokeblockFeeders();
     gNumSafariBalls = 30;
@@ -99,14 +99,14 @@ void sub_80C824C(void)
     {
         SetMainCallback2(c2_exit_to_overworld_2_switch);
     }
-    else if (gUnknown_02024D26 == 8)
+    else if (gBattleOutcome == 8)
     {
         ScriptContext2_RunNewScript(&gUnknown_081C340A);
-        warp_in();
-        gUnknown_0300485C = sub_8080E44;
+        WarpIntoMap();
+        gFieldCallback = sub_8080E44;
         SetMainCallback2(CB2_LoadMap);
     }
-    else if (gUnknown_02024D26 == 7)
+    else if (gBattleOutcome == 7)
     {
         ScriptContext1_SetupScript(&gUnknown_081C3459);
         ScriptContext1_Stop();
@@ -137,13 +137,13 @@ void SafariZoneGetPokeblockNameInFeeder(void)
          && gPokeblockFeeders[i].x == x
          && gPokeblockFeeders[i].y == y)
         {
-            gScriptResult = i;
+            gSpecialVar_Result = i;
             StringCopy(gStringVar1, gPokeblockNames[gPokeblockFeeders[i].pokeblock.color]);
             return;
         }
     }
 
-    gScriptResult = -1;
+    gSpecialVar_Result = -1;
 }
 
 static void GetPokeblockFeederWithinRange(void)
@@ -166,23 +166,23 @@ static void GetPokeblockFeederWithinRange(void)
                 y *= -1;
             if ((x + y) <= 5)
             {
-                gScriptResult = i;
+                gSpecialVar_Result = i;
                 return;
             }
         }
     }
 
-    gScriptResult = -1;
+    gSpecialVar_Result = -1;
 }
 
 struct Pokeblock *unref_sub_80C8418(void)
 {
     SafariZoneGetPokeblockNameInFeeder();
 
-    if (gScriptResult == 0xFFFF)
+    if (gSpecialVar_Result == 0xFFFF)
         return NULL;
     else
-        return &gPokeblockFeeders[gScriptResult].pokeblock;
+        return &gPokeblockFeeders[gSpecialVar_Result].pokeblock;
 }
 
 
@@ -190,10 +190,10 @@ struct Pokeblock *SafariZoneGetActivePokeblock(void)
 {
     GetPokeblockFeederWithinRange();
 
-    if (gScriptResult == 0xFFFF)
+    if (gSpecialVar_Result == 0xFFFF)
         return NULL;
     else
-        return &gPokeblockFeeders[gScriptResult].pokeblock;
+        return &gPokeblockFeeders[gSpecialVar_Result].pokeblock;
 }
 
 
@@ -236,17 +236,17 @@ static void DecrementFeederStepCounters(void)
     }
 }
 
-bool8 unref_sub_80C853C(void)
+bool32 debug_sub_80C853C(void)
 {
     SafariZoneGetPokeblockNameInFeeder();
 
-    if (gScriptResult == 0xFFFF)
+    if (gSpecialVar_Result == 0xFFFF)
     {
         return FALSE;
     }
 
     ConvertIntToDecimalStringN(gStringVar2,
-        gPokeblockFeeders[gScriptResult].stepCounter,
+        gPokeblockFeeders[gSpecialVar_Result].stepCounter,
         STR_CONV_MODE_LEADING_ZEROS, 3);
 
     return TRUE;

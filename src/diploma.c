@@ -1,15 +1,16 @@
 #include "global.h"
-#include "asm.h"
+#include "diploma.h"
 #include "main.h"
 #include "menu.h"
 #include "palette.h"
 #include "pokedex.h"
-#include "rom4.h"
+#include "overworld.h"
 #include "sprite.h"
 #include "string_util.h"
 #include "strings2.h"
 #include "task.h"
 #include "text.h"
+#include "scanline_effect.h"
 
 static void VBlankCB(void);
 static void MainCB2(void);
@@ -34,7 +35,7 @@ static void VBlankCB(void)
     TransferPlttBuffer();
 }
 
-void sub_8145D88(void)
+void CB2_ShowDiploma(void)
 {
     u32 savedIme;
 
@@ -61,16 +62,16 @@ void sub_8145D88(void)
     LZ77UnCompVram(gDiplomaTiles, (void *)VRAM);
     LZ77UnCompVram(gDiplomaTilemap, (void *)(VRAM + 0x3000));
 
-    remove_some_task();
+    ScanlineEffect_Stop();
     ResetTasks();
     ResetSpriteData();
     ResetPaletteFade();
     FreeAllSpritePalettes();
     LoadPalette(gDiplomaPalettes, 0, 64);
-    SetUpWindowConfig(&gWindowConfig_81E6C3C);
-    InitMenuWindow(&gWindowConfig_81E6CE4);
+    Text_LoadWindowTemplate(&gWindowTemplate_81E6C3C);
+    InitMenuWindow(&gMenuTextWindowTemplate);
     DisplayDiplomaText();
-    BeginNormalPaletteFade(-1, 0, 0x10, 0, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
 
     savedIme = REG_IME;
     REG_IME = 0;
@@ -108,7 +109,7 @@ static void Task_DiplomaWaitForKeyPress(u8 taskId)
 {
     if (gMain.newKeys & (A_BUTTON | B_BUTTON))
     {
-        BeginNormalPaletteFade(-1, 0, 0, 0x10, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
         gTasks[taskId].func = Task_DiplomaFadeOut;
     }
 }
@@ -124,7 +125,7 @@ static void Task_DiplomaFadeOut(u8 taskId)
 
 static void DisplayDiplomaText(void)
 {
-    if (sub_8090FF4())
+    if (CompletedNationalPokedex())
     {
         REG_BG3HOFS = 256;
         StringCopy(gStringVar1, gOtherText_NationalDex);
@@ -134,5 +135,5 @@ static void DisplayDiplomaText(void)
         REG_BG3HOFS = 0;
         StringCopy(gStringVar1, gOtherText_HoennDex);
     }
-    MenuPrint(gOtherText_DiplomaCertificationGameFreak, 6, 2);
+    Menu_PrintText(gOtherText_DiplomaCertificationGameFreak, 6, 2);
 }

@@ -5,20 +5,37 @@
 
 struct SpriteSheet
 {
-    const u8 *data;
+    const u8 *data;  // Raw uncompressed pixel data
     u16 size;
+    u16 tag;
+};
+
+struct CompressedSpriteSheet
+{
+    const u8 *data;  // LZ77 compressed pixel data
+    u16 size;        // Uncompressed size of pixel data
     u16 tag;
 };
 
 struct SpriteFrameImage
 {
-    u8 *data;
+    const u8 *data;
     u16 size;
 };
 
+#define obj_frame_tiles(ptr) {.data = (u8 *)ptr, .size = sizeof ptr}
+
+#define overworld_frame(ptr, width, height, frame) {.data = (u8 *)ptr + (width * height * frame * 64)/2, .size = (width * height * 64)/2}
+
 struct SpritePalette
 {
-    const u16 *data;
+    const u16 *data;  // Raw uncompressed palette data
+    u16 tag;
+};
+
+struct CompressedSpritePalette
+{
+    const u8 *data;  // LZ77 compressed palette data
     u16 tag;
 };
 
@@ -58,6 +75,8 @@ union AnimCmd
 
 #define ANIMCMD_FRAME(...) \
     {.frame = {__VA_ARGS__}}
+#define ANIMCMD_LOOP(_count) \
+    {.loop = {.type = -3, .count = _count}}
 #define ANIMCMD_JUMP(_target) \
     {.jump = {.type = -2, .target = _target}}
 #define ANIMCMD_END \
@@ -83,12 +102,19 @@ struct AffineAnimJumpCmd
     u16 target;
 };
 
+struct AffineAnimEndCmdAlt
+{
+    s16 type;
+    u16 val;
+};
+
 union AffineAnimCmd
 {
     s16 type;
     struct AffineAnimFrameCmd frame;
     struct AffineAnimLoopCmd loop;
     struct AffineAnimJumpCmd jump;
+    struct AffineAnimEndCmdAlt end; // unused in code
 };
 
 #define AFFINEANIMCMDTYPE_LOOP 0x7FFD
@@ -97,8 +123,14 @@ union AffineAnimCmd
 
 #define AFFINEANIMCMD_FRAME(_xScale, _yScale, _rotation, _duration) \
     {.frame = {.xScale = _xScale, .yScale = _yScale, .rotation = _rotation, .duration = _duration}}
+#define AFFINEANIMCMD_LOOP(_count) \
+    {.loop = {.type = AFFINEANIMCMDTYPE_LOOP, .count = _count}}
+#define AFFINEANIMCMD_JUMP(_target) \
+    {.jump = {.type = AFFINEANIMCMDTYPE_JUMP, .target = _target}}
 #define AFFINEANIMCMD_END \
     {.type = AFFINEANIMCMDTYPE_END}
+#define AFFINEANIMCMD_END_ALT(_val) \
+    {.end = {.type = AFFINEANIMCMDTYPE_END, .val = _val}}
 
 struct AffineAnimState
 {
@@ -131,7 +163,7 @@ struct Subsprite
 struct SubspriteTable
 {
     u8 subspriteCount;
-    struct Subsprite *subsprites;
+    const struct Subsprite *subsprites;
 };
 
 struct Sprite;
@@ -142,10 +174,12 @@ struct SpriteTemplate
     u16 paletteTag;
     const struct OamData *oam;
     const union AnimCmd *const *anims;
-    struct SpriteFrameImage *images;
+    const struct SpriteFrameImage *images;
     const union AffineAnimCmd *const *affineAnims;
     void (*callback)(struct Sprite *);
 };
+
+typedef void (*SpriteCallback)(struct Sprite *);
 
 struct Sprite
 {
@@ -155,7 +189,7 @@ struct Sprite
     /*0x10*/ const union AffineAnimCmd *const *affineAnims;
     /*0x14*/ const struct SpriteTemplate *template;
     /*0x18*/ const struct SubspriteTable *subspriteTables;
-    /*0x1C*/ void (*callback)(struct Sprite *);
+    /*0x1C*/ SpriteCallback callback;
 
     /*0x20*/ struct Coords16 pos1;
     /*0x24*/ struct Coords16 pos2;
@@ -170,23 +204,16 @@ struct Sprite
     /*0x2D*/ u8 animLoopCounter;
 
     // general purpose data fields
-    /*0x2E*/ s16 data0;
-    /*0x30*/ s16 data1;
-    /*0x32*/ s16 data2;
-    /*0x34*/ s16 data3;
-    /*0x36*/ s16 data4;
-    /*0x38*/ s16 data5;
-    /*0x3A*/ s16 data6;
-    /*0x3C*/ s16 data7;
+    /*0x2E*/ s16 data[8];
 
-    /*0x3E*/ u16 inUse:1;
-             u16 coordOffsetEnabled:1;
-             u16 invisible:1;
-             u16 flags_3:1;
-             u16 flags_4:1;
-             u16 flags_5:1;
-             u16 flags_6:1;
-             u16 flags_7:1;
+    /*0x3E*/ u16 inUse:1;               //1
+             u16 coordOffsetEnabled:1;  //2
+             u16 invisible:1;           //4
+             u16 flags_3:1;             //8
+             u16 flags_4:1;             //0x10
+             u16 flags_5:1;             //0x20
+             u16 flags_6:1;             //0x40
+             u16 flags_7:1;             //0x80
     /*0x3F*/ u16 hFlip:1;
              u16 vFlip:1;
              u16 animBeginning:1;
@@ -204,12 +231,24 @@ struct Sprite
     /*0x43*/ u8 subpriority;
 };
 
+struct OamMatrix
+{
+    s16 a;
+    s16 b;
+    s16 c;
+    s16 d;
+};
+
 extern const struct OamData gDummyOamData;
 extern const union AnimCmd *const gDummySpriteAnimTable[];
 extern const union AffineAnimCmd *const gDummySpriteAffineAnimTable[];
 
 extern s16 gSpriteCoordOffsetX;
 extern s16 gSpriteCoordOffsetY;
+extern u8 gReservedSpritePaletteCount;
+extern u16 gReservedSpriteTileCount;
+
+extern u8 gOamLimit;
 
 extern struct Sprite gSprites[];
 
@@ -219,7 +258,7 @@ void BuildOamBuffer(void);
 u8 CreateSprite(const struct SpriteTemplate *template, s16 x, s16 y, u8 subpriority);
 u8 CreateSpriteAtEnd(const struct SpriteTemplate *template, s16 x, s16 y, u8 subpriority);
 u8 CreateInvisibleSprite(void (*callback)(struct Sprite *));
-u8 CreateSpriteAndAnimate(struct SpriteTemplate *template, s16 x, s16 y, u8 subpriority);
+u8 CreateSpriteAndAnimate(const struct SpriteTemplate *template, s16 x, s16 y, u8 subpriority);
 void DestroySprite(struct Sprite *sprite);
 void ResetOamRange(u8 a, u8 b);
 void LoadOam(void);
@@ -227,12 +266,12 @@ void SetOamMatrix(u8 matrixNum, u16 a, u16 b, u16 c, u16 d);
 void CalcCenterToCornerVec(struct Sprite *sprite, u8 shape, u8 size, u8 affineMode);
 void SpriteCallbackDummy(struct Sprite *sprite);
 void ProcessSpriteCopyRequests(void);
-void RequestSpriteCopy(const u8 *src, u8 *dest, u16 size);
+void RequestSpriteCopy(const void *src, u8 *dest, u16 size);
 void FreeSpriteTiles(struct Sprite *sprite);
 void FreeSpritePalette(struct Sprite *sprite);
 void FreeSpriteOamMatrix(struct Sprite *sprite);
 void DestroySpriteAndFreeResources(struct Sprite *sprite);
-void sub_800142C(u32 a1, u32 a2, u16 *a3, u16 a4, u32 a5);
+void DrawPartyMenuMonText(u32 a1, u32 a2, const u16 *a3, u16 a4, u32 a5);
 void AnimateSprite(struct Sprite *sprite);
 void StartSpriteAnim(struct Sprite *sprite, u8 animNum);
 void StartSpriteAnimIfDifferent(struct Sprite *sprite, u8 animNum);
@@ -273,5 +312,7 @@ void CopyFromSprites(u8 *dest);
 u8 SpriteTileAllocBitmapOp(u16 bit, u8 op);
 
 extern const union AffineAnimCmd *const gDummySpriteAffineAnimTable[];
+
+extern const struct SpriteTemplate gDummySpriteTemplate;
 
 #endif // GUARD_SPRITE_H

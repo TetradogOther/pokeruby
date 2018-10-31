@@ -2,13 +2,13 @@
 #include "pokemon_size_record.h"
 #include "data2.h"
 #include "event_data.h"
-#include "species.h"
+#include "pokedex.h"
+#include "constants/species.h"
 #include "string_util.h"
 #include "strings2.h"
 #include "text.h"
 
-extern u16 SpeciesToNationalPokedexNum(u16);
-extern u16 GetPokedexHeightWeight(u16, u8);
+const u16 Unknown_083D17EC[] = INCBIN_U16("graphics/unknown/unknown_3D17EC.gbapal");
 
 struct UnknownStruct
 {
@@ -17,7 +17,7 @@ struct UnknownStruct
     u16 unk4;
 };
 
-extern u16 gScriptResult;
+extern u16 gSpecialVar_Result;
 
 static const struct UnknownStruct sBigMonSizeTable[] =
 {
@@ -48,7 +48,7 @@ static u32 GetMonSizeHash(struct Pokemon *pkmn)
     u16 hpIV = GetMonData(pkmn, MON_DATA_HP_IV) & 0xF;
     u16 attackIV = GetMonData(pkmn, MON_DATA_ATK_IV) & 0xF;
     u16 defenseIV = GetMonData(pkmn, MON_DATA_DEF_IV) & 0xF;
-    u16 speedIV = GetMonData(pkmn, MON_DATA_SPD_IV) & 0xF;
+    u16 speedIV = GetMonData(pkmn, MON_DATA_SPEED_IV) & 0xF;
     u16 spAtkIV = GetMonData(pkmn, MON_DATA_SPATK_IV) & 0xF;
     u16 spDefIV = GetMonData(pkmn, MON_DATA_SPDEF_IV) & 0xF;
     u32 hibyte = ((attackIV ^ defenseIV) * hpIV) ^ (personality & 0xFF);
@@ -88,10 +88,17 @@ static u32 GetMonSize(u16 species, u16 b)
 
 static void FormatMonSizeRecord(u8 *string, u32 size)
 {
+#if ENGLISH
     u8 decimalPoint[] = _(".");
+#elif GERMAN
+    u8 decimalPoint[] = _(",");
+#endif
 
+#ifdef UNITS_IMPERIAL
     //Convert size from centimeters to inches
     size = (double)(size * 10) / (CM_PER_INCH * 10);
+#endif
+
     string = ConvertIntToDecimalStringN(string, size / 10, 0, 8);
     string = StringAppend(string, decimalPoint);
     ConvertIntToDecimalStringN(string, size % 10, 0, 1);
@@ -99,13 +106,13 @@ static void FormatMonSizeRecord(u8 *string, u32 size)
 
 static u8 CompareMonSize(u16 species, u16 *sizeRecord)
 {
-    if (gScriptResult == 0xFF)
+    if (gSpecialVar_Result == 0xFF)
     {
         return 0;
     }
     else
     {
-        struct Pokemon *pkmn = &gPlayerParty[gScriptResult];
+        struct Pokemon *pkmn = &gPlayerParty[gSpecialVar_Result];
 
         // UB: Too few arguments for function 'GetMonData'
         if (GetMonData(pkmn, MON_DATA_IS_EGG) == TRUE || GetMonData(pkmn, MON_DATA_SPECIES) != species)
@@ -164,7 +171,7 @@ void CompareShroomishSize(void)
 {
     u16 *sizeRecord = GetVarPointer(VAR_SHROOMISH_SIZE_RECORD);
 
-    gScriptResult = CompareMonSize(SPECIES_SHROOMISH, sizeRecord);
+    gSpecialVar_Result = CompareMonSize(SPECIES_SHROOMISH, sizeRecord);
 }
 
 void InitBarboachSizeRecord(void)
@@ -183,7 +190,7 @@ void CompareBarboachSize(void)
 {
     u16 *sizeRecord = GetVarPointer(VAR_BARBOACH_SIZE_RECORD);
 
-    gScriptResult = CompareMonSize(SPECIES_BARBOACH, sizeRecord);
+    gSpecialVar_Result = CompareMonSize(SPECIES_BARBOACH, sizeRecord);
 }
 
 void GiveGiftRibbonToParty(u8 index, u8 ribbonId)
@@ -191,11 +198,19 @@ void GiveGiftRibbonToParty(u8 index, u8 ribbonId)
     s32 i;
     bool32 gotRibbon = FALSE;
     u8 data = 1;
-    u8 arr[] = { 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E };
+    u8 arr[] = {
+        MON_DATA_GIFT_RIBBON_1,
+        MON_DATA_GIFT_RIBBON_2,
+        MON_DATA_GIFT_RIBBON_3,
+        MON_DATA_GIFT_RIBBON_4,
+        MON_DATA_GIFT_RIBBON_5,
+        MON_DATA_GIFT_RIBBON_6,
+        MON_DATA_GIFT_RIBBON_7,
+    };
 
     if (index < 11 && ribbonId < 65)
     {
-        gSaveBlock1.giftRibbons[index] = ribbonId;
+        gSaveBlock1.externalReservedData.giftRibbons[index] = ribbonId;
         for (i = 0; i < 6; i++)
         {
             struct Pokemon *pkmn = &gPlayerParty[i];
@@ -207,6 +222,6 @@ void GiveGiftRibbonToParty(u8 index, u8 ribbonId)
             }
         }
         if (gotRibbon)
-            FlagSet(SYS_RIBBON_GET);
+            FlagSet(FLAG_SYS_RIBBON_GET);
     }
 }

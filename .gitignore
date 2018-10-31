@@ -34,6 +34,12 @@ types_*.taghl
 *.s.old2
 *.dump
 *.sa*
+*.sgm
 Thumbs.db
 build/
 .idea/
+*.DS_Store
+*.pl
+.vs/
+.projects/ARM/
+*.diff

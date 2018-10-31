@@ -1,8 +1,10 @@
 #include "global.h"
+#include "debug.h"
 #include "sprite.h"
 #include "main.h"
 #include "menu_cursor.h"
 #include "palette.h"
+#include "sprite.h"
 
 #define MAX_SPRITE_COPY_REQUESTS 64
 
@@ -25,14 +27,6 @@
 }
 
 #define SPRITE_TILE_IS_ALLOCATED(n) ((gSpriteTileAllocBitmap[(n) / 8] >> ((n) % 8)) & 1)
-
-struct OamMatrix
-{
-    s16 a;
-    s16 b;
-    s16 c;
-    s16 d;
-};
 
 struct SpriteCopyRequest
 {
@@ -57,7 +51,6 @@ static void ClearSpriteCopyRequests(void);
 static void ResetOamMatrices(void);
 static void ResetSprite(struct Sprite *sprite);
 static s16 AllocSpriteTiles(u16 tileCount);
-u8 SpriteTileAllocBitmapOp(u16 bit, u8 op);
 static void RequestSpriteFrameImageCopy(u16 index, u16 tileNum, const struct SpriteFrameImage *images);
 static void ResetAllSprites(void);
 static void BeginAnim(struct Sprite *sprite);
@@ -79,7 +72,6 @@ static void JumpToTopOfAffineAnimLoop(u8 matrixNum, struct Sprite *sprite);
 static void AffineAnimCmd_jump(u8 matrixNum, struct Sprite *sprite);
 static void AffineAnimCmd_end(u8 matrixNum, struct Sprite *sprite);
 static void AffineAnimCmd_frame(u8 matrixNum, struct Sprite *sprite);
-static void CopyOamMatrix(u8 destMatrixIndex, struct OamMatrix *srcMatrix);
 static u8 GetSpriteMatrixNum(struct Sprite *sprite);
 static void SetSpriteOamFlipBits(struct Sprite *sprite, u8 hFlip, u8 vFlip);
 static void AffineAnimStateRestartAnim(u8 matrixNum);
@@ -188,14 +180,7 @@ static const struct Sprite sDummySprite =
     .animPaused = 0,
     .affineAnimPaused = 0,
     .animLoopCounter = 0,
-    .data0 = 0,
-    .data1 = 0,
-    .data2 = 0,
-    .data3 = 0,
-    .data4 = 0,
-    .data5 = 0,
-    .data6 = 0,
-    .data7 = 0,
+    .data = {0},
     .inUse = 0,
     .coordOffsetEnabled = 0,
     .invisible = 0,
@@ -614,7 +599,7 @@ static u8 CreateSpriteAt(u8 index, const struct SpriteTemplate *template, s16 x,
     return index;
 }
 
-u8 CreateSpriteAndAnimate(struct SpriteTemplate *template, s16 x, s16 y, u8 subpriority)
+u8 CreateSpriteAndAnimate(const struct SpriteTemplate *template, s16 x, s16 y, u8 subpriority)
 {
     u8 i;
 
@@ -834,13 +819,19 @@ static void RequestSpriteFrameImageCopy(u16 index, u16 tileNum, const struct Spr
     if (gSpriteCopyRequestCount < MAX_SPRITE_COPY_REQUESTS)
     {
         gSpriteCopyRequests[gSpriteCopyRequestCount].src = images[index].data;
-        gSpriteCopyRequests[gSpriteCopyRequestCount].dest = (u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP * tileNum;
+        gSpriteCopyRequests[gSpriteCopyRequestCount].dest = OBJ_VRAM0 + TILE_SIZE_4BPP * tileNum;
         gSpriteCopyRequests[gSpriteCopyRequestCount].size = images[index].size;
         gSpriteCopyRequestCount++;
     }
+#if DEBUG
+    else
+    {
+        Crash(sDmaOverErrorMsg);
+    }
+#endif
 }
 
-void RequestSpriteCopy(const u8 *src, u8 *dest, u16 size)
+void RequestSpriteCopy(const void *src, u8 *dest, u16 size)
 {
     if (gSpriteCopyRequestCount < MAX_SPRITE_COPY_REQUESTS)
     {
@@ -849,8 +840,15 @@ void RequestSpriteCopy(const u8 *src, u8 *dest, u16 size)
         gSpriteCopyRequests[gSpriteCopyRequestCount].size = size;
         gSpriteCopyRequestCount++;
     }
+#if DEBUG
+    else
+    {
+        Crash(sDmaOverErrorMsg);
+    }
+#endif
 }
 
+// these two functions are unused.
 void CopyFromSprites(u8 *dest)
 {
     u32 i;
@@ -917,16 +915,17 @@ void DestroySpriteAndFreeResources(struct Sprite *sprite)
     DestroySprite(sprite);
 }
 
-void sub_800142C(u32 a1, u32 a2, u16 *a3, u16 a4, u32 a5)
+// Loads the mon name, level, and hp sprites into OAM.
+void DrawPartyMenuMonText(u32 a1, u32 a2, const u16 *a3, u16 a4, u32 baseTileNumber)
 {
-    u16 *d = a3;
+    const u16 *d = a3;
     struct OamData *oam = &gMain.oamBuffer[gMain.objCount];
     while (!(gMain.objCount & 0x80) && (s16)(d[0] + 1) != 0)
     {
         u16 *x = (u16 *)oam;
         x[0] = (d[0] & sOamBitmasks[0]) | ((d[0] + a2) & sOamBitmasks[1]) | ((a4 & sOamBitmasks[2]) << 8);
         x[1] = (d[1] & sOamBitmasks[3]) | ((d[1] + a1) & sOamBitmasks[4]) | ((a4 & sOamBitmasks[5]) << 4);
-        x[2] = (d[2] & sOamBitmasks[6]) | ((d[2] + a5) & sOamBitmasks[7]) | (a4 & sOamBitmasks[8]);
+        x[2] = (d[2] & sOamBitmasks[6]) | ((d[2] + baseTileNumber) & sOamBitmasks[7]) | (a4 & sOamBitmasks[8]);
         oam++;
         gMain.objCount++;
         d += 3;
@@ -1479,7 +1478,7 @@ u16 LoadSpriteSheet(const struct SpriteSheet *sheet)
     else
     {
         AllocSpriteTileRange(sheet->tag, (u16)tileStart, sheet->size / TILE_SIZE_4BPP);
-        CpuCopy16(sheet->data, (u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP * tileStart, sheet->size);
+        CpuCopy16(sheet->data, OBJ_VRAM0 + TILE_SIZE_4BPP * tileStart, sheet->size);
         return (u16)tileStart;
     }
 }
@@ -1517,7 +1516,7 @@ void LoadTilesForSpriteSheet(const struct SpriteSheet *sheet)
 {
     const u8 *data = sheet->data;
     u16 tileStart = GetSpriteTileStartByTag(sheet->tag);
-    CpuCopy16(data, (u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP * tileStart, sheet->size);
+    CpuCopy16(data, OBJ_VRAM0 + TILE_SIZE_4BPP * tileStart, sheet->size);
 }
 
 void LoadTilesForSpriteSheets(struct SpriteSheet *sheets)
@@ -1603,7 +1602,7 @@ void RequestSpriteSheetCopy(const struct SpriteSheet *sheet)
 {
     const u8 *data = sheet->data;
     u16 tileStart = GetSpriteTileStartByTag(sheet->tag);
-    RequestSpriteCopy(data, (u8 *)OBJ_VRAM0 + tileStart * TILE_SIZE_4BPP, sheet->size);
+    RequestSpriteCopy(data, OBJ_VRAM0 + tileStart * TILE_SIZE_4BPP, sheet->size);
 }
 
 u16 LoadSpriteSheetDeferred(const struct SpriteSheet *sheet)

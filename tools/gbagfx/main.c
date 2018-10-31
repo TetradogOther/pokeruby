@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "global.h"
 #include "util.h"
+#include "options.h"
 #include "gfx.h"
 #include "convert_png.h"
 #include "jasc_pal.h"
@@ -19,13 +20,13 @@ struct CommandHandler
     void(*function)(char *inputPath, char *outputPath, int argc, char **argv);
 };
 
-void ConvertGbaToPng(char *inputPath, char *outputPath, int width, int bitDepth, char *paletteFilePath, bool hasTransparency)
+void ConvertGbaToPng(char *inputPath, char *outputPath, struct GbaToPngOptions *options)
 {
     struct Image image;
 
-    if (paletteFilePath != NULL)
+    if (options->paletteFilePath != NULL)
     {
-        ReadGbaPalette(paletteFilePath, &image.palette);
+        ReadGbaPalette(options->paletteFilePath, &image.palette);
         image.hasPalette = true;
     }
     else
@@ -33,24 +34,24 @@ void ConvertGbaToPng(char *inputPath, char *outputPath, int width, int bitDepth,
         image.hasPalette = false;
     }
 
-    ReadImage(inputPath, width, bitDepth, &image, !image.hasPalette);
+    ReadImage(inputPath, options->width, options->bitDepth, options->metatileWidth, options->metatileHeight, &image, !image.hasPalette);
 
-    image.hasTransparency = hasTransparency;
+    image.hasTransparency = options->hasTransparency;
 
     WritePng(outputPath, &image);
 
     FreeImage(&image);
 }
 
-void ConvertPngToGba(char *inputPath, char *outputPath, int numTiles, int bitDepth)
+void ConvertPngToGba(char *inputPath, char *outputPath, struct PngToGbaOptions *options)
 {
     struct Image image;
 
-    image.bitDepth = bitDepth;
+    image.bitDepth = options->bitDepth;
 
     ReadPng(inputPath, &image);
 
-    WriteImage(outputPath, numTiles, bitDepth, &image, !image.hasPalette);
+    WriteImage(outputPath, options->numTiles, options->bitDepth, options->metatileWidth, options->metatileHeight, &image, !image.hasPalette);
 
     FreeImage(&image);
 }
@@ -58,11 +59,13 @@ void ConvertPngToGba(char *inputPath, char *outputPath, int numTiles, int bitDep
 void HandleGbaToPngCommand(char *inputPath, char *outputPath, int argc, char **argv)
 {
     char *inputFileExtension = GetFileExtension(inputPath);
-    int bitDepth = inputFileExtension[0] - '0';
-    char *paletteFilePath;
-    bool hasPalette = false;
-    bool hasTransparency = false;
-    int width = 1;
+    struct GbaToPngOptions options;
+    options.paletteFilePath = NULL;
+    options.bitDepth = inputFileExtension[0] - '0';
+    options.hasTransparency = false;
+    options.width = 1;
+    options.metatileWidth = 1;
+    options.metatileHeight = 1;
 
     for (int i = 3; i < argc; i++)
     {
@@ -75,13 +78,11 @@ void HandleGbaToPngCommand(char *inputPath, char *outputPath, int argc, char **a
 
             i++;
 
-            paletteFilePath = argv[i];
-
-            hasPalette = true;
+            options.paletteFilePath = argv[i];
         }
         else if (strcmp(option, "-object") == 0)
         {
-            hasTransparency = true;
+            options.hasTransparency = true;
         }
         else if (strcmp(option, "-width") == 0)
         {
@@ -90,11 +91,37 @@ void HandleGbaToPngCommand(char *inputPath, char *outputPath, int argc, char **a
 
             i++;
 
-            if (!ParseNumber(argv[i], NULL, 10, &width))
+            if (!ParseNumber(argv[i], NULL, 10, &options.width))
                 FATAL_ERROR("Failed to parse width.\n");
 
-            if (width < 1)
+            if (options.width < 1)
                 FATAL_ERROR("Width must be positive.\n");
+        }
+        else if (strcmp(option, "-mwidth") == 0)
+        {
+            if (i + 1 >= argc)
+                FATAL_ERROR("No metatile width value following \"-mwidth\".\n");
+
+            i++;
+
+            if (!ParseNumber(argv[i], NULL, 10, &options.metatileWidth))
+                FATAL_ERROR("Failed to parse metatile width.\n");
+
+            if (options.metatileWidth < 1)
+                FATAL_ERROR("metatile width must be positive.\n");
+        }
+        else if (strcmp(option, "-mheight") == 0)
+        {
+            if (i + 1 >= argc)
+                FATAL_ERROR("No metatile height value following \"-mheight\".\n");
+
+            i++;
+
+            if (!ParseNumber(argv[i], NULL, 10, &options.metatileHeight))
+                FATAL_ERROR("Failed to parse metatile height.\n");
+
+            if (options.metatileHeight < 1)
+                FATAL_ERROR("metatile height must be positive.\n");
         }
         else
         {
@@ -102,14 +129,21 @@ void HandleGbaToPngCommand(char *inputPath, char *outputPath, int argc, char **a
         }
     }
 
-    ConvertGbaToPng(inputPath, outputPath, width, bitDepth, hasPalette ? paletteFilePath : NULL, hasTransparency);
+    if (options.metatileWidth > options.width)
+        options.width = options.metatileWidth;
+
+    ConvertGbaToPng(inputPath, outputPath, &options);
 }
 
 void HandlePngToGbaCommand(char *inputPath, char *outputPath, int argc, char **argv)
 {
     char *outputFileExtension = GetFileExtension(outputPath);
     int bitDepth = outputFileExtension[0] - '0';
-    int numTiles = 0;
+    struct PngToGbaOptions options;
+    options.numTiles = 0;
+    options.bitDepth = bitDepth;
+    options.metatileWidth = 1;
+    options.metatileHeight = 1;
 
     for (int i = 3; i < argc; i++)
     {
@@ -122,11 +156,37 @@ void HandlePngToGbaCommand(char *inputPath, char *outputPath, int argc, char **a
 
             i++;
 
-            if (!ParseNumber(argv[i], NULL, 10, &numTiles))
+            if (!ParseNumber(argv[i], NULL, 10, &options.numTiles))
                 FATAL_ERROR("Failed to parse number of tiles.\n");
 
-            if (numTiles < 1)
+            if (options.numTiles < 1)
                 FATAL_ERROR("Number of tiles must be positive.\n");
+        }
+        else if (strcmp(option, "-mwidth") == 0)
+        {
+            if (i + 1 >= argc)
+                FATAL_ERROR("No metatile width value following \"-mwidth\".\n");
+
+            i++;
+
+            if (!ParseNumber(argv[i], NULL, 10, &options.metatileWidth))
+                FATAL_ERROR("Failed to parse metatile width.\n");
+
+            if (options.metatileWidth < 1)
+                FATAL_ERROR("metatile width must be positive.\n");
+        }
+        else if (strcmp(option, "-mheight") == 0)
+        {
+            if (i + 1 >= argc)
+                FATAL_ERROR("No metatile height value following \"-mheight\".\n");
+
+            i++;
+
+            if (!ParseNumber(argv[i], NULL, 10, &options.metatileHeight))
+                FATAL_ERROR("Failed to parse metatile height.\n");
+
+            if (options.metatileHeight < 1)
+                FATAL_ERROR("metatile height must be positive.\n");
         }
         else
         {
@@ -134,7 +194,15 @@ void HandlePngToGbaCommand(char *inputPath, char *outputPath, int argc, char **a
         }
     }
 
-    ConvertPngToGba(inputPath, outputPath, numTiles, bitDepth);
+    ConvertPngToGba(inputPath, outputPath, &options);
+}
+
+void HandlePngToGbaPaletteCommand(char *inputPath, char *outputPath, int argc UNUSED, char **argv UNUSED)
+{
+    struct Palette palette;
+
+    ReadPngPalette(inputPath, &palette);
+    WriteGbaPalette(outputPath, &palette);
 }
 
 void HandleGbaToJascPaletteCommand(char *inputPath, char *outputPath, int argc UNUSED, char **argv UNUSED)
@@ -356,6 +424,7 @@ int main(int argc, char **argv)
         { "png", "1bpp", HandlePngToGbaCommand },
         { "png", "4bpp", HandlePngToGbaCommand },
         { "png", "8bpp", HandlePngToGbaCommand },
+        { "png", "gbapal", HandlePngToGbaPaletteCommand },
         { "gbapal", "pal", HandleGbaToJascPaletteCommand },
         { "pal", "gbapal", HandleJascToGbaPaletteCommand },
         { "latfont", "png", HandleLatinFontToPngCommand },

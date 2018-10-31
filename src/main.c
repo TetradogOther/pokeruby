@@ -2,17 +2,18 @@
 #include "gba/flash_internal.h"
 #include "gba/m4a_internal.h"
 #include "main.h"
-#include "asm.h"
 #include "intro.h"
 #include "link.h"
 #include "load_save.h"
 #include "m4a.h"
 #include "play_time.h"
-#include "rng.h"
-#include "rom4.h"
+#include "random.h"
+#include "rom3.h"
+#include "overworld.h"
 #include "rtc.h"
 #include "siirtc.h"
 #include "sound.h"
+#include "scanline_effect.h"
 
 extern struct SoundInfo gSoundInfo;
 extern u32 IntrMain[];
@@ -67,8 +68,9 @@ u8 gSoftResetDisabled;
 IntrFunc gIntrTable[INTR_COUNT];
 bool8 gLinkVSyncDisabled;
 u32 IntrMain_Buffer[0x200];
-u8 gPcmDmaCounter;
+s8 gPcmDmaCounter;
 
+EWRAM_DATA u8 gSharedMem[0x20000] = {0};
 EWRAM_DATA void (**gFlashTimerIntrFunc)(void) = NULL;
 
 static void UpdateLinkAndCallCallbacks(void);
@@ -80,6 +82,10 @@ static void InitIntrHandlers(void);
 static void WaitForVBlank(void);
 
 #define B_START_SELECT (B_BUTTON | START_BUTTON | SELECT_BUTTON)
+
+#ifndef NDEBUG
+    #include <stdlib.h> // don't include if not needed.
+#endif
 
 void AgbMain()
 {
@@ -95,6 +101,14 @@ void AgbMain()
     SeedRngWithRtc();
 
     gSoftResetDisabled = FALSE;
+
+// In Fire Red, AGBPrintInit is called at this spot. For user convenience, I
+// opt to initialize the print area here. It is up to the user where they choose
+// to print stuff from, as anything else declared is NOT authoritative.
+#ifndef NDEBUG
+    AGBPrintInit();
+    __mb_cur_max = 1; // fix for AGBPrintf
+#endif
 
     if (gFlashMemoryPresent != TRUE)
         SetMainCallback2(NULL);
@@ -348,7 +362,7 @@ void DoSoftReset(void)
 {
     REG_IME = 0;
     m4aSoundVSyncOff();
-    remove_some_task();
+    ScanlineEffect_Stop();
     DmaStop(1);
     DmaStop(2);
     DmaStop(3);

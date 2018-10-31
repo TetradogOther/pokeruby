@@ -1,7 +1,8 @@
 #include "global.h"
-#include "asm.h"
+#include "map_name_popup.h"
 #include "event_data.h"
 #include "menu.h"
+#include "region_map.h"
 #include "task.h"
 
 EWRAM_DATA static u8 sTaskId = 0;
@@ -18,7 +19,7 @@ bool8 unref_sub_80A2F44(void)
 
 void ShowMapNamePopup(void)
 {
-    if (FlagGet(0x4000) != TRUE)
+    if (FlagGet(FLAG_SPECIAL_FLAG_0) != TRUE)
     {
         if (!FuncIsActiveTask(Task_MapNamePopup))
         {
@@ -88,8 +89,8 @@ void HideMapNamePopup(void)
 {
     if (FuncIsActiveTask(Task_MapNamePopup))
     {
-        MenuLoadTextWindowGraphics();
-        MenuZeroFillWindowRect(0, 0, 13, 3);
+        Menu_LoadStdFrameGraphics();
+        Menu_EraseWindowRect(0, 0, 13, 3);
         REG_BG0VOFS = 0;
         DestroyTask(sTaskId);
     }
@@ -99,8 +100,8 @@ void DrawMapNamePopup(void)
 {
     u8 name[20];
 
-    MenuLoadTextWindowGraphics_OverrideFrameType(0);
-    sub_80FBFB4(name, gMapHeader.name, 0);
-    MenuDrawTextWindow(0, 0, 13, 3);
-    sub_8072BD8(name, 1, 1, 0x60);
+    Menu_LoadStdFrameGraphicsOverrideStyle(0);
+    GetMapSectionName(name, gMapHeader.regionMapSectionId, 0);
+    Menu_DrawStdWindowFrame(0, 0, 13, 3);
+    MenuPrint_Centered(name, 1, 1, 0x60);
 }

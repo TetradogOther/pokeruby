@@ -1,10 +1,11 @@
 #include "global.h"
 #include "gba/m4a_internal.h"
 #include "sound.h"
-#include "asm.h"
 #include "battle.h"
 #include "m4a.h"
-#include "songs.h"
+#include "main.h"
+#include "pokemon.h"
+#include "constants/songs.h"
 #include "task.h"
 
 struct Fanfare
@@ -13,12 +14,10 @@ struct Fanfare
     u16 duration;
 };
 
-// Hack: different prototype than definition
-u32 SpeciesToCryId(u32);
-
 extern u16 gBattleTypeFlags;
-extern struct MusicPlayerInfo *gMPlay_PokemonCry;
-extern u8 gPokemonCryBGMDuckingCounter;
+
+static EWRAM_DATA struct MusicPlayerInfo *gMPlay_PokemonCry = NULL;
+static EWRAM_DATA u8 gPokemonCryBGMDuckingCounter = 0;
 
 static u16 sCurrentMapMusic;
 static u16 sNextMapMusic;
@@ -26,36 +25,30 @@ static u8 sMapMusicState;
 static u8 sMapMusicFadeInSpeed;
 static u16 sFanfareCounter;
 
-extern bool8 gDisableMusic;
+bool8 gDisableMusic;
+
 extern struct MusicPlayerInfo gMPlay_BGM;
 extern struct MusicPlayerInfo gMPlay_SE1;
 extern struct MusicPlayerInfo gMPlay_SE2;
 extern struct MusicPlayerInfo gMPlay_SE3;
 
-extern struct ToneData voicegroup_8452590[];
-extern struct ToneData voicegroup_8452B90[];
-extern struct ToneData voicegroup_8453190[];
-extern struct ToneData voicegroup_8453790[];
-
-extern struct ToneData voicegroup_84537C0[];
-extern struct ToneData voicegroup_8453DC0[];
-extern struct ToneData voicegroup_84543C0[];
-extern struct ToneData voicegroup_84549C0[];
+extern struct ToneData gCryTable[];
+extern struct ToneData gCryTable2[];
 
 static const struct Fanfare sFanfares[] =
 {
-    { BGM_FANFA1,      80 },
-    { BGM_FANFA4,     160 },
-    { BGM_FANFA5,     220 },
-    { BGM_ME_WAZA,    220 },
-    { BGM_ME_ASA,     160 },
-    { BGM_ME_BACHI,   340 },
-    { BGM_ME_WASURE,  180 },
-    { BGM_ME_KINOMI,  120 },
-    { BGM_ME_TAMA,    710 },
-    { BGM_ME_B_BIG,   250 },
-    { BGM_ME_B_SMALL, 150 },
-    { BGM_ME_ZANNEN,  160 },
+    { MUS_FANFA1,      80 },
+    { MUS_FANFA4,     160 },
+    { MUS_FANFA5,     220 },
+    { MUS_ME_WAZA,    220 },
+    { MUS_ME_ASA,     160 },
+    { MUS_ME_BACHI,   340 },
+    { MUS_ME_WASURE,  180 },
+    { MUS_ME_KINOMI,  120 },
+    { MUS_ME_TAMA,    710 },
+    { MUS_ME_B_BIG,   250 },
+    { MUS_ME_B_SMALL, 150 },
+    { MUS_ME_ZANNEN,  160 },
 };
 
 static void Task_Fanfare(u8 taskId);
@@ -81,8 +74,6 @@ void MapMusicMain(void)
         PlayBGM(sCurrentMapMusic);
         break;
     case 2:
-    case 3:
-    case 4:
         break;
     case 5:
         if (IsBGMStopped())
@@ -353,21 +344,9 @@ void PlayCry5(u16 species, u8 mode)
     RestoreBGMVolumeAfterPokemonCry();
 }
 
-#define GET_CRY_PTR(a, b)\
-{\
-    struct ToneData *tone;\
-    if (v0)\
-        tone = &a[index];\
-    else\
-        tone = &b[index];\
-    gMPlay_PokemonCry = SetPokemonCryTone(tone);\
-    break;\
-}
-
 static void PlayCryInternal(u16 species, s8 pan, s8 volume, u8 priority, u8 mode)
 {
-    u32 cryId;
-    u32 v0;
+    bool32 v0;
     u32 release;
     u32 length;
     u32 pitch;
@@ -376,10 +355,7 @@ static void PlayCryInternal(u16 species, s8 pan, s8 volume, u8 priority, u8 mode
     u8 table;
 
     species--;
-
-    cryId = species;
-
-    v0 = 0;
+    v0 = FALSE;
     release = 0;
     length = 140;
     pitch = 15360;
@@ -425,26 +401,28 @@ static void PlayCryInternal(u16 species, s8 pan, s8 volume, u8 priority, u8 mode
     SetPokemonCryChorus(chorus);
     SetPokemonCryPriority(priority);
 
-    asm("");
-    asm("");
-    asm("");
-    asm("");
-    asm("");
-    asm("");
-    asm("");
-
-    cryId = SpeciesToCryId(cryId);
-    index = 0x7F;
-    asm("" ::: "r0");
-    index &= cryId;
-    table = cryId >> 7;
+    species = SpeciesToCryId(species);
+    index = species & 0x7F;
+    table = species >> 7;
 
     switch (table)
     {
-    case 0: GET_CRY_PTR(voicegroup_84537C0, voicegroup_8452590);
-    case 1: GET_CRY_PTR(voicegroup_8453DC0, voicegroup_8452B90);
-    case 2: GET_CRY_PTR(voicegroup_84543C0, voicegroup_8453190);
-    case 3: GET_CRY_PTR(voicegroup_84549C0, voicegroup_8453790);
+    case 0:
+        gMPlay_PokemonCry = SetPokemonCryTone(
+          v0 ? &gCryTable2[(128 * 0) + index] : &gCryTable[(128 * 0) + index]);
+        break;
+    case 1:
+        gMPlay_PokemonCry = SetPokemonCryTone(
+          v0 ? &gCryTable2[(128 * 1) + index] : &gCryTable[(128 * 1) + index]);
+        break;
+    case 2:
+        gMPlay_PokemonCry = SetPokemonCryTone(
+          v0 ? &gCryTable2[(128 * 2) + index] : &gCryTable[(128 * 2) + index]);
+        break;
+    case 3:
+        gMPlay_PokemonCry = SetPokemonCryTone(
+          v0 ? &gCryTable2[(128 * 3) + index] : &gCryTable[(128 * 3) + index]);
+        break;
     }
 }
 

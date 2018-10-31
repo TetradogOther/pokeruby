@@ -1,20 +1,45 @@
 #include "global.h"
+#include "constants/hold_effects.h"
 #include "item.h"
+#include "constants/items.h"
+#include "item_menu.h"
+#include "item_use.h"
+#include "berry.h"
 #include "string_util.h"
 #include "strings.h"
 
-extern struct Berry *GetBerryInfo(u8 berry);
-
-extern u8 gUnknown_02038560;
-extern struct Item gItems[];
-
-struct BagPocket
+struct Item
 {
-    struct ItemSlot *itemSlots;
-    u8 capacity;
+    u8 name[14];
+    u16 itemId;
+    u16 price;
+    u8 holdEffect;
+    u8 holdEffectParam;
+    const u8 *description;
+    u8 importance;
+    u8 exitsBagOnUse; // unused, but items which have this field set to 1 all
+                      // exit the Bag when they are used.
+    u8 pocket;
+    u8 type;
+    ItemUseFunc fieldUseFunc;
+    u8 battleUsage;
+    ItemUseFunc battleUseFunc;
+    u8 secondaryId;
 };
 
-extern struct BagPocket gBagPockets[5];
+extern u8 gCurSelectedItemSlotIndex;
+extern struct BagPocket gBagPockets[NUM_BAG_POCKETS];
+
+// These constants are used in gItems
+enum
+{
+    POCKET_NONE,
+    POCKET_ITEMS,
+    POCKET_POKE_BALLS,
+    POCKET_TM_HM,
+    POCKET_BERRIES,
+    POCKET_KEY_ITEMS,
+};
 
 enum
 {
@@ -25,17 +50,27 @@ enum
     KEYITEMS_POCKET
 };
 
+#if ENGLISH
+#include "data/item_descriptions_en.h"
+#include "data/items_en.h"
+#elif GERMAN
+#include "data/item_descriptions_de.h"
+#include "data/items_de.h"
+#endif
+
 static void CompactPCItems(void);
 
 void CopyItemName(u16 itemId, u8 *string)
 {
-    if (itemId == 0xAF)
+    if (itemId == ITEM_ENIGMA_BERRY)
     {
-        StringCopy(string, GetBerryInfo(0x2B)->name);
+        StringCopy(string, GetBerryInfo(GETBERRYID(ITEM_ENIGMA_BERRY))->name);
         StringAppend(string, gOtherText_Berry2);
     }
     else
-        StringCopy(string, ItemId_GetItem(itemId)->name);
+    {
+        StringCopy(string, ItemId_GetName(itemId));
+    }
 }
 
 //Unreferenced
@@ -137,6 +172,8 @@ bool8 CheckBagHasSpace(u16 itemId, u16 count)
     return TRUE;
 }
 
+// This function matches if gBagPockets is declared non-const,
+// but it should be fixed anyway.
 bool8 AddBagItem(u16 itemId, u16 count)
 {
     u8 i;
@@ -220,21 +257,21 @@ bool8 RemoveBagItem(u16 itemId, u16 count)
     if (totalQuantity < count)
         return FALSE;   //We don't have enough of the item
 
-    if (gBagPockets[pocket].capacity > gUnknown_02038560
-     && gBagPockets[pocket].itemSlots[gUnknown_02038560].itemId == itemId)
+    if (gBagPockets[pocket].capacity > gCurSelectedItemSlotIndex
+     && gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].itemId == itemId)
     {
-        if (gBagPockets[pocket].itemSlots[gUnknown_02038560].quantity >= count)
+        if (gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].quantity >= count)
         {
-            gBagPockets[pocket].itemSlots[gUnknown_02038560].quantity -= count;
+            gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].quantity -= count;
             count = 0;
         }
         else
         {
-            count -= gBagPockets[pocket].itemSlots[gUnknown_02038560].quantity;
-            gBagPockets[pocket].itemSlots[gUnknown_02038560].quantity = 0;
+            count -= gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].quantity;
+            gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].quantity = 0;
         }
-        if (gBagPockets[pocket].itemSlots[gUnknown_02038560].quantity == 0)
-            gBagPockets[pocket].itemSlots[gUnknown_02038560].itemId = 0;
+        if (gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].quantity == 0)
+            gBagPockets[pocket].itemSlots[gCurSelectedItemSlotIndex].itemId = 0;
         if (count == 0)
             return TRUE;
     }
@@ -267,11 +304,11 @@ u8 GetPocketByItemId(u16 itemId)
     return ItemId_GetPocket(itemId);
 }
 
-void ClearItemSlots(struct ItemSlot *itemSlots, u8 b)
+void ClearItemSlots(struct ItemSlot *itemSlots, u8 capacity)
 {
     u16 i;
 
-    for (i = 0; i < b; i++)
+    for (i = 0; i < capacity; i++)
     {
         itemSlots[i].itemId = 0;
         itemSlots[i].quantity = 0;
@@ -282,7 +319,7 @@ static s32 FindFreePCItemSlot(void)
 {
     s8 i;
 
-    for (i = 0; i < 50; i++)
+    for (i = 0; i < PC_ITEMS_COUNT; i++)
     {
         if (gSaveBlock1.pcItems[i].itemId == 0)
             return i;
@@ -295,7 +332,7 @@ u8 CountUsedPCItemSlots(void)
     u8 usedSlots = 0;
     u8 i;
 
-    for (i = 0; i < 50; i++)
+    for (i = 0; i < PC_ITEMS_COUNT; i++)
     {
         if (gSaveBlock1.pcItems[i].itemId != 0)
             usedSlots++;
@@ -307,7 +344,7 @@ bool8 CheckPCHasItem(u16 itemId, u16 count)
 {
     u8 i;
 
-    for (i = 0; i < 50; i++)
+    for (i = 0; i < PC_ITEMS_COUNT; i++)
     {
         if (gSaveBlock1.pcItems[i].itemId == itemId && gSaveBlock1.pcItems[i].quantity >= count)
             return TRUE;
@@ -319,13 +356,13 @@ bool8 AddPCItem(u16 itemId, u16 count)
 {
     u8 i;
     s8 freeSlot;
-    struct ItemSlot newItems[50];
+    struct ItemSlot newItems[PC_ITEMS_COUNT];
 
     //Copy PC items
     memcpy(newItems, gSaveBlock1.pcItems, sizeof(newItems));
 
     //Use any item slots that already contain this item
-    for (i = 0; i < 50; i++)
+    for (i = 0; i < PC_ITEMS_COUNT; i++)
     {
         if (newItems[i].itemId == itemId)
         {
@@ -375,9 +412,9 @@ static void CompactPCItems(void)
     u16 i;
     u16 j;
 
-    for (i = 0; i < 49; i++)
+    for (i = 0; i < PC_ITEMS_COUNT - 1; i++)
     {
-        for (j = i + 1; j <= 49; j++)
+        for (j = i + 1; j <= PC_ITEMS_COUNT - 1; j++)
         {
             if (gSaveBlock1.pcItems[i].itemId == 0)
             {
@@ -393,26 +430,26 @@ void SwapRegisteredBike(void)
 {
     switch (gSaveBlock1.registeredItem)
     {
-    case 0x103:
-        gSaveBlock1.registeredItem = 0x110;
+    case ITEM_MACH_BIKE:
+        gSaveBlock1.registeredItem = ITEM_ACRO_BIKE;
         break;
-    case 0x110:
-        gSaveBlock1.registeredItem = 0x103;
+    case ITEM_ACRO_BIKE:
+        gSaveBlock1.registeredItem = ITEM_MACH_BIKE;
         break;
     }
 }
 
 static u16 SanitizeItemId(u16 itemId)
 {
-    if (itemId > 0x15C)
+    if (itemId >= ARRAY_COUNT(gItems))
         return 0;
     else
         return itemId;
 }
 
-struct Item *ItemId_GetItem(u16 itemId)
+const u8 *ItemId_GetName(u16 itemId)
 {
-    return &gItems[SanitizeItemId(itemId)];
+    return gItems[SanitizeItemId(itemId)].name;
 }
 
 u16 ItemId_GetId(u16 itemId)
@@ -435,30 +472,30 @@ u8 ItemId_GetHoldEffectParam(u16 itemId)
     return gItems[SanitizeItemId(itemId)].holdEffectParam;
 }
 
-u8 *ItemId_GetDescription(u16 itemId)
+const u8 *ItemId_GetDescription(u16 itemId)
 {
     return gItems[SanitizeItemId(itemId)].description;
 }
 
-bool8 ItemId_CopyDescription(u8 *a, u32 itemId, u32 c)
+bool32 ItemId_CopyDescription(u8 *dest, u32 itemId, u32 textLine)
 {
-    u32 r5 = c + 1;
-    u8 *description = gItems[SanitizeItemId(itemId)].description;
-    u8 *str = a;
+    u32 curTextLine = textLine + 1;
+    const u8 *description = gItems[SanitizeItemId(itemId)].description;
+    u8 *str = dest;
 
     for (;;)
     {
         if (*description == 0xFF || *description == 0xFE)
         {
-            r5--;
-            if (r5 == 0)
+            curTextLine--;
+            if (curTextLine == 0)
             {
                 *str = 0xFF;
                 return TRUE;
             }
             if (*description == 0xFF)
                 return FALSE;
-            str = a;
+            str = dest;
             description++;
         }
         else
@@ -471,9 +508,10 @@ u8 ItemId_GetImportance(u16 itemId)
     return gItems[SanitizeItemId(itemId)].importance;
 }
 
-u8 ItemId_GetUnknownValue(u16 itemId)
+// unused
+u8 ItemId_GetExitsBagOnUse(u16 itemId)
 {
-    return gItems[SanitizeItemId(itemId)].unk19;
+    return gItems[SanitizeItemId(itemId)].exitsBagOnUse;
 }
 
 u8 ItemId_GetPocket(u16 itemId)

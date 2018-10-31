@@ -6,6 +6,8 @@
 #define gPaletteFade_delay            (gPaletteFade.multipurpose2) // normal and hardware fade
 #define gPaletteFade_submode          (gPaletteFade.multipurpose2) // fast fade
 
+#define FADE_COLOR_WHITE (RGB(31, 31, 31) | 0x8000)
+
 enum
 {
     FAST_FADE_IN_FROM_WHITE,
@@ -16,22 +18,22 @@ enum
 
 struct PaletteFadeControl
 {
-    u32 multipurpose1;
-    u8 delayCounter:6;
-    u16 y:5; // blend coefficient
-    u16 targetY:5; // target blend coefficient
-    u16 blendColor:15;
-    u16 active:1;
-    u16 multipurpose2:6;
-    u16 yDec:1; // whether blend coefficient is decreasing
-    u16 bufferTransferDisabled:1;
-    u16 mode:2;
-    u16 shouldResetBlendRegisters:1;
-    u16 hardwareFadeFinishing:1;
-    u16 softwareFadeFinishingCounter:5;
-    u16 softwareFadeFinishing:1;
-    u16 objPaletteToggle:1;
-    u8 deltaY:4; // rate of change of blend coefficient
+    /*0x00*/    u32 multipurpose1;
+    /*0x04*/    u8 delayCounter:6;
+    /*0x05*/    u16 y:5; // blend coefficient
+    /*0x05-06*/ u16 targetY:5; // target blend coefficient
+    /*0x07*/    u16 blendColor:15;
+    /*0x07*/    u16 active:1;
+    /*0x08*/    u16 multipurpose2:6;
+    /*0x08*/    u16 yDec:1; // whether blend coefficient is decreasing
+    /*0x08*/    u16 bufferTransferDisabled:1;
+    /*0x09*/    u16 mode:2;
+    /*0x09*/    u16 shouldResetBlendRegisters:1;
+    /*0x09*/    u16 hardwareFadeFinishing:1;
+    /*0x09-0a*/ u16 softwareFadeFinishingCounter:5;
+    /*0x0a*/    u16 softwareFadeFinishing:1;
+    /*0x0a*/    u16 objPaletteToggle:1;
+    /*0x0a*/    u8 deltaY:4; // rate of change of blend coefficient
 };
 
 extern struct PaletteFadeControl gPaletteFade;
@@ -48,7 +50,6 @@ u8 UpdatePaletteFade(void);
 void ResetPaletteFade(void);
 void ReadPlttIntoBuffers(void);
 bool8 BeginNormalPaletteFade(u32, s8, u8, u8, u16);
-bool8 unref_sub_8073D3C(u32, u8, u8, u8, u16);
 void unref_sub_8073D84(u8, u32 *);
 void ResetPaletteStructByUid(u16);
 void ResetPaletteStruct(u8);

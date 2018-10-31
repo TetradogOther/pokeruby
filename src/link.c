@@ -1,18 +1,23 @@
 #include "global.h"
+#include "cable_club.h"
 #include "link.h"
-#include "asm.h"
 #include "battle.h"
+#include "berry.h"
+#include "hall_of_fame.h"
+#include "item_use.h"
 #include "main.h"
 #include "menu.h"
 #include "palette.h"
-#include "rng.h"
+#include "random.h"
 #include "save.h"
-#include "songs.h"
+#include "constants/songs.h"
 #include "sound.h"
 #include "sprite.h"
+#include "string_util.h"
 #include "strings2.h"
 #include "task.h"
 #include "text.h"
+#include "ewram.h"
 
 #define SIO_MULTI_CNT ((struct SioMultiCnt *)REG_ADDR_SIOCNT)
 
@@ -33,15 +38,13 @@ struct LinkTestBGInfo
     u32 dummy_C;
 };
 
-extern u8 unk_2000000[];
-extern u8 unk_2004000[];
 extern u16 gBattleTypeFlags;
-extern u16 gScriptItemId;
 
 extern u16 word_3004858;
 
+extern void Blender_SetBankBerryData(u8 bank, u16 itemID);
+
 static void InitLinkTestBG(u8, u8, u8, u8);
-void InitLinkTestBG_Unused(u8, u8, u8, u8);
 void LinkTestScreen();
 static void InitLocalLinkPlayer(void);
 static void VBlankCB_LinkTest(void);
@@ -64,7 +67,6 @@ u32 sub_8007E40(void);
 static void SetBlockReceivedFlag(u8);
 static u16 LinkTestCalcBlockChecksum(void *, u16);
 static void PrintHexDigit(u8, u8, u8);
-static void PrintHex(u32, u8, u8, u8);
 static void LinkCB_RequestPlayerDataExchange(void);
 static void Task_PrintTestData(u8);
 bool8 sub_8008224(void);
@@ -75,8 +77,9 @@ static void sub_80083E0(void);
 static void sub_8008454(void);
 static void sub_80084C8(void);
 static void sub_80084F4(void);
+
 static void CheckErrorStatus(void);
-static void CB2_PrintErrorMessage(void);
+void CB2_PrintErrorMessage(void);
 static u8 IsSioMultiMaster(void);
 static void DisableSerial(void);
 static void EnableSerial(void);
@@ -142,6 +145,9 @@ void (*gLinkCallback)(void);
 struct LinkPlayer gSavedLinkPlayers[MAX_LINK_PLAYERS];
 u8 gShouldAdvanceLinkState;
 u16 gLinkTestBlockChecksums[MAX_LINK_PLAYERS];
+#if DEBUG
+u8 gUnknown_Debug_30030E0;
+#endif
 u8 gBlockRequestType;
 u8 gLastSendQueueCount;
 struct Link gLink;
@@ -153,11 +159,11 @@ u8 deUnkValue1;
 u8 deUnkValue2;
 #endif
 
-EWRAM_DATA bool8 gLinkTestDebugValuesEnabled = {0};
-EWRAM_DATA bool8 gLinkTestDummyBool = {0};
-EWRAM_DATA u32 gFiller_20238B8 = {0};
-EWRAM_DATA u32 dword_20238BC = {0};
-EWRAM_DATA bool8 gLinkOpen = {0};
+EWRAM_DATA bool8 gLinkTestDebugValuesEnabled = 0;
+EWRAM_DATA bool8 gLinkTestDummyBool = 0;
+EWRAM_DATA u32 gFiller_20238B8 = 0;
+EWRAM_DATA u32 dword_20238BC = 0;
+EWRAM_DATA bool8 gLinkOpen = 0;
 
 static const u16 sLinkTestDigitPalette[] = INCBIN_U16("graphics/interface/link_test_digits.gbapal");
 static const u32 sLinkTestDigitTiles[] = INCBIN_U32("graphics/interface/link_test_digits.4bpp");
@@ -175,20 +181,20 @@ static const u8 sDebugMessages[7][12] =
 
 static const u8 sColorCodes[] = _("{HIGHLIGHT TRANSPARENT}{COLOR WHITE2}");
 
-static const u32 sBlockRequestLookupTable[5 * 2] =
+const struct BlockRequest sBlockRequestLookupTable[5] =
 {
-    (u32)gBlockSendBuffer, 200,
-    (u32)gBlockSendBuffer, 200,
-    (u32)gBlockSendBuffer, 100,
-    (u32)gBlockSendBuffer, 220,
-    (u32)gBlockSendBuffer,  40,
+    {gBlockSendBuffer, 200},
+    {gBlockSendBuffer, 200},
+    {gBlockSendBuffer, 100},
+    {gBlockSendBuffer, 220},
+    {gBlockSendBuffer, 40},
 };
 
 static const u8 sTestString[] = _("テストな");
 
-ALIGNED(4) static const u8 sMagic[] = "GameFreak inc.";
+const u8 sMagic[] = "GameFreak inc.";
 
-ALIGNED(4) static const u8 sEmptyString[] = _("");
+const u8 sEmptyString[] = _(" ");
 
 void Task_DestroySelf(u8 taskId)
 {
@@ -235,8 +241,8 @@ void LinkTestScreen(void)
     FreeAllSpritePalettes();
     ResetTasks();
     SetVBlankCallback(VBlankCB_LinkTest);
-    SetUpWindowConfig(&gWindowConfig_81E6CE4);
-    InitMenuWindow((struct WindowConfig *)&gWindowConfig_81E6CE4);
+    Text_LoadWindowTemplate(&gMenuTextWindowTemplate);
+    InitMenuWindow((struct WindowTemplate *)&gMenuTextWindowTemplate);
     ResetBlockSend();
     gLinkType = 0x1111;
     OpenLink();
@@ -400,13 +406,13 @@ static void LinkTestProcessKeyInput(void)
     if (gMain.newKeys & A_BUTTON)
         gShouldAdvanceLinkState = 1;
     if (gMain.heldKeys & B_BUTTON)
-        InitBlockSend(unk_2004000, 0x2004);
+        InitBlockSend(ewram4000, 0x2004);
     if (gMain.newKeys & L_BUTTON)
-        BeginNormalPaletteFade(-1, 0, 0x10, 0, 2);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(2, 0, 0));
     if (gMain.newKeys & START_BUTTON)
         SetSuppressLinkErrorMessage(TRUE);
     if (gMain.newKeys & R_BUTTON)
-        TrySavingData(LINK_SAVE);
+        Save_WriteData(SAVE_LINK);
     if (gMain.newKeys & SELECT_BUTTON)
         sub_800832C();
     if (gLinkTestDebugValuesEnabled)
@@ -503,7 +509,7 @@ static void ProcessRecvCmds(u8 unusedParam)
         case 0x8888:
             if (sBlockRecv[i].size > BLOCK_BUFFER_SIZE)
             {
-                u16 *buffer = (u16 *)unk_2000000;
+                u16 *buffer = (u16 *)gSharedMem;
                 u16 j;
                 for (j = 0; j < CMD_LENGTH - 1; j++)
                     buffer[(sBlockRecv[i].pos / 2) + j] = gRecvCmds[j + 1][i];
@@ -540,6 +546,9 @@ static void ProcessRecvCmds(u8 unusedParam)
                 else
                 {
                     SetBlockReceivedFlag(i);
+#if DEBUG
+                    debug_sub_808B838(i);
+#endif
                 }
             }
             break;
@@ -553,11 +562,11 @@ static void ProcessRecvCmds(u8 unusedParam)
             sub_8007E24();
             break;
         case 0xAAAB:
-            sub_80516C4(i, gRecvCmds[1][i]);
+            Blender_SetBankBerryData(i, gRecvCmds[1][i]);
             break;
         case 0xCCCC:
 #if defined(ENGLISH)
-            SendBlock(0, (void *)(sBlockRequestLookupTable)[gRecvCmds[1][i] * 2], (sBlockRequestLookupTable + 1)[gRecvCmds[1][i] * 2]);
+            SendBlock(0, sBlockRequestLookupTable[gRecvCmds[1][i]].address, sBlockRequestLookupTable[gRecvCmds[1][i]].size);
 #elif defined(GERMAN)
             if (deUnkValue2 == 1)
             {
@@ -566,7 +575,7 @@ static void ProcessRecvCmds(u8 unusedParam)
             }
             else if (deUnkValue2 == 2 || deUnkValue2 == 3)
             {
-                SendBlock(0, (void *)(sBlockRequestLookupTable)[gRecvCmds[1][i] * 2], (sBlockRequestLookupTable + 1)[gRecvCmds[1][i] * 2]);
+                SendBlock(0, sBlockRequestLookupTable[gRecvCmds[1][i]].address, sBlockRequestLookupTable[gRecvCmds[1][i]].size);
 
                 if (deUnkValue2 == 2)
                     deUnkValue2 = 1;
@@ -575,7 +584,7 @@ static void ProcessRecvCmds(u8 unusedParam)
             }
             else
             {
-                SendBlock(0, (void *)(sBlockRequestLookupTable)[gRecvCmds[1][i] * 2], (sBlockRequestLookupTable + 1)[gRecvCmds[1][i] * 2]);
+                SendBlock(0, sBlockRequestLookupTable[gRecvCmds[1][i]].address, sBlockRequestLookupTable[gRecvCmds[1][i]].size);
             }
 #endif
             break;
@@ -632,7 +641,7 @@ static void BuildSendCmd(u16 code)
         break;
     case 0xAAAB:
         gSendCmd[0] = 0xAAAB;
-        gSendCmd[1] = gScriptItemId;
+        gSendCmd[1] = gSpecialVar_ItemId;
         break;
     case 0xCCCC:
         gSendCmd[0] = 0xCCCC;
@@ -895,14 +904,9 @@ bool8 sub_8007E9C(u8 a1)
     }
 }
 
-bool8 sub_8007ECC(void)
+bool8 IsLinkTaskFinished(void)
 {
-    u8 retVal = FALSE;
-
-    if (!gLinkCallback)
-        retVal = TRUE;
-
-    return retVal;
+    return gLinkCallback == NULL;
 }
 
 u8 GetBlockReceivedStatus(void)
@@ -950,11 +954,11 @@ static u16 LinkTestCalcBlockChecksum(void *data, u16 size)
 
 static void PrintHexDigit(u8 tileNum, u8 x, u8 y)
 {
-    u16 *tilemap = (u16 *)BG_SCREEN_ADDR(gLinkTestBGInfo.screenBaseBlock);
+    u16 *tilemap = BG_SCREEN_ADDR(gLinkTestBGInfo.screenBaseBlock);
     tilemap[(32 * y) + x] = (gLinkTestBGInfo.paletteNum << 12) | (tileNum + 1);
 }
 
-static void PrintHex(u32 num, u8 x, u8 y, u8 maxDigits)
+void PrintHex(u32 num, u8 x, u8 y, u8 maxDigits)
 {
     u8 buffer[16];
     s32 i;
@@ -971,6 +975,54 @@ static void PrintHex(u32 num, u8 x, u8 y, u8 maxDigits)
         x++;
     }
 }
+
+#if DEBUG
+
+EWRAM_DATA uintptr_t debugCharacterBase = 0;
+EWRAM_DATA uintptr_t unk_20238C8 = 0;
+EWRAM_DATA u16 *debugTileMap = NULL;
+EWRAM_DATA u32 unk_20238D0 = 0;
+
+void debug_sub_8008218(u16 *buffer, u32 arg1, u16 *arg2, u32 arg3)
+{
+    CpuSet(sLinkTestDigitTiles, buffer, 272);
+    debugCharacterBase = (uintptr_t)buffer;
+    unk_20238C8 = (uintptr_t)arg1;
+    debugTileMap = arg2;
+    unk_20238D0 = arg3;
+}
+
+void debug_sub_8008264(u32 value, int left, int top, int d, int e)
+{
+    s32 i;
+    u32 buffer[8];
+
+    if (unk_20238D0 == e)
+    {
+        u32 *ptr;
+        u16 *tilemapDest;
+
+        if (d > 8)
+            d = 8;
+        ptr = buffer;
+        for (i = 0; i < d; i++)
+        {
+            *ptr++ = value & 0xF;
+            value >>= 4;
+        }
+
+        tilemapDest = (u16 *)debugTileMap + top * 0x20 + left;
+        ptr = buffer + d - 1;
+        for (i = 0; i < d; i++)
+        {
+            *tilemapDest = (debugCharacterBase - unk_20238C8) / 32 + *ptr + 1;
+            ptr--;
+            tilemapDest++;
+        }
+    }
+}
+
+#endif
 
 static void LinkCB_RequestPlayerDataExchange(void)
 {
@@ -1233,9 +1285,9 @@ void CB2_LinkError(void)
     FillPalette(0, 0, 2);
     ResetTasks();
     SetVBlankCallback(VBlankCB_LinkTest);
-    SetUpWindowConfig(&gWindowConfig_81E7198);
-    InitMenuWindow((struct WindowConfig *)&gWindowConfig_81E7198);
-    MenuZeroFillScreen();
+    Text_LoadWindowTemplate(&gWindowTemplate_81E7198);
+    InitMenuWindow((struct WindowTemplate *)&gWindowTemplate_81E7198);
+    Menu_EraseScreen();
     REG_BLDALPHA = 0;
     REG_BG0VOFS = 0;
     REG_BG0HOFS = 0;
@@ -1250,14 +1302,33 @@ void CB2_LinkError(void)
     SetMainCallback2(CB2_PrintErrorMessage);
 }
 
-static void CB2_PrintErrorMessage(void)
+void CB2_PrintErrorMessage(void)
 {
-    u8 array[64] __attribute__((unused)); // unused
+    u8 array[32] __attribute__((unused)); // unused
+    u8 array2[32] __attribute__((unused)); // unused
 
     switch (gMain.state)
     {
     case 0:
-        MenuPrint_PixelCoords(gMultiText_LinkError, 20, 56, 1);
+        Menu_PrintTextPixelCoords(gMultiText_LinkError, 20, 56, 1);
+#if DEBUG
+        StringCopy(array, sColorCodes);
+
+        ConvertIntToHexStringN(array2, sErrorLinkStatus, STR_CONV_MODE_LEADING_ZEROS, 8);
+        StringAppend(array, array2);
+
+        StringAppend(array, sEmptyString);
+
+        ConvertIntToHexStringN(array2, sErrorLastSendQueueCount, STR_CONV_MODE_LEADING_ZEROS, 2);
+        StringAppend(array, array2);
+
+        StringAppend(array, sEmptyString);
+
+        ConvertIntToHexStringN(array2, sErrorLastRecvQueueCount, STR_CONV_MODE_LEADING_ZEROS, 2);
+        StringAppend(array, array2);
+
+        Menu_PrintText(array, 2, 15);
+#endif
         break;
     case 30:
     case 60:

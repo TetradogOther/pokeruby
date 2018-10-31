@@ -1,6 +1,5 @@
 #include "global.h"
 #include "palette.h"
-#include "asm.h"
 #include "blend_palette.h"
 #include "decompress.h"
 
@@ -75,7 +74,7 @@ static bool8 IsSoftwarePaletteFadeFinishing(void);
 
 void LoadCompressedPalette(const void *src, u16 offset, u16 size)
 {
-    sub_800D238(src, sPaletteDecompressionBuffer);
+    LZDecompressWram(src, sPaletteDecompressionBuffer);
     CpuCopy16(sPaletteDecompressionBuffer, gPlttBufferUnfaded + offset, size);
     CpuCopy16(sPaletteDecompressionBuffer, gPlttBufferFaded + offset, size);
 }
@@ -193,10 +192,10 @@ bool8 BeginNormalPaletteFade(u32 selectedPalettes, s8 delay, u8 startY, u8 targe
     }
 }
 
-bool8 unref_sub_8073D3C(u32 a1, u8 a2, u8 a3, u8 a4, u16 a5)
+bool8 unref_sub_8073D3C(u32 selectedPalettes, s8 delay, u8 startY, u8 targetY, u16 blendColor)
 {
     ReadPlttIntoBuffers();
-    return BeginNormalPaletteFade(a1, a2, a3, a4, a5);
+    return BeginNormalPaletteFade(selectedPalettes, delay, startY, targetY, blendColor);
 }
 
 void unref_sub_8073D84(u8 a1, u32 *a2)
@@ -615,7 +614,7 @@ static u8 UpdateFastPaletteFade(void)
             if (b < b0)
                 b = b0;
 
-            gPlttBufferFaded[i] = r | (g << 5) | (b << 10);
+            gPlttBufferFaded[i] = RGB(r, g, b);
         }
         break;
     case FAST_FADE_OUT_TO_WHTIE:
@@ -633,7 +632,7 @@ static u8 UpdateFastPaletteFade(void)
             if (b > 31)
                 b = 31;
 
-            gPlttBufferFaded[i] = r | (g << 5) | (b << 10);
+            gPlttBufferFaded[i] = RGB(r, g, b);
         }
         break;
     case FAST_FADE_IN_FROM_BLACK:
@@ -659,7 +658,7 @@ static u8 UpdateFastPaletteFade(void)
             if (b > b0)
                 b = b0;
 
-            gPlttBufferFaded[i] = r | (g << 5) | (b << 10);
+            gPlttBufferFaded[i] = RGB(r, g, b);
         }
         break;
     case FAST_FADE_OUT_TO_BLACK:
@@ -677,7 +676,7 @@ static u8 UpdateFastPaletteFade(void)
             if (b < 0)
                 b = 0;
 
-            gPlttBufferFaded[i] = r | (g << 5) | (b << 10);
+            gPlttBufferFaded[i] = RGB(r, g, b);
         }
     }
 
@@ -828,8 +827,6 @@ void BlendPalettes(u32 selectedPalettes, u8 coeff, u16 color)
 
 void BlendPalettesUnfaded(u32 selectedPalettes, u8 coeff, u16 color)
 {
-    void *src = gPlttBufferUnfaded;
-    void *dest = gPlttBufferFaded;
-    DmaCopy32(3, src, dest, PLTT_SIZE);
+    DmaCopy32Defvars(3, gPlttBufferUnfaded, gPlttBufferFaded, PLTT_SIZE);
     BlendPalettes(selectedPalettes, coeff, color);
 }

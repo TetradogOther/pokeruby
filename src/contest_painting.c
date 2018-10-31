@@ -1,30 +1,29 @@
 #include "global.h"
 #include "contest_painting.h"
-#include "asm.h"
+#include "contest_painting_effects.h"
 #include "data2.h"
 #include "decompress.h"
 #include "main.h"
 #include "menu.h"
 #include "palette.h"
-#include "rng.h"
+#include "random.h"
 #include "sprite.h"
 #include "string_util.h"
 #include "strings.h"
 #include "text.h"
+#include "scanline_effect.h"
+#include "ewram.h"
 
-extern u8 unk_2000000[];
-extern u8 gUnknown_03000750;
-extern u16 gUnknown_03000752;
-extern u16 gUnknown_03000754;
-extern u16 (*gUnknown_03005E10)[][32];
-extern u8 gUnknown_03005E40[];
-extern u16 (*gUnknown_03005E90)[];
+static u8 gUnknown_03000750;
+static u16 gUnknown_03000752;
+static u16 gUnknown_03000754;
+static u8 gUnknown_03000756;
 
-extern struct ContestEntry unk_2015de0;
-extern struct Unk2015E00 unk_2015e00;
-extern struct Unk3000756 gUnknown_03000756;
-extern struct Unk03005E20 gUnknown_03005E20;
-extern struct ContestEntry *gUnknown_03005E8C;
+u16 (*gUnknown_03005E10)[][32];
+struct Unk03005E20 gUnknown_03005E20;
+u8 gUnknown_03005E40[0x4C];
+struct ContestEntry *gUnknown_03005E8C;
+u16 (*gUnknown_03005E90)[];
 
 static const u16 gPictureFramePalettes[][16] =
 {
@@ -105,17 +104,12 @@ static void VBlankCB_ContestPainting(void);
 void sub_8106B90();  //should be static
 static void sub_8107090(u8 arg0, u8 arg1);
 
-extern void sub_80FC7A0(struct Unk03005E20*);
-extern void sub_80FDA18(struct Unk03005E20*);
-extern void sub_80FD8CC(struct Unk03005E20*);
-extern void *species_and_otid_get_pal();
-
-__attribute__((naked))
+NAKED
 void sub_8106630(u32 arg0)
 {
     asm(".syntax unified\n\
     push {r4-r7,lr}\n\
-    ldr r2, _0810665C @ =0x02015de0\n\
+    ldr r2, _0810665C @ =gSharedMem + 0x15DE0\n\
     subs r4, r2, 0x2\n\
     subs r5, r2, 0x1\n\
     ldr r3, _08106660 @ =gSaveBlock1\n\
@@ -137,7 +131,7 @@ void sub_8106630(u32 arg0)
     pop {r0}\n\
     bx r0\n\
     .align 2, 0\n\
-_0810665C: .4byte 0x02015de0\n\
+_0810665C: .4byte gSharedMem + 0x15DE0\n\
 _08106660: .4byte gSaveBlock1\n\
 _08106664: .4byte 0x00002dfc\n\
     .syntax divided\n");
@@ -153,32 +147,17 @@ static void ShowContestPainting(void)
     switch (gMain.state)
     {
     case 0:
-        remove_some_task();
+        ScanlineEffect_Stop();
         SetVBlankCallback(NULL);
-        gUnknown_03005E8C = &unk_2015de0;
+        gUnknown_03005E8C = &ewram15DE0;
         ContestPaintingInitVars(TRUE);
         ContestPaintingInitBG();
         gMain.state++;
         break;
     case 1:
     {
-        u8 *addr;
-        size_t size;
-
         ResetPaletteFade();
-        addr = (void *)VRAM;
-        size = 0x18000;
-        while (1)
-        {
-            DmaFill32(3, 0, addr, 0x1000);
-            addr += 0x1000;
-            size -= 0x1000;
-            if (size <= 0x1000)
-            {
-                DmaFill32(3, 0, addr, size);
-                break;
-            }
-        }
+        DmaFill32Large(3, 0, (void *)(VRAM + 0x0), 0x18000, 0x1000);
         ResetSpriteData();
         gMain.state++;
         break;
@@ -186,15 +165,15 @@ static void ShowContestPainting(void)
     case 2:
         SeedRng(gMain.vblankCounter1);
         InitKeys();
-        ContestPaintingInitWindow(unk_2000000[0x15DDF]);
+        ContestPaintingInitWindow(ewram15DDF);
         gMain.state++;
         break;
     case 3:
-        sub_8107090(unk_2000000[0x15DDE], unk_2000000[0x15DDF]);
+        sub_8107090(ewram15DDE, ewram15DDF);
         gMain.state++;
         break;
     case 4:
-        ContestPaintingPrintCaption(unk_2000000[0x15DDE], unk_2000000[0x15DDF]);
+        ContestPaintingPrintCaption(ewram15DDE, ewram15DDF);
         LoadPalette(gUnknown_083F6140, 0, 1 * 2);
         DmaClear32(3, PLTT, 0x400);
         BeginFastPaletteFade(2);
@@ -224,7 +203,7 @@ static void HoldContestPainting(void)
     case 0:
         if (!gPaletteFade.active)
             gUnknown_03000750 = 1;
-        if (gUnknown_03000756.var_0 != 0 && gUnknown_03000754 != 0)
+        if (gUnknown_03000756 != 0 && gUnknown_03000754 != 0)
             gUnknown_03000754--;
         break;
     case 1:
@@ -233,15 +212,15 @@ static void HoldContestPainting(void)
             u8 two = 2;  //needed to make the asm match
 
             gUnknown_03000750 = two;
-            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, 0);
+            BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
         }
-        if (gUnknown_03000756.var_0 != 0)
+        if (gUnknown_03000756 != 0)
             gUnknown_03000754 = 0;
         break;
     case 2:
         if (!gPaletteFade.active)
             SetMainCallback2(CB2_QuitContestPainting);
-        if (gUnknown_03000756.var_0 != 0 && gUnknown_03000754 <= 0x1D)
+        if (gUnknown_03000756 != 0 && gUnknown_03000754 <= 0x1D)
             gUnknown_03000754++;
         break;
     }
@@ -249,8 +228,8 @@ static void HoldContestPainting(void)
 
 static void ContestPaintingInitWindow(u8 arg0)
 {
-    InitMenuWindow(&gWindowConfig_81E7160);
-    SetUpWindowConfig(&gWindowConfig_81E7160);
+    InitMenuWindow(&gWindowTemplate_81E7160);
+    Text_LoadWindowTemplate(&gWindowTemplate_81E7160);
 }
 
 static void ContestPaintingPrintCaption(u8 contestType, u8 arg1)
@@ -267,15 +246,23 @@ static void ContestPaintingPrintCaption(u8 contestType, u8 arg1)
     {
         ptr = StringCopy(ptr, gUnknown_083F60AC[type]);
         ptr = StringCopy(ptr, gContestText_ContestWinner);
+#if ENGLISH
         ptr = StringCopy(ptr, gUnknown_03005E8C->trainer_name);
+#elif GERMAN
+        ptr = StringCopy10(ptr, gUnknown_03005E8C->pokemon_name);
+#endif
 
-        // {ENG}
+        // {LATIN}
         ptr[0] = 0xFC;
         ptr[1] = 0x16;
         ptr += 2;
 
         ptr = StringCopy(ptr, gOtherText_Unknown1);
+#if ENGLISH
         ptr = StringCopy10(ptr, gUnknown_03005E8C->pokemon_name);
+#elif GERMAN
+        ptr = StringCopy(ptr, gUnknown_03005E8C->trainer_name);
+#endif
 
         xPos = 6;
         yPos = 14;
@@ -289,7 +276,7 @@ static void ContestPaintingPrintCaption(u8 contestType, u8 arg1)
         xPos = 3;
         yPos = 14;
     }
-    MenuPrint_PixelCoords(gUnknown_03005E40, xPos * 8 + 1, yPos * 8, 1);
+    Menu_PrintTextPixelCoords(gUnknown_03005E40, xPos * 8 + 1, yPos * 8, 1);
 }
 
 static void ContestPaintingInitBG(void)
@@ -307,13 +294,13 @@ static void ContestPaintingInitVars(bool8 arg0)
 {
     if (arg0 == FALSE)
     {
-        gUnknown_03000756.var_0 = FALSE;
+        gUnknown_03000756 = FALSE;
         gUnknown_03000752 = 0;
         gUnknown_03000754 = 0;
     }
     else
     {
-        gUnknown_03000756.var_0 = TRUE;
+        gUnknown_03000756 = TRUE;
         gUnknown_03000752 = 15;
         gUnknown_03000754 = 30;
     }
@@ -321,7 +308,7 @@ static void ContestPaintingInitVars(bool8 arg0)
 
 static void ContestPaintingMosaic(void)
 {
-    if (gUnknown_03000756.var_0 == FALSE)
+    if (gUnknown_03000756 == FALSE)
     {
         REG_MOSAIC = 0;
         return;
@@ -341,25 +328,23 @@ static void VBlankCB_ContestPainting(void)
     TransferPlttBuffer();
 }
 
-#ifdef NONMATCHING
 static void sub_8106AC4(u16 species, u8 arg1)
 {
-    void *pal;
+    const void *pal;
 
-    // Unsure what gUnknown_03005E8C->var0 is supposed to be.
-    pal = species_and_otid_get_pal(species, gUnknown_03005E8C->var4, gUnknown_03005E8C->var0);
+    pal = GetMonSpritePalFromOtIdPersonality(species, gUnknown_03005E8C->otId, gUnknown_03005E8C->personality);
     LZDecompressVram(pal, gUnknown_03005E90);
 
-    if (arg1 == 1)
+    if (arg1 == 0)
     {
         HandleLoadSpecialPokePic(
             &gMonFrontPicTable[species],
-            gMonFrontPicCoords[species].x,
-            gMonFrontPicCoords[species].y,
+            gMonFrontPicCoords[species].coords,
+            gMonFrontPicCoords[species].y_offset,
             0x2000000,
             gUnknown_081FAF4C[1],
             species,
-            (u32)gUnknown_03005E8C->var0
+            (u32)gUnknown_03005E8C->personality
         );
         sub_8106B90(gUnknown_081FAF4C[1], gUnknown_03005E90, gUnknown_03005E10);
     }
@@ -367,114 +352,16 @@ static void sub_8106AC4(u16 species, u8 arg1)
     {
         HandleLoadSpecialPokePic(
             &gMonBackPicTable[species],
-            gMonBackPicCoords[species].x,
-            gMonBackPicCoords[species].y,
+            gMonBackPicCoords[species].coords,
+            gMonBackPicCoords[species].y_offset,
             0x2000000,
             gUnknown_081FAF4C[0],
             species,
-            (u32)gUnknown_03005E8C->var0
+            (u32)gUnknown_03005E8C->personality
         );
         sub_8106B90(gUnknown_081FAF4C[0], gUnknown_03005E90, gUnknown_03005E10);
     }
 }
-#else
-__attribute__((naked))
-static void sub_8106AC4(u16 arg0, u8 arg2)
-{
-    asm(".syntax unified\n\
-    push {r4-r7,lr}\n\
-    mov r7, r8\n\
-    push {r7}\n\
-    sub sp, 0xC\n\
-    adds r4, r1, 0\n\
-    lsls r0, 16\n\
-    lsrs r6, r0, 16\n\
-    lsls r4, 24\n\
-    lsrs r4, 24\n\
-    ldr r7, _08106B28 @ =gUnknown_03005E8C\n\
-    ldr r0, [r7]\n\
-    ldr r1, [r0, 0x4]\n\
-    ldr r2, [r0]\n\
-    adds r0, r6, 0\n\
-    bl species_and_otid_get_pal\n\
-    ldr r1, _08106B2C @ =gUnknown_03005E90\n\
-    mov r8, r1\n\
-    ldr r1, [r1]\n\
-    bl LZDecompressVram\n\
-    cmp r4, 0\n\
-    bne _08106B40\n\
-    lsls r0, r6, 3\n\
-    ldr r1, _08106B30 @ =gMonFrontPicTable\n\
-    adds r0, r1\n\
-    ldr r1, _08106B34 @ =gMonFrontPicCoords\n\
-    lsls r2, r6, 2\n\
-    adds r2, r1\n\
-    ldrb r1, [r2]\n\
-    ldrb r2, [r2, 0x1]\n\
-    movs r3, 0x80\n\
-    lsls r3, 18\n\
-    ldr r4, _08106B38 @ =gUnknown_081FAF4C\n\
-    ldr r5, [r4, 0x4]\n\
-    str r5, [sp]\n\
-    str r6, [sp, 0x4]\n\
-    ldr r4, [r7]\n\
-    ldr r4, [r4]\n\
-    str r4, [sp, 0x8]\n\
-    bl HandleLoadSpecialPokePic\n\
-    mov r2, r8\n\
-    ldr r1, [r2]\n\
-    ldr r0, _08106B3C @ =gUnknown_03005E10\n\
-    ldr r2, [r0]\n\
-    adds r0, r5, 0\n\
-    bl sub_8106B90\n\
-    b _08106B74\n\
-    .align 2, 0\n\
-_08106B28: .4byte gUnknown_03005E8C\n\
-_08106B2C: .4byte gUnknown_03005E90\n\
-_08106B30: .4byte gMonFrontPicTable\n\
-_08106B34: .4byte gMonFrontPicCoords\n\
-_08106B38: .4byte gUnknown_081FAF4C\n\
-_08106B3C: .4byte gUnknown_03005E10\n\
-_08106B40:\n\
-    lsls r0, r6, 3\n\
-    ldr r1, _08106B80 @ =gMonBackPicTable\n\
-    adds r0, r1\n\
-    ldr r1, _08106B84 @ =gMonBackPicCoords\n\
-    lsls r2, r6, 2\n\
-    adds r2, r1\n\
-    ldrb r1, [r2]\n\
-    ldrb r2, [r2, 0x1]\n\
-    movs r3, 0x80\n\
-    lsls r3, 18\n\
-    ldr r4, _08106B88 @ =gUnknown_081FAF4C\n\
-    ldr r5, [r4]\n\
-    str r5, [sp]\n\
-    str r6, [sp, 0x4]\n\
-    ldr r4, [r7]\n\
-    ldr r4, [r4]\n\
-    str r4, [sp, 0x8]\n\
-    bl HandleLoadSpecialPokePic\n\
-    mov r0, r8\n\
-    ldr r1, [r0]\n\
-    ldr r0, _08106B8C @ =gUnknown_03005E10\n\
-    ldr r2, [r0]\n\
-    adds r0, r5, 0\n\
-    bl sub_8106B90\n\
-_08106B74:\n\
-    add sp, 0xC\n\
-    pop {r3}\n\
-    mov r8, r3\n\
-    pop {r4-r7}\n\
-    pop {r0}\n\
-    bx r0\n\
-    .align 2, 0\n\
-_08106B80: .4byte gMonBackPicTable\n\
-_08106B84: .4byte gMonBackPicCoords\n\
-_08106B88: .4byte gUnknown_081FAF4C\n\
-_08106B8C: .4byte gUnknown_03005E10\n\
-    .syntax divided\n");
-}
-#endif
 
 #ifdef NONMATCHING
 void sub_8106B90(u8 a[][8][8][4], u16 b[], u16 c[][8][8][8])
@@ -511,7 +398,7 @@ void sub_8106B90(u8 a[][8][8][4], u16 b[], u16 c[][8][8][8])
     }
 }
 #else
-__attribute__((naked))
+NAKED
 void sub_8106B90()
 {
     asm(".syntax unified\n\
@@ -747,8 +634,8 @@ static u8 sub_8106EE0(u8 arg0)
 
 static void sub_8106F4C(void)
 {
-    gUnknown_03005E90 = &unk_2015e00.unk2017e00;
-    gUnknown_03005E10 = &unk_2015e00.unk2015e00;
+    gUnknown_03005E90 = &ewram15E00.unk2017e00;
+    gUnknown_03005E10 = &ewram15E00.unk2015e00;
 }
 
 static void sub_8106F6C(u8 arg0)
@@ -756,7 +643,7 @@ static void sub_8106F6C(u8 arg0)
     gUnknown_03005E20.var_4 = gUnknown_03005E10;
     gUnknown_03005E20.var_8 = gUnknown_03005E90;
     gUnknown_03005E20.var_18 = 0;
-    gUnknown_03005E20.var_1F = gUnknown_03005E8C->var0;
+    gUnknown_03005E20.var_1F = gUnknown_03005E8C->personality % 256;
     gUnknown_03005E20.var_19 = 0;
     gUnknown_03005E20.var_1A = 0;
     gUnknown_03005E20.var_1B = 64;
@@ -792,7 +679,7 @@ static void sub_8106F6C(u8 arg0)
 static void sub_8107090(u8 arg0, u8 arg1)
 {
     sub_8106F4C();
-    sub_8106AC4(gUnknown_03005E8C->var8, 0);
+    sub_8106AC4(gUnknown_03005E8C->species, 0);
     sub_8106F6C(sub_8106EE0(arg0));
     sub_8106E98(arg0);
     sub_8106C40(arg0, arg1);

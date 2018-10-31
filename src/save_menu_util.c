@@ -1,9 +1,9 @@
 #include "global.h"
 #include "save_menu_util.h"
-#include "asm.h"
 #include "event_data.h"
 #include "menu.h"
 #include "pokedex.h"
+#include "region_map.h"
 #include "string_util.h"
 #include "strings2.h"
 
@@ -15,10 +15,10 @@ void HandleDrawSaveWindowInfo(s16 left, s16 top)
     if (IsResizeSaveWindowEnabled())
         width = 13;
 
-    if (FlagGet(SYS_POKEDEX_GET))
+    if (FlagGet(FLAG_SYS_POKEDEX_GET))
     {
         // print info + dex information.
-        MenuDrawTextWindow(left, top, left + width, top + 11);
+        Menu_DrawStdWindowFrame(left, top, left + width, top + 11);
         PrintSaveMapName(++left, ++top); // MAP NAME
         PrintSavePlayerName(left, top + 2); // PLAYER
         PrintSaveBadges(left, top + 4); // BADGES
@@ -28,7 +28,7 @@ void HandleDrawSaveWindowInfo(s16 left, s16 top)
     else
     {
         // print everything besides dex.
-        MenuDrawTextWindow(left, top, left + width, top + 9);
+        Menu_DrawStdWindowFrame(left, top, left + width, top + 9);
         PrintSaveMapName(++left, ++top); // MAP NAME
         PrintSavePlayerName(left, top + 2); // PLAYER
         PrintSaveBadges(left, top + 4); // BADGES
@@ -44,10 +44,10 @@ void HandleCloseSaveWindow(u16 left, u16 top)
     if (IsResizeSaveWindowEnabled())
         width = 13;
 
-    if (FlagGet(SYS_POKEDEX_GET))
-        MenuZeroFillWindowRect(left, top, left + width, top + 11);
+    if (FlagGet(FLAG_SYS_POKEDEX_GET))
+        Menu_EraseWindowRect(left, top, left + width, top + 11);
     else
-        MenuZeroFillWindowRect(left, top, left + width, top + 9);
+        Menu_EraseWindowRect(left, top, left + width, top + 9);
 }
 
 /*
@@ -62,7 +62,7 @@ u8 IsResizeSaveWindowEnabled(void) // i don't know what else to name it..
 
 void PrintSavePlayerName(s16 x, s16 y)
 {
-    MenuPrint(gOtherText_Player, x, y);
+    Menu_PrintText(gOtherText_Player, x, y);
     MenuPrint_RightAligned(gSaveBlock2.playerName, x + 12, y);
 }
 
@@ -70,15 +70,15 @@ void PrintSaveMapName(s16 x, s16 y)
 {
     char name[32];
 
-    CopyMapName(name, gMapHeader.name);
-    MenuPrint(name, x, y);
+    CopyMapName(name, gMapHeader.regionMapSectionId);
+    Menu_PrintText(name, x, y);
 }
 
 void PrintSaveBadges(s16 x, s16 y)
 {
     char badges[16];
 
-    MenuPrint(gOtherText_Badges, x, y);
+    Menu_PrintText(gOtherText_Badges, x, y);
     ConvertIntToDecimalString(badges, GetBadgeCount());
     MenuPrint_RightAligned(badges, x + 12, y);
 }
@@ -87,7 +87,7 @@ void PrintSavePokedexCount(s16 x, s16 y)
 {
     char pokedex[16];
 
-    MenuPrint(gOtherText_Pokedex, x, y);
+    Menu_PrintText(gOtherText_Pokedex, x, y);
     ConvertIntToDecimalStringN(pokedex, GetPokedexSeenCount(), 1, 3);
     MenuPrint_RightAligned(pokedex, x + 12, y);
 }
@@ -96,7 +96,7 @@ void PrintSavePlayTime(s16 x, s16 y)
 {
     char playtime[16];
 
-    MenuPrint(gOtherText_PlayTime, x, y);
+    Menu_PrintText(gOtherText_PlayTime, x, y);
     FormatPlayTime(playtime, gSaveBlock2.playTimeHours, gSaveBlock2.playTimeMinutes, 1);
     MenuPrint_RightAligned(playtime, x + 12, y);
 }
@@ -106,7 +106,7 @@ u8 GetBadgeCount(void)
     u8 badgeCount = 0;
     int badgeFlag;
 
-    for (badgeFlag = BADGE01_GET; badgeFlag <= BADGE08_GET; badgeFlag++)
+    for (badgeFlag = FLAG_BADGE01_GET; badgeFlag <= FLAG_BADGE08_GET; badgeFlag++)
         if (FlagGet(badgeFlag))
             badgeCount++;
 
@@ -125,9 +125,9 @@ u16 GetPokedexSeenCount()
     return pokedexSeenCount;
 }
 
-void FormatPlayTime(char *playtime, u16 hours, u16 minutes, u16 unk)
+void FormatPlayTime(char *playtime, u16 hours, u16 minutes, u16 colon)
 {
-    s16 colon = unk;
+    s16 _colon = colon;
     playtime = ConvertIntToDecimalString(playtime, hours);
 
     // playtime[0] is hours.
@@ -136,7 +136,7 @@ void FormatPlayTime(char *playtime, u16 hours, u16 minutes, u16 unk)
 
     playtime[0] = 0;
 
-    if (colon)
+    if (_colon)
         playtime[1] = 0xF0; // set middle character to ":"
     else
         playtime[1] = 0;

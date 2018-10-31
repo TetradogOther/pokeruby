@@ -1,13 +1,13 @@
 #include "global.h"
+#include "hall_of_fame.h"
 #include "main.h"
 #include "palette.h"
-#include "rom4.h"
+#include "overworld.h"
 #include "script.h"
 #include "script_menu.h"
 #include "task.h"
 
-extern void sub_81428CC(void);
-extern void (*gUnknown_0300485C)(void);
+extern void (*gFieldCallback)(void);
 
 static void ReshowPCMenuAfterHallOfFamePC(void);
 static void Task_WaitForPaletteFade(u8);
@@ -21,16 +21,16 @@ void AccessHallOfFamePC(void)
 void ReturnFromHallOfFamePC(void)
 {
     SetMainCallback2(c2_exit_to_overworld_2_switch);
-    gUnknown_0300485C = ReshowPCMenuAfterHallOfFamePC;
+    gFieldCallback = ReshowPCMenuAfterHallOfFamePC;
 }
 
 static void ReshowPCMenuAfterHallOfFamePC(void)
 {
     ScriptContext2_Enable();
-    sub_8053E90();
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0x10, 0, 0);
-    TryCreatePCMenu();
-    sub_80B5838();
+    Overworld_PlaySpecialMapMusic();
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
+    ScrSpecial_CreatePCMenu();
+    ScriptMenu_DisplayPCStartupPrompt();
     CreateTask(Task_WaitForPaletteFade, 10);
 }
 

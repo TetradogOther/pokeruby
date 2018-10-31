@@ -1,4 +1,5 @@
 #include "global.h"
+#include "debug.h"
 #include "task.h"
 
 #define ACTIVE_SENTINEL 0x10
@@ -10,6 +11,10 @@ struct Task gTasks[ACTIVE_SENTINEL];
 
 static void InsertTask(u8 newTaskId);
 static u8 FindFirstActiveTask();
+
+const u8 gError_NoTasksLeft[] = _(
+    "TASK OVER\n"
+    "タスクがオーバーしました");
 
 void ResetTasks()
 {
@@ -45,6 +50,10 @@ u8 CreateTask(TaskFunc func, u8 priority)
             return taskId;
         }
     }
+
+#if DEBUG
+    Crash(gError_NoTasksLeft);
+#endif
 
     return 0;
 }

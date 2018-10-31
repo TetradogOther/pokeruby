@@ -46,10 +46,12 @@ struct Main
 extern u8 gLinkTransferringData;
 extern struct Main gMain;
 extern bool8 gSoftResetDisabled;
-extern bool8 gLinkVSyncDisabled;
 
+extern bool8 gLinkVSyncDisabled;
 extern const u8 gGameVersion;
 extern const u8 gGameLanguage;
+
+extern u16 gKeyRepeatStartDelay;
 
 void AgbMain(void);
 void SetMainCallback2(MainCallback callback);
@@ -61,5 +63,8 @@ void SetSerialCallback(IntrCallback callback);
 void InitFlashTimer(void);
 void DoSoftReset(void);
 void ClearPokemonCrySongs(void);
+
+extern const char BuildDateTime[];
+extern s8 gPcmDmaCounter;
 
 #endif // GUARD_MAIN_H

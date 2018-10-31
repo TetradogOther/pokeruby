@@ -368,7 +368,7 @@ extern const u8 gNoiseTable[];
 
 extern const struct PokemonCrySong gPokemonCrySongTemplate;
 
-extern const struct ToneData voicegroup_pokemon_cry;
+extern const struct ToneData voicegroup000;
 
 extern char gNumMusicPlayers[];
 extern char gMaxLines[];
@@ -404,10 +404,6 @@ void SampleFreqSet(u32 freq);
 void m4aSoundVSyncOn(void);
 void m4aSoundVSyncOff(void);
 
-void m4aMPlayTempoControl(struct MusicPlayerInfo *mplayInfo, u16 tempo);
-void m4aMPlayVolumeControl(struct MusicPlayerInfo *mplayInfo, u16 trackBits, u16 volume);
-void m4aMPlayPitchControl(struct MusicPlayerInfo *mplayInfo, u16 trackBits, u16 pitch);
-void m4aMPlayPanpotControl(struct MusicPlayerInfo *mplayInfo, u16 trackBits, s8 pan);
 void ClearModM(struct MusicPlayerTrack *track);
 void m4aMPlayModDepthSet(struct MusicPlayerInfo *mplayInfo, u16 trackBits, u8 modDepth);
 void m4aMPlayLFOSpeedSet(struct MusicPlayerInfo *mplayInfo, u16 trackBits, u8 lfoSpeed);

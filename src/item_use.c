@@ -1,105 +1,70 @@
 #include "global.h"
-#include "asm.h"
+#include "item_use.h"
 #include "battle.h"
 #include "berry.h"
+#include "bike.h"
 #include "coins.h"
 #include "data2.h"
 #include "event_data.h"
-#include "field_map_obj_helpers.h"
+#include "field_effect.h"
+#include "field_fadetransition.h"
 #include "field_player_avatar.h"
 #include "field_weather.h"
 #include "fieldmap.h"
 #include "item.h"
-#include "items.h"
+#include "item_menu.h"
+#include "constants/flags.h"
+#include "constants/items.h"
 #include "mail.h"
 #include "main.h"
-#include "map_obj_lock.h"
+#include "event_obj_lock.h"
 #include "menu.h"
 #include "menu_helpers.h"
 #include "metatile_behavior.h"
 #include "palette.h"
-#include "rom4.h"
+#include "party_menu.h"
+#include "pokeblock.h"
+#include "pokemon_item_effect.h"
+#include "pokemon_menu.h"
+#include "overworld.h"
+#include "rom_8094928.h"
 #include "script.h"
-#include "songs.h"
+#include "constants/songs.h"
 #include "sound.h"
 #include "string_util.h"
 #include "strings.h"
 #include "task.h"
-#include "vars.h"
+#include "constants/bg_event_constants.h"
+#include "constants/map_types.h"
+#include "constants/species.h"
+#include "constants/vars.h"
 
-extern void (* gUnknown_03005D00)(u8);
-extern void (* gUnknown_0300485C)(void);
-extern void (* gUnknown_03004AE4)(u8);
+extern void (*gFieldItemUseCallback)(u8);
+extern void (*gFieldCallback)(void);
+extern void (*gPokemonItemUseCallback)(u8, u16, TaskFunc);
 
-extern u8 gUnknown_02038561;
+extern u8 gPokemonItemUseType;
 extern u8 gLastFieldPokeMenuOpened;
-extern u8 gUnknown_02024E6C;
+extern u8 gBankInMenu;
 
-extern u8 gUnknown_081A1654[];
-extern u8 gUnknown_081A168F[];
+extern u8 S_PlantBerryTreeFromBag[];
+extern u8 S_WaterBerryTreeFromBag[];
 
-extern u16 gUnknown_02024A6A[];
+extern u16 gBattlerPartyIndexes[];
 
-extern void HandleItemMenuPaletteFade(u8);
-extern void ExecuteItemUseFromBlackPalette(void);
-extern void DisplayItemMessageOnField(u8, const u8 *, TaskFunc, u16);
-extern void CleanUpItemMenuMessage(u8);
-extern void CleanUpOverworldMessage(u8);
-extern void ItemUseOnFieldCB_Bike(u8);
-extern void ItemUseOnFieldCB_Rod(u8);
-extern void ItemUseOnFieldCB_Itemfinder(u8);
-extern void sub_80A5D04(void);
-extern bool8 IsBikingDisallowedByPlayer(void);
-extern void GetOnOffBike(u8);
-extern struct MapConnection *sub_8056BA0(s16 x, s16 y); // fieldmap.c
-extern void sub_810BA7C(u8);
-extern void sub_8080E28(void);
-extern void UseMedicine(u8);
-extern void sub_8070048(u8);
-extern void DoPPRecoveryItemEffect(u8);
-extern void DoPPUpItemEffect(u8);
-extern void DoRareCandyItemEffect(u8);
-extern void DoEvolutionStoneItemEffect(u8);
-extern u16 ItemIdToBattleMoveId(u16);
-extern void sub_80A3FA0(u16 *, u32, u32, u32, u32, u32);
-extern void sub_80A3E0C(void);
-extern void TeachMonTMMove(u8);
-extern void sub_80878A8(void);
-extern void sub_8053014(void);
-extern void sub_80A7094(u8);
-extern bool8 ExecuteTableBasedItemEffect_(struct Pokemon *mon, u16, u8, u16);
-extern void sub_8094E4C(void);
-extern u8 ExecuteTableBasedItemEffect__(u8 u8, u16 u16, int i);
-extern u8 GetItemEffectType();
-extern void sub_808B020(void);
-extern void sub_810B96C(void);
-
-extern u16 gScriptItemId;
 extern u16 gBattleTypeFlags;
 
-bool8 ItemfinderCheckForHiddenItems(struct MapEvents *events, u8 taskId);
-void RunItemfinderResults(u8);
-void ExitItemfinder(u8);
-void sub_80C9720(u8);
-void sub_80C9838(u8, s16, s16);
-u8 GetPlayerDirectionTowardsHiddenItem(s16, s16);
-void SetPlayerDirectionTowardsItem(u8);
-void DisplayItemRespondingMessageAndExitItemfinder(u8);
-void RotatePlayerAndExitItemfinder(u8);
-void sub_80C9D00(u8);
-void sub_80C9D74(u8);
-void sub_80C9EE4(u8);
-void sub_80C9F10(u8);
-void sub_80C9F80(u8);
-void sub_80C9FC0(u8);
-void ItemUseOutOfBattle_TMHM(u8);
-void ItemUseOutOfBattle_EvolutionStone(u8);
-void ItemUseOutOfBattle_CannotUse(u8);
+static void ItemUseOnFieldCB_Berry(u8);
+static void ItemUseOnFieldCB_WailmerPail(u8);
+static void StartTeachMonTMHMMove(u8);
+static void DisplayTeachMonTMHMYesNoChoice(u8);
+static void BootTMHM(u8);
+static void WaitButtonPressAndDisplayTMHMInfo(u8);
 
 static const u8 gSSTidalBetaString[] = _("この　チケットで　ふねに　のりほうだい\nはやく　のってみたいな");
 static const u8 gSSTidalBetaString2[] = _("この　チケットで　ふねに　のりほうだい\nはやく　のってみたいな");
 
-static const struct TextStruct gUnknown_083D61DC[2] =
+static const u8 *const sSSTidalBetaStrings[] =
 {
     gSSTidalBetaString,
     gSSTidalBetaString2,
@@ -114,9 +79,9 @@ static const MainCallback gExitToOverworldFuncList[] =
 
 static const u8 gItemFinderDirections[] = { DIR_NORTH, DIR_EAST, DIR_SOUTH, DIR_WEST };
 
-static const struct YesNoFuncTable gUnknown_083D61F4 =
+static const struct YesNoFuncTable sTeachMonTMHMYesNoActions =
 {
-    .yesFunc = sub_80C9FC0,
+    .yesFunc = StartTeachMonTMHMMove,
     .noFunc = CleanUpItemMenuMessage,
 };
 
@@ -124,10 +89,10 @@ void ExecuteSwitchToOverworldFromItemUse(u8 taskId)
 {
     u8 taskData;
 
-    if (gScriptItemId == 0xAF)
+    if (gSpecialVar_ItemId == ITEM_ENIGMA_BERRY)
         taskData = gTasks[taskId].data[15] - 1;
     else
-        taskData = ItemId_GetType(gScriptItemId) - 1;
+        taskData = ItemId_GetType(gSpecialVar_ItemId) - 1;
 
     gTasks[taskId].data[8] = (u32)gExitToOverworldFuncList[taskData] >> 16;
     gTasks[taskId].data[9] = (u32)gExitToOverworldFuncList[taskData];
@@ -137,50 +102,52 @@ void ExecuteSwitchToOverworldFromItemUse(u8 taskId)
 void ItemMenu_ConfirmNormalFade(u8 var)
 {
     ExecuteSwitchToOverworldFromItemUse(var);
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
 }
 
 void ItemMenu_ConfirmComplexFade(u8 var)
 {
     ExecuteSwitchToOverworldFromItemUse(var);
-    fade_screen(1, 0);
+    FadeScreen(1, 0);
 }
 
 void SetUpItemUseOnFieldCallback(u8 taskId)
 {
     if (gTasks[taskId].data[2] != 1)
     {
-        gUnknown_0300485C = (void *)ExecuteItemUseFromBlackPalette;
+        gFieldCallback = ExecuteItemUseFromBlackPalette;
         ItemMenu_ConfirmNormalFade(taskId);
     }
     else
-        gUnknown_03005D00(taskId);
+    {
+        gFieldItemUseCallback(taskId);
+    }
 }
 
-void HandleDeniedItemUseMessage(u8 var1, u8 playerMenuStatus, const u8 *text)
+static void HandleDeniedItemUseMessage(u8 taskId, u8 playerMenuStatus, const u8 *text)
 {
     StringExpandPlaceholders(gStringVar4, text);
 
     switch (playerMenuStatus)
     {
     case 0: // Item Menu
-        MenuZeroFillWindowRect(0, 13, 13, 20);
-        DisplayItemMessageOnField(var1, gStringVar4, CleanUpItemMenuMessage, 1);
+        Menu_EraseWindowRect(0, 13, 13, 20);
+        DisplayItemMessageOnField(taskId, gStringVar4, CleanUpItemMenuMessage, 1);
         break;
     default: // Field
-        DisplayItemMessageOnField(var1, gStringVar4, CleanUpOverworldMessage, 0);
+        DisplayItemMessageOnField(taskId, gStringVar4, CleanUpOverworldMessage, 0);
         break;
     }
 }
 
-void DisplayDadsAdviceCannotUseItemMessage(u8 var1, u8 playerMenuStatus)
+void DisplayDadsAdviceCannotUseItemMessage(u8 taskId, u8 playerMenuStatus)
 {
-    HandleDeniedItemUseMessage(var1, playerMenuStatus, gOtherText_DadsAdvice);
+    HandleDeniedItemUseMessage(taskId, playerMenuStatus, gOtherText_DadsAdvice);
 }
 
-void DisplayCantGetOffBikeItemMessage(u8 var1, u8 playerMenuStatus)
+void DisplayCantGetOffBikeItemMessage(u8 taskId, u8 playerMenuStatus)
 {
-    HandleDeniedItemUseMessage(var1, playerMenuStatus, gOtherText_CantGetOffBike);
+    HandleDeniedItemUseMessage(taskId, playerMenuStatus, gOtherText_CantGetOffBike);
 }
 
 u8 CheckIfItemIsTMHMOrEvolutionStone(u16 itemId)
@@ -199,7 +166,7 @@ void ItemMenu_ReadMail(u8 taskId)
 
     if (!gPaletteFade.active)
     {
-        mailStruct.itemId = gScriptItemId;
+        mailStruct.itemId = gSpecialVar_ItemId;
         HandleReadMail(&mailStruct, sub_80A5D04, 0);
         DestroyTask(taskId);
     }
@@ -207,7 +174,7 @@ void ItemMenu_ReadMail(u8 taskId)
 
 void ItemUseOutOfBattle_Mail(u8 taskId)
 {
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
     gTasks[taskId].func = ItemMenu_ReadMail;
 }
 
@@ -219,7 +186,7 @@ void ItemUseOutOfBattle_Bike(u8 taskId)
     PlayerGetDestCoords(&x, &y);
     tileBehavior = MapGridGetMetatileBehaviorAt(x, y);
 
-    if (FlagGet(SYS_CYCLING_ROAD) == TRUE // on cycling road?
+    if (FlagGet(FLAG_SYS_CYCLING_ROAD) == TRUE
         || MetatileBehavior_IsVerticalRail(tileBehavior) == TRUE
         || MetatileBehavior_IsHorizontalRail(tileBehavior) == TRUE
         || MetatileBehavior_IsIsolatedVerticalRail(tileBehavior) == TRUE
@@ -229,9 +196,9 @@ void ItemUseOutOfBattle_Bike(u8 taskId)
     }
     else
     {
-        if (IsBikingAllowedByMap() == TRUE && IsBikingDisallowedByPlayer() == FALSE)
+        if (Overworld_IsBikingAllowed() == TRUE && IsBikingDisallowedByPlayer() == FALSE)
         {
-            gUnknown_03005D00 = (void *)ItemUseOnFieldCB_Bike;
+            gFieldItemUseCallback = (void *)ItemUseOnFieldCB_Bike;
             SetUpItemUseOnFieldCallback(taskId);
         }
         else
@@ -241,12 +208,12 @@ void ItemUseOutOfBattle_Bike(u8 taskId)
 
 void ItemUseOnFieldCB_Bike(u8 taskId)
 {
-    if (ItemId_GetSecondaryId(gScriptItemId) == 0)
-        GetOnOffBike(2);
-    if (ItemId_GetSecondaryId(gScriptItemId) == 1)
-        GetOnOffBike(4);
+    if (ItemId_GetSecondaryId(gSpecialVar_ItemId) == 0)
+        GetOnOffBike(PLAYER_AVATAR_FLAG_MACH_BIKE);
+    if (ItemId_GetSecondaryId(gSpecialVar_ItemId) == 1)
+        GetOnOffBike(PLAYER_AVATAR_FLAG_ACRO_BIKE);
 
-    sub_8064E2C();
+    ScriptUnfreezeEventObjects();
     ScriptContext2_Disable();
     DestroyTask(taskId);
 }
@@ -262,7 +229,7 @@ bool32 CanFish(void)
     if (MetatileBehavior_IsWaterfall(tileBehavior))
         return FALSE;
 
-    if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_4))
+    if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_UNDERWATER))
         return FALSE;
 
     if (!TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING))
@@ -285,7 +252,7 @@ void ItemUseOutOfBattle_Rod(u8 taskId)
 {
     if (CanFish() == TRUE)
     {
-        gUnknown_03005D00 = (void *)ItemUseOnFieldCB_Rod;
+        gFieldItemUseCallback = (void *)ItemUseOnFieldCB_Rod;
         SetUpItemUseOnFieldCallback(taskId);
     }
     else
@@ -294,15 +261,15 @@ void ItemUseOutOfBattle_Rod(u8 taskId)
 
 void ItemUseOnFieldCB_Rod(u8 taskId)
 {
-    StartFishing(ItemId_GetSecondaryId(gScriptItemId));
+    StartFishing(ItemId_GetSecondaryId(gSpecialVar_ItemId));
     DestroyTask(taskId);
 }
 
-void ItemUseOutOfBattle_Itemfinder(u8 var)
+void ItemUseOutOfBattle_Itemfinder(u8 taskId)
 {
-    IncrementGameStat(0x27);
-    gUnknown_03005D00 = (void *)ItemUseOnFieldCB_Itemfinder;
-    SetUpItemUseOnFieldCallback(var);
+    IncrementGameStat(GAME_STAT_USED_ITEMFINDER);
+    gFieldItemUseCallback = (void *)ItemUseOnFieldCB_Itemfinder;
+    SetUpItemUseOnFieldCallback(taskId);
 }
 
 void ItemUseOnFieldCB_Itemfinder(u8 taskId)
@@ -332,7 +299,7 @@ void RunItemfinderResults(u8 taskId)
             }
             else // player is above hidden item.
             {
-                playerDir = player_get_direction_lower_nybble();
+                playerDir = GetPlayerFacingDirection();
 
                 // rotate player clockwise depending on current direction.
                 for (i = 0; i < 4; i++)
@@ -353,8 +320,8 @@ void RunItemfinderResults(u8 taskId)
 
 void ExitItemfinder(u8 taskId)
 {
-    MenuZeroFillWindowRect(0, 14, 29, 19);
-    sub_8064E2C();
+    Menu_EraseWindowRect(0, 14, 29, 19);
+    ScriptUnfreezeEventObjects();
     ScriptContext2_Disable();
     DestroyTask(taskId);
 }
@@ -370,12 +337,12 @@ bool8 ItemfinderCheckForHiddenItems(struct MapEvents *events, u8 taskId)
 
     for (i = 0; i < events->bgEventCount; i++)
     {
-        if ((events -> bgEvents[i].kind == 7) && !FlagGet(events -> bgEvents[i].bgUnion.hiddenItem.hiddenItemId + 600))
+        if ((events->bgEvents[i].kind == BG_EVENT_HIDDEN_ITEM) && !FlagGet(events->bgEvents[i].bgUnion.hiddenItem.hiddenItemId + FLAG_HIDDEN_ITEMS_START))
         {
             // do a distance lookup of each item so long as the index remains less than the objects on the current map.
-            distanceX = (u16)events -> bgEvents[i].x + 7;
+            distanceX = (u16)events->bgEvents[i].x + 7;
             newDistanceX = distanceX - x;
-            distanceY = (u16)events -> bgEvents[i].y + 7;
+            distanceY = (u16)events->bgEvents[i].y + 7;
             newDistanceY = distanceY - y;
 
             // is item in range?
@@ -386,7 +353,7 @@ bool8 ItemfinderCheckForHiddenItems(struct MapEvents *events, u8 taskId)
     sub_80C9720(taskId);
 
     // hidden item detected?
-    if(gTasks[taskId].data[2] == TRUE)
+    if (gTasks[taskId].data[2] == TRUE)
         return TRUE;
     else
         return FALSE;
@@ -398,11 +365,11 @@ bool8 HiddenItemAtPos(struct MapEvents *events, s16 x, s16 y)
     struct BgEvent *bgEvent = events->bgEvents;
     int i;
 
-    for(i = 0; i < bgEventCount; i++)
+    for (i = 0; i < bgEventCount; i++)
     {
-        if(bgEvent[i].kind == 7 && x == (u16)bgEvent[i].x && y == (u16)bgEvent[i].y) // hidden item and coordinates matches x and y passed?
+        if (bgEvent[i].kind == BG_EVENT_HIDDEN_ITEM && x == (u16)bgEvent[i].x && y == (u16)bgEvent[i].y) // hidden item and coordinates matches x and y passed?
         {
-            if(!FlagGet(bgEvent[i].bgUnion.hiddenItem.hiddenItemId + 600))
+            if (!FlagGet(bgEvent[i].bgUnion.hiddenItem.hiddenItemId + FLAG_HIDDEN_ITEMS_START))
                 return TRUE;
             else
                 return FALSE;
@@ -420,29 +387,29 @@ bool8 sub_80C9688(struct MapConnection *connection, int x, int y)
 
     mapHeader = mapconnection_get_mapheader(connection);
 
-    switch(connection->direction)
+    switch (connection->direction)
     {
     // same weird temp variable behavior seen in HiddenItemAtPos
     case 2:
         localOffset = connection->offset + 7;
         localX = x - localOffset;
-        localLength = mapHeader->mapData->height - 7;
+        localLength = mapHeader->mapLayout->height - 7;
         localY = localLength + y; // additions are reversed for some reason
         break;
     case 1:
         localOffset = connection->offset + 7;
         localX = x - localOffset;
-        localLength = gMapHeader.mapData->height + 7;
+        localLength = gMapHeader.mapLayout->height + 7;
         localY = y - localLength;
         break;
     case 3:
-        localLength = mapHeader->mapData->width - 7;
+        localLength = mapHeader->mapLayout->width - 7;
         localX = localLength + x; // additions are reversed for some reason
         localOffset = connection->offset + 7;
         localY = y - localOffset;
         break;
     case 4:
-        localLength = gMapHeader.mapData->width + 7;
+        localLength = gMapHeader.mapLayout->width + 7;
         localX = x - localLength;
         localOffset = connection->offset + 7;
         localY = y - localOffset;
@@ -459,8 +426,8 @@ void sub_80C9720(u8 taskId)
 {
     s16 x, y;
     s16 curX, curY;
-    s16 width = gMapHeader.mapData->width + 7;
-    s16 height = gMapHeader.mapData->height + 7;
+    s16 width = gMapHeader.mapLayout->width + 7;
+    s16 height = gMapHeader.mapLayout->height + 7;
 
     PlayerGetDestCoords(&x, &y);
 
@@ -481,7 +448,7 @@ void sub_80C9720(u8 taskId)
     }
 }
 #else
-__attribute__((naked))
+NAKED
 void sub_80C9720(u8 taskId)
 {
     asm(".syntax unified\n\
@@ -636,7 +603,7 @@ void sub_80C9838(u8 taskId, s16 x, s16 y)
     s16 *data = gTasks[taskId].data;
     s16 var1, var2, var3, var4;
 
-    if(data[2] == FALSE)
+    if (data[2] == FALSE)
     {
         data[0] = x;
         data[1] = y;
@@ -646,34 +613,34 @@ void sub_80C9838(u8 taskId, s16 x, s16 y)
     {
         // data[0] and data[1] contain the player's coordinates.
         // x and y contain the item's coordinates.
-        if(data[0] < 0)
+        if (data[0] < 0)
             var1 = data[0] * -1; // item is to the left
         else
             var1 = data[0]; // item is to the right
 
-        if(data[1] < 0)
+        if (data[1] < 0)
             var2 = data[1] * -1; // item is to the north
         else
             var2 = data[1]; // item is to the south
 
-        if(x < 0)
+        if (x < 0)
             var3 = x * -1;
         else
             var3 = x;
 
-        if(y < 0)
+        if (y < 0)
             var4 = y * -1;
         else
             var4 = y;
 
-        if(var1 + var2 > var3 + var4)
+        if (var1 + var2 > var3 + var4)
         {
             data[0] = x;
             data[1] = y;
         }
         else
         {
-            if(var1 + var2 == var3 + var4 && (var2 > var4 || (var2 == var4 && data[1] < y)))
+            if (var1 + var2 == var3 + var4 && (var2 > var4 || (var2 == var4 && data[1] < y)))
             {
                 data[0] = x;
                 data[1] = y;
@@ -686,40 +653,40 @@ u8 GetPlayerDirectionTowardsHiddenItem(s16 itemX, s16 itemY)
 {
     s16 abX, abY;
 
-    if(itemX == 0 && itemY == 0)
+    if (itemX == 0 && itemY == 0)
         return DIR_NONE; // player is standing on the item.
 
     // get absolute X distance.
-    if(itemX < 0)
+    if (itemX < 0)
         abX = itemX * -1;
     else
         abX = itemX;
 
     // get absolute Y distance.
-    if(itemY < 0)
+    if (itemY < 0)
         abY = itemY * -1;
     else
         abY = itemY;
 
-    if(abX > abY)
+    if (abX > abY)
     {
-        if(itemX < 0)
+        if (itemX < 0)
             return DIR_EAST;
         else
             return DIR_NORTH;
     }
     else
     {
-        if(abX < abY)
+        if (abX < abY)
         {
-            if(itemY < 0)
+            if (itemY < 0)
                 return DIR_SOUTH;
             else
                 return DIR_WEST;
         }
-        if(abX == abY)
+        if (abX == abY)
         {
-            if(itemY < 0)
+            if (itemY < 0)
                 return DIR_SOUTH;
             else
                 return DIR_WEST;
@@ -730,15 +697,15 @@ u8 GetPlayerDirectionTowardsHiddenItem(s16 itemX, s16 itemY)
 
 void SetPlayerDirectionTowardsItem(u8 direction)
 {
-    FieldObjectClearAnimIfSpecialAnimFinished(&gMapObjects[GetFieldObjectIdByLocalIdAndMap(0xFF, 0, 0)]);
-    FieldObjectClearAnim(&gMapObjects[GetFieldObjectIdByLocalIdAndMap(0xFF, 0, 0)]);
-    UnfreezeMapObject(&gMapObjects[GetFieldObjectIdByLocalIdAndMap(0xFF, 0, 0)]);
+    EventObjectClearHeldMovementIfFinished(&gEventObjects[GetEventObjectIdByLocalIdAndMap(0xFF, 0, 0)]);
+    EventObjectClearHeldMovement(&gEventObjects[GetEventObjectIdByLocalIdAndMap(0xFF, 0, 0)]);
+    UnfreezeEventObject(&gEventObjects[GetEventObjectIdByLocalIdAndMap(0xFF, 0, 0)]);
     PlayerTurnInPlace(direction);
 }
 
 void DisplayItemRespondingMessageAndExitItemfinder(u8 taskId)
 {
-    if(FieldObjectCheckIfSpecialAnimFinishedOrInactive(&gMapObjects[GetFieldObjectIdByLocalIdAndMap(0xFF, 0, 0)]) == TRUE)
+    if (EventObjectCheckHeldMovementStatus(&gEventObjects[GetEventObjectIdByLocalIdAndMap(0xFF, 0, 0)]) == TRUE)
         DisplayItemMessageOnField(taskId, gOtherText_ItemfinderResponding, ExitItemfinder, 0);
 }
 
@@ -746,7 +713,7 @@ void RotatePlayerAndExitItemfinder(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
 
-    if(FieldObjectCheckIfSpecialAnimFinishedOrInactive(&gMapObjects[GetFieldObjectIdByLocalIdAndMap(0xFF, 0, 0)]) == TRUE
+    if (EventObjectCheckHeldMovementStatus(&gEventObjects[GetEventObjectIdByLocalIdAndMap(0xFF, 0, 0)]) == TRUE
     || data[2] == FALSE)
     {
         SetPlayerDirectionTowardsItem(gItemFinderDirections[data[5]]);
@@ -754,25 +721,25 @@ void RotatePlayerAndExitItemfinder(u8 taskId)
         data[5] = (data[5] + 1) & 3;
         data[3]++;
 
-        if(data[3] == 4)
+        if (data[3] == 4)
             DisplayItemMessageOnField(taskId, gOtherText_ItemfinderItemUnderfoot, ExitItemfinder, 0);
     }
 }
 
 void ItemUseOutOfBattle_PokeblockCase(u8 taskId)
 {
-    if(sub_80F9344() == TRUE)
+    if (sub_80F9344() == TRUE)
     {
         DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].data[2]);
     }
-    else if(gTasks[taskId].data[2] != TRUE)
+    else if (gTasks[taskId].data[2] != TRUE)
     {
         sub_810BA7C(0);
         ItemMenu_ConfirmNormalFade(taskId);
     }
     else
     {
-        gUnknown_0300485C = (void *)sub_8080E28;
+        gFieldCallback = (void *)sub_8080E28;
         sub_810BA7C(1);
         ItemMenu_ConfirmComplexFade(taskId);
     }
@@ -783,9 +750,9 @@ void ItemUseOutOfBattle_CoinCase(u8 taskId)
     ConvertIntToDecimalStringN(gStringVar1, GetCoins(), 0, 4);
     StringExpandPlaceholders(gStringVar4, gOtherText_Coins3);
 
-    if(!gTasks[taskId].data[2])
+    if (!gTasks[taskId].data[2])
     {
-        MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
+        Menu_EraseWindowRect(0, 13, 13, 20);
         DisplayItemMessageOnField(taskId, gStringVar4, CleanUpItemMenuMessage, 1);
     }
     else
@@ -794,62 +761,62 @@ void ItemUseOutOfBattle_CoinCase(u8 taskId)
     }
 }
 
-void sub_80C9BB8(u8 var)
+static void SSTicketWaitForAButtonPress(u8 taskId)
 {
-    if(gMain.newKeys & A_BUTTON)
-        CleanUpItemMenuMessage(var);
+    if (gMain.newKeys & A_BUTTON)
+        CleanUpItemMenuMessage(taskId);
 }
 
-void sub_80C9BD8(u8 var)
+static void SSTicketWaitForAButtonPress2(u8 taskId)
 {
-    if(gMain.newKeys & A_BUTTON)
-        CleanUpOverworldMessage(var);
+    if (gMain.newKeys & A_BUTTON)
+        CleanUpOverworldMessage(taskId);
 }
 
 // unused
 void ItemUseOutOfBattle_SSTicket(u8 taskId)
 {
-    if(gTasks[taskId].data[2] == 0)
+    if (gTasks[taskId].data[2] == 0)
     {
-        MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
-        DisplayItemMessageOnField(taskId, (u8 *)gUnknown_083D61DC[ItemId_GetSecondaryId(gScriptItemId)].text, sub_80C9BB8, 1);
+        Menu_EraseWindowRect(0, 13, 13, 20);
+        DisplayItemMessageOnField(taskId, sSSTidalBetaStrings[ItemId_GetSecondaryId(gSpecialVar_ItemId)], SSTicketWaitForAButtonPress, 1);
     }
     else
     {
-        DisplayItemMessageOnField(taskId, (u8 *)gUnknown_083D61DC[ItemId_GetSecondaryId(gScriptItemId)].text, sub_80C9BD8, 0);
+        DisplayItemMessageOnField(taskId, sSSTidalBetaStrings[ItemId_GetSecondaryId(gSpecialVar_ItemId)], SSTicketWaitForAButtonPress2, 0);
     }
 }
 
-void sub_80C9C7C(u8 taskId)
+void ItemUseOutOfBattle_Berry(u8 taskId)
 {
-    if(IsPlayerFacingPlantedBerryTree() == TRUE)
+    if (IsPlayerFacingUnplantedSoil() == TRUE)
     {
-        gUnknown_03005D00 = sub_80C9D00;
-        gUnknown_0300485C = ExecuteItemUseFromBlackPalette;
+        gFieldItemUseCallback = ItemUseOnFieldCB_Berry;
+        gFieldCallback = ExecuteItemUseFromBlackPalette;
         gTasks[taskId].data[8] = (u32)c2_exit_to_overworld_2_switch >> 16;
         gTasks[taskId].data[9] = (u32)c2_exit_to_overworld_2_switch;
         gTasks[taskId].func = HandleItemMenuPaletteFade;
-        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 0x10, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 0x10, RGB(0, 0, 0));
     }
     else
     {
-        ItemId_GetFieldFunc(gScriptItemId)(taskId);
+        ItemId_GetFieldFunc(gSpecialVar_ItemId)(taskId);
     }
 }
 
-void sub_80C9D00(u8 taskId)
+static void ItemUseOnFieldCB_Berry(u8 taskId)
 {
-    RemoveBagItem(gScriptItemId, 1);
+    RemoveBagItem(gSpecialVar_ItemId, 1);
     ScriptContext2_Enable();
-    ScriptContext1_SetupScript(gUnknown_081A1654);
+    ScriptContext1_SetupScript(S_PlantBerryTreeFromBag);
     DestroyTask(taskId);
 }
 
 void ItemUseOutOfBattle_WailmerPail(u8 taskId)
 {
-    if(TryToWaterBerryTree() == TRUE)
+    if (TryToWaterBerryTree() == TRUE)
     {
-        gUnknown_03005D00 = sub_80C9D74;
+        gFieldItemUseCallback = ItemUseOnFieldCB_WailmerPail;
         SetUpItemUseOnFieldCallback(taskId);
     }
     else
@@ -858,23 +825,23 @@ void ItemUseOutOfBattle_WailmerPail(u8 taskId)
     }
 }
 
-void sub_80C9D74(u8 taskId)
+static void ItemUseOnFieldCB_WailmerPail(u8 taskId)
 {
     ScriptContext2_Enable();
-    ScriptContext1_SetupScript(gUnknown_081A168F);
+    ScriptContext1_SetupScript(S_WaterBerryTreeFromBag);
     DestroyTask(taskId);
 }
 
-void sub_80C9D98(u8 taskId)
+static void SetPokemonItemUseAndFadeOut(u8 taskId)
 {
-    gUnknown_02038561 = 0;
+    gPokemonItemUseType = ITEM_USE_SINGLE_MON;
     ItemMenu_ConfirmNormalFade(taskId);
 }
 
 void ItemUseOutOfBattle_Medicine(u8 taskId)
 {
-    gUnknown_03004AE4 = UseMedicine;
-    sub_80C9D98(taskId);
+    gPokemonItemUseCallback = UseMedicine;
+    SetPokemonItemUseAndFadeOut(taskId);
 }
 
 void ItemUseOutOfBattle_SacredAsh(u8 taskId)
@@ -883,153 +850,153 @@ void ItemUseOutOfBattle_SacredAsh(u8 taskId)
 
     gLastFieldPokeMenuOpened = 0;
 
-    for(i = 0; i < 6; i++)
+    for (i = 0; i < PARTY_SIZE; i++)
     {
-        if(GetMonData(&gPlayerParty[i], MON_DATA_SPECIES) != 0 && GetMonData(&gPlayerParty[i], MON_DATA_HP) == 0)
+        if (GetMonData(&gPlayerParty[i], MON_DATA_SPECIES) != SPECIES_NONE && GetMonData(&gPlayerParty[i], MON_DATA_HP) == 0)
         {
             gLastFieldPokeMenuOpened = i;
             break;
         }
     }
-    gUnknown_03004AE4 = sub_8070048;
-    gUnknown_02038561 = 4;
+    gPokemonItemUseCallback = DoSacredAshItemEffect;
+    gPokemonItemUseType = ITEM_USE_ALL_MONS;
     ItemMenu_ConfirmNormalFade(taskId);
 }
 
 void ItemUseOutOfBattle_PPRecovery(u8 taskId)
 {
-    gUnknown_03004AE4 = DoPPRecoveryItemEffect;
-    sub_80C9D98(taskId);
+    gPokemonItemUseCallback = DoPPRecoveryItemEffect;
+    SetPokemonItemUseAndFadeOut(taskId);
 }
 
 void ItemUseOutOfBattle_PPUp(u8 taskId)
 {
-    gUnknown_03004AE4 = DoPPUpItemEffect;
-    sub_80C9D98(taskId);
+    gPokemonItemUseCallback = DoPPUpItemEffect;
+    SetPokemonItemUseAndFadeOut(taskId);
 }
 
 void ItemUseOutOfBattle_RareCandy(u8 taskId)
 {
-    gUnknown_03004AE4 = DoRareCandyItemEffect;
-    sub_80C9D98(taskId);
+    gPokemonItemUseCallback = DoRareCandyItemEffect;
+    SetPokemonItemUseAndFadeOut(taskId);
 }
 
 void ItemUseOutOfBattle_TMHM(u8 taskId)
 {
-    MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
+    Menu_EraseWindowRect(0, 13, 13, 20);
 
-    if(gScriptItemId >= ITEM_HM01)
-        DisplayItemMessageOnField(taskId, gOtherText_BootedHM, sub_80C9EE4, 1); // HM
+    if (gSpecialVar_ItemId >= ITEM_HM01_CUT)
+        DisplayItemMessageOnField(taskId, gOtherText_BootedHM, BootTMHM, 1); // HM
     else
-        DisplayItemMessageOnField(taskId, gOtherText_BootedTM, sub_80C9EE4, 1); // TM
+        DisplayItemMessageOnField(taskId, gOtherText_BootedTM, BootTMHM, 1); // TM
 }
 
-void sub_80C9EE4(u8 taskId)
+static void BootTMHM(u8 taskId)
 {
-    PlaySE(2);
-    gTasks[taskId].func = sub_80C9F10;
+    PlaySE(SE_PC_LOGON);
+    gTasks[taskId].func = WaitButtonPressAndDisplayTMHMInfo;
 }
 
-void sub_80C9F10(u8 taskId)
+static void WaitButtonPressAndDisplayTMHMInfo(u8 taskId)
 {
-    if(gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
+    if (gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
     {
-        StringCopy(gStringVar1, gMoveNames[ItemIdToBattleMoveId(gScriptItemId)]);
+        StringCopy(gStringVar1, gMoveNames[ItemIdToBattleMoveId(gSpecialVar_ItemId)]);
         StringExpandPlaceholders(gStringVar4, gOtherText_ContainsMove);
-        DisplayItemMessageOnField(taskId, gStringVar4, sub_80C9F80, 1);
+        DisplayItemMessageOnField(taskId, gStringVar4, DisplayTeachMonTMHMYesNoChoice, 1);
     }
 }
 
-void sub_80C9F80(u8 var)
+static void DisplayTeachMonTMHMYesNoChoice(u8 taskId)
 {
     DisplayYesNoMenu(7, 7, 1);
     sub_80A3FA0(gBGTilemapBuffers[1], 8, 8, 5, 4, 1);
-    sub_80F914C(var, &gUnknown_083D61F4);
+    DoYesNoFuncWithChoice(taskId, &sTeachMonTMHMYesNoActions);
 }
 
-void sub_80C9FC0(u8 var)
+static void StartTeachMonTMHMMove(u8 taskId)
 {
-    gUnknown_03004AE4 = TeachMonTMMove;
-    sub_80C9D98(var);
+    gPokemonItemUseCallback = TeachMonTMMove;
+    SetPokemonItemUseAndFadeOut(taskId);
 }
 
-void sub_80C9FDC(void)
+static void PrepareItemUseMessage(void)
 {
-    RemoveBagItem(gScriptItemId, 1);
+    RemoveBagItem(gSpecialVar_ItemId, 1);
     sub_80A3E0C();
-    CopyItemName(gScriptItemId, gStringVar2);
+    CopyItemName(gSpecialVar_ItemId, gStringVar2);
     StringExpandPlaceholders(gStringVar4, gOtherText_UsedItem);
 }
 
-void ItemUseOutOfBattle_Repel(u8 var)
+void ItemUseOutOfBattle_Repel(u8 taskId)
 {
-    if(VarGet(VAR_REPEL_STEP_COUNT) == FALSE)
+    if (VarGet(VAR_REPEL_STEP_COUNT) == 0)
     {
-        VarSet(VAR_REPEL_STEP_COUNT, ItemId_GetHoldEffectParam(gScriptItemId));
-        sub_80C9FDC();
-        DisplayItemMessageOnField(var, gStringVar4, CleanUpItemMenuMessage, 1);
+        VarSet(VAR_REPEL_STEP_COUNT, ItemId_GetHoldEffectParam(gSpecialVar_ItemId));
+        PrepareItemUseMessage();
+        DisplayItemMessageOnField(taskId, gStringVar4, CleanUpItemMenuMessage, 1);
     }
     else
     {
-        DisplayItemMessageOnField(var, gOtherText_RepelLingers, CleanUpItemMenuMessage, 1);
+        DisplayItemMessageOnField(taskId, gOtherText_RepelLingers, CleanUpItemMenuMessage, 1);
     }
 }
 
-void sub_80CA07C(void)
+static void sub_80CA07C(void)
 {
     sub_80A3E0C();
-    CopyItemName(gScriptItemId, gStringVar2);
+    CopyItemName(gSpecialVar_ItemId, gStringVar2);
 }
 
-void sub_80CA098(u8 taskId)
+static void PlayBlackWhiteFluteSound(u8 taskId)
 {
     if(++gTasks[taskId].data[15] > 7)
     {
-        PlaySE(0x75);
+        PlaySE(SE_BIDORO);
         DisplayItemMessageOnField(taskId, gStringVar4, CleanUpItemMenuMessage, 1);
     }
 }
 
 void ItemUseOutOfBattle_BlackWhiteFlute(u8 taskId)
 {
-    if(gScriptItemId == 43)
+    if (gSpecialVar_ItemId == ITEM_WHITE_FLUTE)
     {
-        FlagSet(SYS_ENC_UP_ITEM);
-        FlagReset(SYS_ENC_DOWN_ITEM);
+        FlagSet(FLAG_SYS_ENC_UP_ITEM);
+        FlagClear(FLAG_SYS_ENC_DOWN_ITEM);
         sub_80CA07C();
         StringExpandPlaceholders(gStringVar4, gOtherText_UsedFlute);
-        gTasks[taskId].func = sub_80CA098;
+        gTasks[taskId].func = PlayBlackWhiteFluteSound;
         gTasks[taskId].data[15] = 0;
     }
-    else if(gScriptItemId == 42)
+    else if (gSpecialVar_ItemId == ITEM_BLACK_FLUTE)
     {
-        FlagSet(SYS_ENC_DOWN_ITEM);
-        FlagReset(SYS_ENC_UP_ITEM);
+        FlagSet(FLAG_SYS_ENC_DOWN_ITEM);
+        FlagClear(FLAG_SYS_ENC_UP_ITEM);
         sub_80CA07C();
         StringExpandPlaceholders(gStringVar4, gOtherText_UsedRepel);
-        gTasks[taskId].func = sub_80CA098;
+        gTasks[taskId].func = PlayBlackWhiteFluteSound;
         gTasks[taskId].data[15] = 0;
     }
 }
 
 void task08_080A1C44(u8 taskId)
 {
-    player_avatar_init_params_reset();
-    sub_80878A8();
+    ResetInitialPlayerAvatarState();
+    StartEscapeRopeFieldEffect();
     DestroyTask(taskId);
 }
 
-void sub_80CA18C(u8 taskId)
+static void ItemUseOnFieldCB_EscapeRope(u8 taskId)
 {
-    sub_8053014();
-    sub_80C9FDC();
+    Overworld_ResetStateAfterDigEscRope();
+    PrepareItemUseMessage();
     gTasks[taskId].data[0] = 0;
     DisplayItemMessageOnField(taskId, gStringVar4, task08_080A1C44, 0);
 }
 
-bool8 sub_80CA1C8(void)
+bool8 CanUseEscapeRopeOnCurrMap(void)
 {
-    if(gMapHeader.mapType == MAP_TYPE_UNDERGROUND)
+    if (gMapHeader.mapType == MAP_TYPE_UNDERGROUND)
         return TRUE;
     else
         return FALSE;
@@ -1037,9 +1004,9 @@ bool8 sub_80CA1C8(void)
 
 void ItemUseOutOfBattle_EscapeRope(u8 taskId)
 {
-    if(sub_80CA1C8() == TRUE) // is map type an area you can use escape rope?
+    if (CanUseEscapeRopeOnCurrMap() == TRUE)
     {
-        gUnknown_03005D00 = sub_80CA18C;
+        gFieldItemUseCallback = ItemUseOnFieldCB_EscapeRope;
         SetUpItemUseOnFieldCallback(taskId);
     }
     else
@@ -1048,49 +1015,49 @@ void ItemUseOutOfBattle_EscapeRope(u8 taskId)
     }
 }
 
-void ItemUseOutOfBattle_EvolutionStone(u8 var)
+void ItemUseOutOfBattle_EvolutionStone(u8 taskId)
 {
-    gUnknown_03004AE4 = DoEvolutionStoneItemEffect;
-    sub_80C9D98(var);
+    gPokemonItemUseCallback = DoEvolutionStoneItemEffect;
+    SetPokemonItemUseAndFadeOut(taskId);
 }
 
-void ItemUseInBattle_PokeBall(u8 var)
+void ItemUseInBattle_PokeBall(u8 taskId)
 {
-    if(PlayerPartyAndPokemonStorageFull() == FALSE) // have room for mon?
+    if (PlayerPartyAndPokemonStorageFull() == FALSE) // have room for mon?
     {
-        RemoveBagItem(gScriptItemId, 1);
-        sub_80A7094(var);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+        sub_80A7094(taskId);
     }
     else
     {
-        MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
-        DisplayItemMessageOnField(var, gOtherText_BoxIsFull, CleanUpItemMenuMessage, 1);
+        Menu_EraseWindowRect(0, 13, 13, 20);
+        DisplayItemMessageOnField(taskId, gOtherText_BoxIsFull, CleanUpItemMenuMessage, 1);
     }
 }
 
-void sub_80CA294(u8 var)
+void sub_80CA294(u8 taskId)
 {
-    if(gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
-        sub_80A7094(var);
+    if (gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
+        sub_80A7094(taskId);
 }
 
 void sub_80CA2BC(u8 taskId)
 {
     if(++gTasks[taskId].data[15] > 7)
     {
-        PlaySE(1);
-        RemoveBagItem(gScriptItemId, 1);
-        DisplayItemMessageOnField(taskId, sub_803F378(gScriptItemId), sub_80CA294, 1);
+        PlaySE(SE_KAIFUKU);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+        DisplayItemMessageOnField(taskId, sub_803F378(gSpecialVar_ItemId), sub_80CA294, 1);
     }
 }
 
 void ItemUseInBattle_StatIncrease(u8 taskId)
 {
-    u16 partyId = gUnknown_02024A6A[gUnknown_02024E6C];
+    u16 partyId = gBattlerPartyIndexes[gBankInMenu];
 
-    MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
+    Menu_EraseWindowRect(0, 13, 13, 20);
 
-    if(ExecuteTableBasedItemEffect_(&gPlayerParty[partyId], gScriptItemId, partyId, 0) != FALSE)
+    if (ExecuteTableBasedItemEffect_(&gPlayerParty[partyId], gSpecialVar_ItemId, partyId, 0) != FALSE)
     {
         DisplayItemMessageOnField(taskId, gOtherText_WontHaveAnyEffect, CleanUpItemMenuMessage, 1);
     }
@@ -1103,10 +1070,10 @@ void ItemUseInBattle_StatIncrease(u8 taskId)
 
 void sub_80CA394(u8 taskId)
 {
-    if(!gPaletteFade.active)
+    if (!gPaletteFade.active)
     {
         sub_8094E4C();
-        gpu_pal_allocator_reset__manage_upper_four();
+        FreeAndReserveObjectSpritePalettes();
         DestroyTask(taskId);
     }
 }
@@ -1114,34 +1081,34 @@ void sub_80CA394(u8 taskId)
 void sub_80CA3C0(u8 taskId)
 {
     gTasks[taskId].func = sub_80CA394;
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
 }
 
 void ItemUseInBattle_Medicine(u8 var)
 {
-    gUnknown_03004AE4 = UseMedicine;
+    gPokemonItemUseCallback = UseMedicine;
     sub_80CA3C0(var);
 }
 
 void unref_sub_80CA410(u8 var)
 {
-    gUnknown_03004AE4 = sub_8070048;
+    gPokemonItemUseCallback = DoSacredAshItemEffect;
     sub_80CA3C0(var);
 }
 
 void ItemUseInBattle_PPRecovery(u8 var)
 {
-    gUnknown_03004AE4 = DoPPRecoveryItemEffect;
+    gPokemonItemUseCallback = DoPPRecoveryItemEffect;
     sub_80CA3C0(var);
 }
 
 void unref_sub_80CA448(u8 var)
 {
-    MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
+    Menu_EraseWindowRect(0, 13, 13, 20);
 
-    if(ExecuteTableBasedItemEffect__(0, gScriptItemId, 0) == FALSE)
+    if (ExecuteTableBasedItemEffect__(0, gSpecialVar_ItemId, 0) == FALSE)
     {
-        RemoveBagItem(gScriptItemId, 1);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
         GetMonNickname(&gPlayerParty[0], gStringVar1);
         StringExpandPlaceholders(gStringVar4, gOtherText_SnapConfusion);
         DisplayItemMessageOnField(var, gStringVar4, sub_80A7094, 1);
@@ -1154,11 +1121,11 @@ void unref_sub_80CA448(u8 var)
 
 void ItemUseInBattle_Escape(u8 taskId)
 {
-    MenuZeroFillWindowRect(0, 0xD, 0xD, 0x14);
+    Menu_EraseWindowRect(0, 13, 13, 20);
 
-    if((gBattleTypeFlags & BATTLE_TYPE_TRAINER) == FALSE)
+    if ((gBattleTypeFlags & BATTLE_TYPE_TRAINER) == FALSE)
     {
-        sub_80C9FDC();
+        PrepareItemUseMessage();
         DisplayItemMessageOnField(taskId, gStringVar4, sub_80A7094, 1);
     }
     else
@@ -1169,7 +1136,7 @@ void ItemUseInBattle_Escape(u8 taskId)
 
 void ItemUseOutOfBattle_EnigmaBerry(u8 taskId)
 {
-    switch(GetItemEffectType(gScriptItemId) - 1)
+    switch (GetItemEffectType(gSpecialVar_ItemId) - 1)
     {
     case 1:
     case 2:
@@ -1212,7 +1179,7 @@ void ItemUseOutOfBattle_EnigmaBerry(u8 taskId)
 
 void ItemUseInBattle_EnigmaBerry(u8 taskId)
 {
-    switch(GetItemEffectType(gScriptItemId))
+    switch (GetItemEffectType(gSpecialVar_ItemId))
     {
     case 0:
         ItemUseInBattle_StatIncrease(taskId);

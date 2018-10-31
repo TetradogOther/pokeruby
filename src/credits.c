@@ -1,27 +1,28 @@
 #include "global.h"
-#include "asm.h"
 #include "data2.h"
 #include "decompress.h"
 #include "event_data.h"
+#include "hall_of_fame.h"
+#include "intro_credits_graphics.h"
 #include "m4a.h"
 #include "main.h"
 #include "menu.h"
 #include "palette.h"
 #include "pokedex.h"
-#include "rng.h"
-#include "songs.h"
+#include "random.h"
+#include "constants/songs.h"
 #include "sound.h"
-#include "species.h"
+#include "constants/species.h"
 #include "starter_choose.h"
+#include "task.h"
 #include "trig.h"
+#include "ewram.h"
 
 asm(".set REG_BASE, 0x4000000");
 asm(".set OFFSET_REG_BLDCNT,      0x50");
 asm(".set OFFSET_REG_BLDALPHA,    0x52");
 asm(".set REG_BLDCNT,      REG_BASE + OFFSET_REG_BLDCNT");
 asm(".set REG_BLDALPHA,    REG_BASE + OFFSET_REG_BLDALPHA");
-
-extern void *species_and_otid_get_pal(u32, u16, u16);
 
 enum
 {
@@ -159,38 +160,24 @@ struct Unk201C000
 struct CreditsEntry
 {
     u8 var_0;
-    u8 *text;
+    const u8 *text;
 };
 
-extern u8 ewram[];
-
-#define EWRAM_1F800          ((u16 *)(ewram + 0x1F800))
-#define HALL_OF_FAME_SHEET_0 ((u8 *)(ewram + 0x1E000))
-#define HALL_OF_FAME_SHEET_1 ((u8 *)(ewram + 0x1E800))
-#define HALL_OF_FAME_SHEET_2 ((u8 *)(ewram + 0x1F000))
-#define ewram1c000           (*(struct Unk201C000 *)(ewram + 0x1C000))
-
-extern struct HallOfFame gHallOfFame;
 extern u8 unk_201e800[0x800];
 extern u8 unk_201f000[0x800];
-extern u16 unk_201f800[];
 
 extern struct SpriteTemplate gUnknown_02024E8C;
 
-extern s16 gUnknown_02039320;
-extern u16 gUnknown_02039322; // TASK A
-extern u8 gUnknown_02039324;
-extern u8 gUnknown_02039325;
 extern u16 gUnknown_02039358;
 extern s16 gUnknown_0203935A;
 extern s16 gUnknown_0203935C;
 
-extern u8 gReservedSpritePaletteCount;
+static EWRAM_DATA s16 gUnknown_02039320 = 0;
+static EWRAM_DATA u16 gUnknown_02039322 = 0; // TASK A
+EWRAM_DATA u8 gUnknown_02039324 = 0;
+static EWRAM_DATA u8 gUnknown_02039325 = 0;
 
-// data/starter_choose
-extern u16 gBirchBagGrassPal[32];
-extern u8 gBirchGrassTilemap[];
-extern u8 gBirchHelpGfx[];
+extern u8 gReservedSpritePaletteCount;
 
 // data/hall_of_fame
 extern void *gUnknown_0840B5A0[];
@@ -198,26 +185,208 @@ extern void *gUnknown_0840B5A0[];
 // data/credits
 const u16 gUnknown_0840B7BC[] = INCBIN_U16("graphics/credits/palette_1.gbapal");
 const u8 gUnknown_0840B7FC[] = INCBIN_U8("graphics/credits/ampersand.4bpp");
-extern u8 gUnknown_0840B83C[];
-extern u8 gUnknown_0840B84B[];
-extern u8 gUnknown_0840B85A[];
-extern u8 gUnknown_0840B869[];
-extern u8 gUnknown_0840B878[];
-extern struct CreditsEntry *gCreditsEntryPointerTable[][5];
-extern u8 gUnknown_0840CA00[][2];
-extern struct SpriteSheet gUnknown_0840CAA0;
-extern struct SpritePalette gUnknown_0840CAB0;
-extern const union AnimCmd *const gSpriteAnimTable_0840CA54[];
-extern const union AnimCmd *const gSpriteAnimTable_0840CA94[];
-extern struct SpriteTemplate gSpriteTemplate_840CAEC;
 
-// data/intro_credits_graphics
-extern const struct SpriteSheet gIntro2BrendanSpriteSheet;
-extern const struct SpriteSheet gIntro2MaySpriteSheet;
-extern const struct SpriteSheet gIntro2BicycleSpriteSheet;
-extern const struct SpritePalette gIntro2SpritePalettes[];
-extern const struct SpriteSheet gUnknown_08416E24;
-extern const struct SpriteSheet gUnknown_08416E34;
+void spritecb_814580C(struct Sprite *sprite);
+
+const u8 gUnknown_0840B83C[] =
+{
+    0,    1, 0,
+    0xFF, 1, 0xFF,
+    0xFF, 1, 0xFF,
+    0xFF, 1, 0xFF,
+    0xFF, 1, 0xFF,
+};
+
+const u8 gUnknown_0840B84B[] =
+{
+    1, 0xFF, 1,
+    1, 0xFF, 1,
+    1, 2,    1,
+    1, 0xFF, 1,
+    1, 0xFF, 1,
+};
+
+const u8 gUnknown_0840B85A[] =
+{
+    1, 0, 0,
+    1, 0xFF, 0xFF,
+    1, 2,    2,
+    1, 0xFF, 0xFF,
+    1, 0x80, 0x80,
+};
+
+const u8 gUnknown_0840B869[] =
+{
+    1, 3, 1,
+    1, 4, 1,
+    1, 5, 1,
+    1, 0xC4, 1,
+    1, 0xC3, 1,
+};
+
+const u8 gUnknown_0840B878[] =
+{
+    1, 6, 7,
+    1, 8, 9,
+    1, 0xFF, 1,
+    1, 0x88, 0x89,
+    1, 0x86, 0x87,
+#ifdef GERMAN
+    1, 0, 0,
+    1, 0xFF, 0xFF,
+    1, 0x80, 0x8A,
+    1, 0xFF, 0xFF,
+    1, 0xFF, 0xFF,
+    0, 1, 0,
+    0xFF, 1, 0xFF,
+    0xFF, 1, 0xFF,
+    0xFF, 1, 0xFF,
+    0x80, 1, 0x80,
+#endif
+};
+
+#ifdef GERMAN
+#include "data/credits_de.h"
+#else
+#include "data/credits_en.h"
+#endif
+
+const u8 gUnknown_0840CA00[][2] =
+{
+    {104, 36},
+    {120, 36},
+    {136, 36},
+};
+
+static const union AnimCmd gSpriteAnim_840CA08[] =
+{
+    ANIMCMD_FRAME(0, 8),
+    ANIMCMD_FRAME(64, 8),
+    ANIMCMD_FRAME(128, 8),
+    ANIMCMD_FRAME(192, 8),
+    ANIMCMD_JUMP(0),
+};
+
+static const union AnimCmd gSpriteAnim_840CA1C[] =
+{
+    ANIMCMD_FRAME(0, 4),
+    ANIMCMD_FRAME(64, 4),
+    ANIMCMD_FRAME(128, 4),
+    ANIMCMD_FRAME(192, 4),
+    ANIMCMD_JUMP(0),
+};
+
+static const union AnimCmd gSpriteAnim_840CA30[] =
+{
+    ANIMCMD_FRAME(256, 4),
+    ANIMCMD_FRAME(320, 4),
+    ANIMCMD_FRAME(384, 4),
+    ANIMCMD_END,
+};
+
+static const union AnimCmd gSpriteAnim_840CA40[] =
+{
+    ANIMCMD_FRAME(384, 30),
+    ANIMCMD_FRAME(320, 30),
+    ANIMCMD_FRAME(256, 30),
+    ANIMCMD_FRAME(256, 30),
+    ANIMCMD_END,
+};
+
+static const union AnimCmd *const gSpriteAnimTable_0840CA54[] =
+{
+    gSpriteAnim_840CA08,
+    gSpriteAnim_840CA1C,
+    gSpriteAnim_840CA30,
+    gSpriteAnim_840CA40,
+};
+
+static const union AnimCmd gSpriteAnim_840CA64[] =
+{
+    ANIMCMD_FRAME(0, 8),
+    ANIMCMD_FRAME(64, 8),
+    ANIMCMD_FRAME(128, 8),
+    ANIMCMD_FRAME(192, 8),
+    ANIMCMD_JUMP(0),
+};
+
+static const union AnimCmd gSpriteAnim_840CA78[] =
+{
+    ANIMCMD_FRAME(0, 4),
+    ANIMCMD_FRAME(64, 4),
+    ANIMCMD_FRAME(128, 4),
+    ANIMCMD_FRAME(192, 4),
+    ANIMCMD_JUMP(0),
+};
+
+static const union AnimCmd gSpriteAnim_840CA8C[] =
+{
+    ANIMCMD_FRAME(0, 4),
+    ANIMCMD_END,
+};
+
+static const union AnimCmd *const gSpriteAnimTable_0840CA94[] =
+{
+    gSpriteAnim_840CA64,
+    gSpriteAnim_840CA78,
+    gSpriteAnim_840CA8C,
+};
+
+static const struct SpriteSheet gUnknown_0840CAA0[] = {{ewram1E000_2, 6144, 1001}, {0}};
+static const struct SpritePalette gUnknown_0840CAB0[] = {{ewram_1F800_2, 1001}, {0}};
+
+static const struct OamData gOamData_840CAC0 =
+{
+    .y = 160,
+    .affineMode = 0,
+    .objMode = 0,
+    .mosaic = 0,
+    .bpp = 0,
+    .shape = 0,
+    .x = 0,
+    .matrixNum = 0,
+    .size = 3,
+    .tileNum = 0,
+    .priority = 1,
+    .paletteNum = 0,
+    .affineParam = 0,
+};
+
+static const union AnimCmd gSpriteAnim_840CAC8[] =
+{
+    ANIMCMD_FRAME(0, 8),
+    ANIMCMD_END,
+};
+
+static const union AnimCmd gSpriteAnim_840CAD0[] =
+{
+    ANIMCMD_FRAME(64, 8),
+    ANIMCMD_END,
+};
+
+static const union AnimCmd gSpriteAnim_840CAD8[] =
+{
+    ANIMCMD_FRAME(128, 8),
+    ANIMCMD_END,
+};
+
+static const union AnimCmd *const gSpriteAnimTable_840CAE0[] =
+{
+    gSpriteAnim_840CAC8,
+    gSpriteAnim_840CAD0,
+    gSpriteAnim_840CAD8,
+};
+
+static const struct SpriteTemplate gSpriteTemplate_840CAEC =
+{
+    .tileTag = 1001,
+    .paletteTag = 1001,
+    .oam = &gOamData_840CAC0,
+    .anims = gSpriteAnimTable_840CAE0,
+    .images = NULL,
+    .affineAnims = gDummySpriteAffineAnimTable,
+    .callback = spritecb_814580C,
+};
 
 // graphics
 extern u8 gCreditsCopyrightEnd_Gfx[];
@@ -246,7 +415,7 @@ static void sub_8145128(u16, u16, u16);
 static void sub_81452D0(u16 arg0, u16 palette);
 static void spritecb_player_8145378(struct Sprite *sprite);
 static void spritecb_rival_8145420(struct Sprite *sprite);
-static u8 sub_81456B4(u16 nationalNum, u16 x, u16 y, u16 position);
+static u8 sub_81456B4(u16 species, u16 x, u16 y, u16 position);
 static void sub_81458DC(void);
 
 static void vblank_8143948(void)
@@ -263,27 +432,17 @@ static void sub_814395C(void)
     BuildOamBuffer();
     UpdatePaletteFade();
 
-    if (!(gMain.heldKeys & B_BUTTON))
+    if ((gMain.heldKeys & B_BUTTON)
+     && gUnknown_02039324 != 0
+     && gTasks[gUnknown_02039322].func == task_a_8143B68)
     {
-        return;
+        vblank_8143948();
+        RunTasks();
+        AnimateSprites();
+        BuildOamBuffer();
+        UpdatePaletteFade();
+        gUnknown_02039325 = 1;
     }
-
-    if (!gUnknown_02039324)
-    {
-        return;
-    }
-
-    if (gTasks[gUnknown_02039322].func != task_a_8143B68)
-    {
-        return;
-    }
-
-    vblank_8143948();
-    RunTasks();
-    AnimateSprites();
-    BuildOamBuffer();
-    UpdatePaletteFade();
-    gUnknown_02039325 = 1;
 }
 
 void sub_81439D0(void)
@@ -309,16 +468,14 @@ void sub_81439D0(void)
     while (TRUE)
     {
         if (sub_8144ECC(0, taskIdA))
-        {
             break;
-        }
     }
 
     taskIdC = gTasks[taskIdA].data[TDA_TASK_C_ID];
     gTasks[taskIdC].data[TDC_0] = 40;
 
-    SetUpWindowConfig(&gWindowConfig_81E7208);
-    InitMenuWindow(&gWindowConfig_81E7208);
+    Text_LoadWindowTemplate(&gWindowTemplate_81E7208);
+    InitMenuWindow(&gWindowTemplate_81E7208);
     LoadPalette(&gUnknown_0840B7BC, 0x80, sizeof(gUnknown_0840B7BC));
 
     CpuCopy16(&gUnknown_0840B7FC, (void *)(VRAM + 0xBEE0), sizeof(gUnknown_0840B7FC));
@@ -330,7 +487,7 @@ void sub_81439D0(void)
     gTasks[taskIdB].data[TDB_TASK_A_ID] = taskIdA;
     gTasks[taskIdA].data[TDA_TASK_B_ID] = taskIdB;
 
-    BeginNormalPaletteFade(-1, 0, 16, 0, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
 
     savedIme = REG_IME;
     REG_IME = 0;
@@ -340,7 +497,7 @@ void sub_81439D0(void)
 
 
     SetVBlankCallback(vblank_8143948);
-    m4aSongNumStart(BGM_THANKFOR);
+    m4aSongNumStart(MUS_THANKFOR);
     SetMainCallback2(sub_814395C);
     gUnknown_02039325 = 0;
 
@@ -357,17 +514,13 @@ void sub_81439D0(void)
 
 static void task_a_8143B38(u8 taskIdA)
 {
-    if (gPaletteFade.active)
-    {
-        return;
-    }
-
-    gTasks[taskIdA].func = task_a_8143B68;
+    if (!gPaletteFade.active)
+        gTasks[taskIdA].func = task_a_8143B68;
 }
 
 static void task_a_8143B68(u8 taskIdA)
 {
-    u16 data11;
+    u16 data1;
 
     if (gTasks[taskIdA].data[TDA_4])
     {
@@ -382,34 +535,32 @@ static void task_a_8143B68(u8 taskIdA)
     }
 
     gUnknown_02039320 = 0;
-    data11 = gTasks[taskIdA].data[TDA_11];
+    data1 = gTasks[taskIdA].data[TDA_11];
 
     if (gTasks[taskIdA].data[TDA_11] == 1)
     {
-        gTasks[taskIdA].data[TDA_13] = data11;
+        gTasks[taskIdA].data[TDA_13] = data1;
         gTasks[taskIdA].data[TDA_11] = 0;
-        BeginNormalPaletteFade(-1, 0, 0, 16, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
         gTasks[taskIdA].func = task_a_8143BFC;
     }
     else if (gTasks[taskIdA].data[TDA_11] == 2)
     {
-        gTasks[taskIdA].data[TDA_13] = data11;
+        gTasks[taskIdA].data[TDA_13] = data1;
         gTasks[taskIdA].data[TDA_11] = 0;
-        BeginNormalPaletteFade(-1, 0, 0, 16, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB(0, 0, 0));
         gTasks[taskIdA].func = task_a_8143CC0;
     }
 }
 
 static void task_a_8143BFC(u8 taskIdA)
 {
-    if (gPaletteFade.active)
+    if (!gPaletteFade.active)
     {
-        return;
+        REG_DISPCNT = 0;
+        sub_81450AC(taskIdA);
+        gTasks[taskIdA].func = task_a_80C9BFC;
     }
-
-    REG_DISPCNT = 0;
-    sub_81450AC(taskIdA);
-    gTasks[taskIdA].func = task_a_80C9BFC;
 }
 
 static void task_a_80C9BFC(u8 taskIdA)
@@ -418,33 +569,29 @@ static void task_a_80C9BFC(u8 taskIdA)
 
     SetVBlankCallback(NULL);
 
-    if (!sub_8144ECC(gTasks[taskIdA].data[TDA_7], taskIdA))
+    if (sub_8144ECC(gTasks[taskIdA].data[TDA_7], taskIdA))
     {
-        return;
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
+
+        backup = REG_IME;
+        REG_IME = 0;
+        REG_IE |= INTR_FLAG_VBLANK;
+        REG_IME = backup;
+        REG_DISPSTAT |= DISPSTAT_VBLANK_INTR;
+
+        SetVBlankCallback(vblank_8143948);
+        gTasks[taskIdA].func = task_a_8143B38;
     }
-
-    BeginNormalPaletteFade(-1, 0, 16, 0, 0);
-
-    backup = REG_IME;
-    REG_IME = 0;
-    REG_IE |= INTR_FLAG_VBLANK;
-    REG_IME = backup;
-    REG_DISPSTAT |= DISPSTAT_VBLANK_INTR;
-
-    SetVBlankCallback(vblank_8143948);
-    gTasks[taskIdA].func = task_a_8143B38;
 }
 
 static void task_a_8143CC0(u8 taskIdA)
 {
-    if (gPaletteFade.active)
+    if (!gPaletteFade.active)
     {
-        return;
+        REG_DISPCNT = 0;
+        sub_81450AC(taskIdA);
+        gTasks[taskIdA].func = task_a_8143D04;
     }
-
-    REG_DISPCNT = 0;
-    sub_81450AC(taskIdA);
-    gTasks[taskIdA].func = task_a_8143D04;
 }
 
 void task_a_8143D04(u8 taskIdA)
@@ -461,7 +608,7 @@ void task_a_8143D04(u8 taskIdA)
         gReservedSpritePaletteCount = 8;
         LZ77UnCompVram(&gBirchHelpGfx, (void *)VRAM);
         LZ77UnCompVram(&gBirchGrassTilemap, (void *)(VRAM + 0x3800));
-        LoadPalette(gBirchBagGrassPal + 1, 1, 31 * 2);
+        LoadPalette(gBirchBagGrassPal[0] + 1, 1, 31 * 2);
 
         for (i = 0; i < 0x800; i++)
             HALL_OF_FAME_SHEET_0[i] = 0x11;
@@ -475,8 +622,8 @@ void task_a_8143D04(u8 taskIdA)
         EWRAM_1F800[2] = 0x529F; // light red
         EWRAM_1F800[3] = 0x7E94; // light blue
 
-        LoadSpriteSheet(&gUnknown_0840CAA0);
-        LoadSpritePalette(&gUnknown_0840CAB0);
+        LoadSpriteSheet(gUnknown_0840CAA0);
+        LoadSpritePalette(gUnknown_0840CAB0);
 
         gMain.state += 1;
         break;
@@ -487,7 +634,7 @@ void task_a_8143D04(u8 taskIdA)
         gTasks[gTasks[taskIdA].data[TDA_TASK_D_ID]].data[TDD_TASK_A_ID] = taskIdA;
         gTasks[gTasks[taskIdA].data[TDA_TASK_D_ID]].data[TDD_2] = gTasks[taskIdA].data[TDA_7];
 
-        BeginNormalPaletteFade(-1, 0, 16, 0, 0);
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
         REG_BG3HOFS = 0;
         REG_BG3VOFS = 32;
         REG_BG3CNT = BGCNT_PRIORITY(3) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(7) | BGCNT_16COLOR | BGCNT_TXT256x256;
@@ -508,19 +655,17 @@ static void task_a_8143EBC(u8 taskIdA)
         return;
     }
 
-    BeginNormalPaletteFade(-1, 12, 0, 16, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 12, 0, 16, RGB(0, 0, 0));
     gTasks[taskIdA].func = task_a_8143F04;
 }
 
 static void task_a_8143F04(u8 taskIdA)
 {
-    if (gPaletteFade.active)
+    if (!gPaletteFade.active)
     {
-        return;
+        sub_81450AC(taskIdA);
+        gTasks[taskIdA].func = task_a_8143F3C;
     }
-
-    sub_81450AC(taskIdA);
-    gTasks[taskIdA].func = task_a_8143F3C;
 }
 
 static void task_a_8143F3C(u8 taskIdA)
@@ -532,7 +677,7 @@ static void task_a_8143F3C(u8 taskIdA)
     sub_8145128(0, 0x3800, 0);
     ResetSpriteData();
     FreeAllSpritePalettes();
-    BeginNormalPaletteFade(-1, 8, 16, 0, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 8, 16, 0, RGB(0, 0, 0));
 
     REG_BG0CNT = BGCNT_PRIORITY(0) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(7) | BGCNT_16COLOR | BGCNT_TXT256x256;
     backup = REG_IME;
@@ -554,68 +699,58 @@ static void task_a_8143FDC(u8 taskIdA)
         return;
     }
 
-    BeginNormalPaletteFade(-1, 6, 0, 16, 0);
+    BeginNormalPaletteFade(0xFFFFFFFF, 6, 0, 16, RGB(0, 0, 0));
     gTasks[taskIdA].func = task_a_8144024;
 }
 
 static void task_a_8144024(u8 taskIdA)
 {
-    if (gPaletteFade.active)
+    if (!gPaletteFade.active)
     {
-        return;
+        sub_81452D0(0x3800, 0);
+
+        BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 0, RGB(0, 0, 0));
+        gTasks[taskIdA].data[TDA_0] = 7200;
+        gTasks[taskIdA].func = task_a_8144080;
     }
-
-    sub_81452D0(0x3800, 0);
-
-    BeginNormalPaletteFade(-1, 0, 0, 0, 0);
-    gTasks[taskIdA].data[TDA_0] = 7200;
-    gTasks[taskIdA].func = task_a_8144080;
 }
 
 static void task_a_8144080(u8 taskIdA)
 {
-    if (gPaletteFade.active)
+    if (!gPaletteFade.active)
     {
-        return;
-    }
+        if (gTasks[taskIdA].data[TDA_0] == 0)
+        {
+            FadeOutBGM(4);
+            BeginNormalPaletteFade(0xFFFFFFFF, 8, 0, 16, FADE_COLOR_WHITE);
+            gTasks[taskIdA].func = task_a_8144114;
+            return;
+        }
 
-    if (gTasks[taskIdA].data[TDA_0] == 0)
-    {
-        FadeOutBGM(4);
-        BeginNormalPaletteFade(-1, 8, 0, 16, 0xFFFF);
-        gTasks[taskIdA].func = task_a_8144114;
-        return;
-    }
+        if (gMain.newKeys)
+        {
+            FadeOutBGM(4);
+            BeginNormalPaletteFade(0xFFFFFFFF, 8, 0, 16, FADE_COLOR_WHITE);
+            gTasks[taskIdA].func = task_a_8144114;
+            return;
+        }
 
-    if (gMain.newKeys)
-    {
-        FadeOutBGM(4);
-        BeginNormalPaletteFade(-1, 8, 0, 16, 0xFFFF);
-        gTasks[taskIdA].func = task_a_8144114;
-        return;
-    }
+        if (gTasks[taskIdA].data[TDA_0] == 7144)
+        {
+            FadeOutBGM(8);
+        }
 
-    if (gTasks[taskIdA].data[TDA_0] == 7144)
-    {
-        FadeOutBGM(8);
-    }
+        if (gTasks[taskIdA].data[TDA_0] == 6840)
+            m4aSongNumStart(MUS_END);
 
-    if (gTasks[taskIdA].data[TDA_0] == 6840)
-    {
-        m4aSongNumStart(BGM_END);
+        gTasks[taskIdA].data[TDA_0] -= 1;
     }
-
-    gTasks[taskIdA].data[TDA_0] -= 1;
 }
 
 static void task_a_8144114(u8 taskIdA)
 {
-    if (gPaletteFade.active)
-    {
-        return;
-    }
-
-    SoftReset(0xFF);
+    if (!gPaletteFade.active)
+        SoftReset(0xFF);
 }
 
 static void sub_8144130(void)
@@ -652,38 +787,30 @@ static void task_b_81441B8(u8 taskIdB)
     case 8:
     case 9:
     default:
-        if (gPaletteFade.active)
+        if (!gPaletteFade.active)
         {
-            return;
+            gTasks[taskIdB].data[TDB_0] = 1;
+            gTasks[taskIdB].data[TDB_3] = 0x58;
+            gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].data[TDA_14] = 0;
+            gUnknown_02039320 = 0;
         }
-        gTasks[taskIdB].data[TDB_0] = 1;
-        gTasks[taskIdB].data[TDB_3] = 0x58;
-        gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].data[TDA_14] = 0;
-        gUnknown_02039320 = 0;
         return;
-
     case 1:
         if (gTasks[taskIdB].data[TDB_3] != 0)
         {
             gTasks[taskIdB].data[TDB_3] -= 1;
             return;
         }
-
         gTasks[taskIdB].data[TDB_0] += 1;
         return;
-
     case 2:
         REG_DISPCNT &= ~DISPCNT_BG0_ON;
-
         if (gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].func == task_a_8143B68)
         {
             if (gTasks[taskIdB].data[TDB_CURRENT_PAGE] < PAGE_COUNT)
             {
-
                 for (i = 0; i < 5; i++)
-                {
-                    sub_8072BD8(gCreditsEntryPointerTable[gTasks[taskIdB].data[TDB_CURRENT_PAGE]][i]->text, 0, 9 + i * 2, 240);
-                }
+                    MenuPrint_Centered(gCreditsEntryPointerTable[gTasks[taskIdB].data[TDB_CURRENT_PAGE]][i]->text, 0, 9 + i * 2, 240);
 
                 gTasks[taskIdB].data[TDB_CURRENT_PAGE] += 1;
                 gTasks[taskIdB].data[TDB_0] += 1;
@@ -691,36 +818,24 @@ static void task_b_81441B8(u8 taskIdB)
                 gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].data[TDA_14] = 1;
 
                 if (gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].data[TDA_13] == 1)
-                {
                     BeginNormalPaletteFade(0x300, 0, 16, 0, COLOR_LIGHT_GREEN);
-                }
                 else
-                {
                     BeginNormalPaletteFade(0x300, 0, 16, 0, COLOR_DARK_GREEN);
-                }
                 return;
             }
-
-
             gTasks[taskIdB].data[TDB_0] = 10;
             return;
         }
-
         gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].data[TDA_14] = 0;
         return;
-
     case 3:
         REG_DISPCNT |= DISPCNT_BG0_ON;
-
-        if (gPaletteFade.active)
+        if (!gPaletteFade.active)
         {
-            return;
+            gTasks[taskIdB].data[TDB_3] = UNK_DEFINE_82;
+            gTasks[taskIdB].data[TDB_0] += 1;
         }
-
-        gTasks[taskIdB].data[TDB_3] = UNK_DEFINE_82;
-        gTasks[taskIdB].data[TDB_0] += 1;
         return;
-
     case 4:
         if (gTasks[taskIdB].data[TDB_3] != 0)
         {
@@ -733,28 +848,18 @@ static void task_b_81441B8(u8 taskIdB)
             gTasks[taskIdB].data[TDB_0] += 1;
             return;
         }
-
         gTasks[taskIdB].data[TDB_0] += 1;
-
         if (gTasks[gTasks[taskIdB].data[TDB_TASK_A_ID]].data[TDA_13] == 1)
-        {
             BeginNormalPaletteFade(0x300, 0, 0, 16, COLOR_LIGHT_GREEN);
-        }
         else
-        {
             BeginNormalPaletteFade(0x300, 0, 0, 16, COLOR_DARK_GREEN);
-        }
-
         return;
-
     case 5:
-        if (gPaletteFade.active)
+        if (!gPaletteFade.active)
         {
-            return;
+            Menu_EraseWindowRect(0, 9, 29, 19);
+            gTasks[taskIdB].data[TDB_0] = 2;
         }
-
-        MenuZeroFillWindowRect(0, 9, 29, 19);
-        gTasks[taskIdB].data[TDB_0] = 2;
         return;
 
     case 10:
@@ -851,12 +956,12 @@ static void task_d_8144514(u8 taskIdD)
         if (r6->unk8C < r6->unk8E - 1)
         {
             r6->unk8C++;
-            gSprites[r2].data3 = 50;
+            gSprites[r2].data[3] = 50;
         }
         else
         {
             r6->unk8C = 0;
-            gSprites[r2].data3 = 512;
+            gSprites[r2].data[3] = 512;
         }
         r6->unk88++;
         if (r6->unk8A == 2)
@@ -891,7 +996,7 @@ void task_c_8144664(u8 taskIdC)
         }
         else
         {
-            gSprites[gTasks[taskIdC].data[TDC_2]].data0 = 2;
+            gSprites[gTasks[taskIdC].data[TDC_2]].data[0] = 2;
             gTasks[taskIdC].data[TDC_5] = 0;
             gTasks[taskIdC].data[TDC_0]++;
         }
@@ -908,8 +1013,8 @@ void task_c_8144664(u8 taskIdC)
         }
         break;
     case 3:
-        gSprites[gTasks[taskIdC].data[TDC_2]].data0 = 3;
-        gSprites[gTasks[taskIdC].data[TDC_3]].data0 = 1;
+        gSprites[gTasks[taskIdC].data[TDC_2]].data[0] = 3;
+        gSprites[gTasks[taskIdC].data[TDC_3]].data[0] = 1;
         gTasks[taskIdC].data[TDC_4] = 120;
         gTasks[taskIdC].data[TDC_0]++;
         break;
@@ -932,7 +1037,7 @@ void task_c_8144664(u8 taskIdC)
         }
         else
         {
-            gSprites[gTasks[taskIdC].data[TDC_2]].data0 = 1;
+            gSprites[gTasks[taskIdC].data[TDC_2]].data[0] = 1;
             gTasks[taskIdC].data[TDC_0]++;
         }
         break;
@@ -940,16 +1045,16 @@ void task_c_8144664(u8 taskIdC)
         gTasks[taskIdC].data[TDC_0] = 50;
         break;
     case 10:
-        gSprites[gTasks[taskIdC].data[TDC_3]].data0 = 2;
+        gSprites[gTasks[taskIdC].data[TDC_3]].data[0] = 2;
         gTasks[taskIdC].data[TDC_0] = 50;
         break;
     case 20:
-        gSprites[gTasks[taskIdC].data[TDC_2]].data0 = 4;
+        gSprites[gTasks[taskIdC].data[TDC_2]].data[0] = 4;
         gTasks[taskIdC].data[TDC_0] = 50;
         break;
     case 30:
-        gSprites[gTasks[taskIdC].data[TDC_2]].data0 = 5;
-        gSprites[gTasks[taskIdC].data[TDC_3]].data0 = 3;
+        gSprites[gTasks[taskIdC].data[TDC_2]].data[0] = 5;
+        gSprites[gTasks[taskIdC].data[TDC_3]].data[0] = 3;
         gTasks[taskIdC].data[TDC_0] = 50;
         break;
     case 50:
@@ -975,14 +1080,11 @@ void task_e_8144934(u8 taskIdE)
                 gTasks[taskIdE].data[TDE_1] = 0x7FFF;
             }
         }
-
         sub_8149020(0);
         break;
-
     case 1:
         sub_8149020(0);
         break;
-
     case 2:
         if (gTasks[taskIdE].data[TDE_1] != 0x7FFF)
         {
@@ -997,7 +1099,6 @@ void task_e_8144934(u8 taskIdE)
         }
         sub_8149020(1);
         break;
-
     case 3:
         if (gTasks[taskIdE].data[TDE_1] != 0x7FFF)
         {
@@ -1012,10 +1113,8 @@ void task_e_8144934(u8 taskIdE)
                 gTasks[taskIdE].data[TDE_1] += 1;
             }
         }
-
         sub_8149020(1);
         break;
-
     case 4:
         sub_8149020(2);
         break;
@@ -1033,11 +1132,10 @@ static void sub_8144A68(u8 data, u8 taskIdA)
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.x = 272;
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].pos1.y = 46;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.y = 46;
-        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data0 = 0;
-        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data0 = 0;
+        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data[0] = 0;
+        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data[0] = 0;
         gTasks[taskIdA].data[TDA_0] = sub_8148EC0(0, 0x2000, 0x20, 8);
         break;
-
     case 1:
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].invisible = 0;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].invisible = 0;
@@ -1045,11 +1143,10 @@ static void sub_8144A68(u8 data, u8 taskIdA)
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.x = 272;
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].pos1.y = 46;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.y = 46;
-        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data0 = 0;
-        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data0 = 0;
+        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data[0] = 0;
+        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data[0] = 0;
         gTasks[taskIdA].data[TDA_0] = sub_8148EC0(0, 0x2000, 0x20, 8);
         break;
-
     case 2:
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].invisible = 0;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].invisible = 0;
@@ -1057,11 +1154,10 @@ static void sub_8144A68(u8 data, u8 taskIdA)
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.x = 272;
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].pos1.y = 46;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.y = 46;
-        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data0 = 0;
-        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data0 = 0;
+        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data[0] = 0;
+        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data[0] = 0;
         gTasks[taskIdA].data[TDA_0] = sub_8148EC0(1, 0x2000, 0x200, 8);
         break;
-
     case 3:
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].invisible = 0;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].invisible = 0;
@@ -1069,11 +1165,10 @@ static void sub_8144A68(u8 data, u8 taskIdA)
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.x = -32;
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].pos1.y = 46;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.y = 46;
-        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data0 = 0;
-        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data0 = 0;
+        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data[0] = 0;
+        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data[0] = 0;
         gTasks[taskIdA].data[TDA_0] = sub_8148EC0(1, 0x2000, 0x200, 8);
         break;
-
     case 4:
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].invisible = 0;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].invisible = 0;
@@ -1081,8 +1176,8 @@ static void sub_8144A68(u8 data, u8 taskIdA)
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.x = 152;
         gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].pos1.y = 46;
         gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].pos1.y = 46;
-        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data0 = 0;
-        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data0 = 0;
+        gSprites[gTasks[taskIdA].data[TDA_PLAYER_CYCLIST]].data[0] = 0;
+        gSprites[gTasks[taskIdA].data[TDA_RIVAL_CYCLIST]].data[0] = 0;
         gTasks[taskIdA].data[TDA_0] = sub_8148EC0(2, 0x2000, 0x200, 8);
         break;
     }
@@ -1100,9 +1195,7 @@ static void sub_8144A68(u8 data, u8 taskIdA)
     gTasks[gTasks[taskIdA].data[TDA_TASK_C_ID]].data[TDC_4] = 0;
 
     if (data == 2)
-    {
         gTasks[gTasks[taskIdA].data[TDA_TASK_C_ID]].data[TDC_5] = UNK_DEFINE_45;
-    }
 }
 
 static bool8 sub_8144ECC(u8 data, u8 taskIdA)
@@ -1126,20 +1219,18 @@ static bool8 sub_8144ECC(u8 data, u8 taskIdA)
         FreeAllSpritePalettes();
         gMain.state = 1;
         break;
-
     case 1:
         gUnknown_02039358 = 34;
         gUnknown_0203935A = 0;
         sub_8148CB0(data);
         gMain.state += 1;
         break;
-
     case 2:
         if (gSaveBlock2.playerGender == MALE)
         {
-            LoadCompressedObjectPic(&gIntro2BrendanSpriteSheet);
-            LoadCompressedObjectPic(&gUnknown_08416E34);
-            LoadCompressedObjectPic(&gIntro2BicycleSpriteSheet);
+            LoadCompressedObjectPic(gIntro2BrendanSpriteSheet);
+            LoadCompressedObjectPic(gUnknown_08416E34);
+            LoadCompressedObjectPic(gIntro2BicycleSpriteSheet);
             LoadSpritePalettes(gIntro2SpritePalettes);
 
             spriteId = intro_create_brendan_sprite(120, 46);
@@ -1154,9 +1245,9 @@ static bool8 sub_8144ECC(u8 data, u8 taskIdA)
         }
         else
         {
-            LoadCompressedObjectPic(&gIntro2MaySpriteSheet);
-            LoadCompressedObjectPic(&gUnknown_08416E24);
-            LoadCompressedObjectPic(&gIntro2BicycleSpriteSheet);
+            LoadCompressedObjectPic(gIntro2MaySpriteSheet);
+            LoadCompressedObjectPic(gUnknown_08416E24);
+            LoadCompressedObjectPic(gIntro2BicycleSpriteSheet);
             LoadSpritePalettes(gIntro2SpritePalettes);
 
             spriteId = intro_create_may_sprite(120, 46);
@@ -1169,17 +1260,14 @@ static bool8 sub_8144ECC(u8 data, u8 taskIdA)
             gSprites[spriteId].callback = spritecb_rival_8145420;
             gSprites[spriteId].anims = gSpriteAnimTable_0840CA94;
         };
-
         gMain.state += 1;
         break;
-
     case 3:
         sub_8144A68(data, taskIdA);
         sub_8148E90(data);
         gMain.state = 0;
         return TRUE;
     }
-
     return FALSE;
 }
 
@@ -1212,7 +1300,8 @@ static void sub_81450AC(u8 taskIdA)
     gUnknown_0203935C = 1;
 }
 
-static void sub_8145128(u16 arg0, u16 arg1, u16 arg2) {
+static void sub_8145128(u16 arg0, u16 arg1, u16 arg2)
+{
     u16 baseTile;
     u16 i;
 
@@ -1222,65 +1311,45 @@ static void sub_8145128(u16 arg0, u16 arg1, u16 arg2) {
     baseTile = (arg2 / 16) << 12;
 
     for (i = 0; i < 32 * 32; i++)
-    {
         ((u16 *) (VRAM + arg1))[i] = baseTile + 1;
-    }
 
     for (i = 0; i < 21; i++)
-    {
         ((u16 *) (VRAM + arg1))[7 * 32 + 4 + i] = i + 2 + baseTile;
-    }
 
     for (i = 0; i < 20; i++)
-    {
         ((u16 *) (VRAM + arg1))[9 * 32 + 4 + i] = i + 23 + baseTile;
-    }
 
     for (i = 0; i < 23; i++)
-    {
         ((u16 *) (VRAM + arg1))[11 * 32 + 4 + i] = i + 43 + baseTile;
-    }
 
     for (i = 0; i < 12; i++)
-    {
         ((u16 *) (VRAM + arg1))[13 * 32 + 4 + i] = i + 66 + baseTile;
-    }
 }
 
 u16 sub_8145208(u8 arg0)
 {
-
     u16 out = (arg0 & 0x3F) + 80;
 
     if (arg0 == 0xFF)
-    {
         return 1;
-    }
 
     if (arg0 & (1 << 7))
-    {
         out |= 1 << 11;
-    }
-
     if (arg0 & (1 << 6))
-    {
         out |= 1 << 10;
-    }
 
     return out;
 }
 
-void sub_814524C(u8 arg0[], u8 baseX, u8 baseY, u16 arg3, u16 palette) {
+void sub_814524C(const u8 arg0[], u8 baseX, u8 baseY, u16 arg3, u16 palette)
+{
     u8 y, x;
-
     const u16 tileOffset = (palette / 16) << 12;
 
     for (y = 0; y < 5; y++)
     {
         for (x = 0; x < 3; x++)
-        {
             ((u16 *) (VRAM + arg3 + (baseY + y) * 64))[baseX + x] = tileOffset + sub_8145208(arg0[y * 3 + x]);
-        }
     }
 }
 
@@ -1315,42 +1384,31 @@ static void spritecb_player_8145378(struct Sprite *sprite)
         return;
     }
 
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
         StartSpriteAnimIfDifferent(sprite, 0);
         break;
-
     case 1:
         StartSpriteAnimIfDifferent(sprite, 1);
         if (sprite->pos1.x > -32)
-        {
             sprite->pos1.x -= 1;
-        }
         break;
-
     case 2:
         StartSpriteAnimIfDifferent(sprite, 2);
         break;
-
     case 3:
         StartSpriteAnimIfDifferent(sprite, 3);
         break;
-
     case 4:
         StartSpriteAnimIfDifferent(sprite, 0);
         if (sprite->pos1.x > 120)
-        {
             sprite->pos1.x -= 1;
-        }
         break;
-
     case 5:
         StartSpriteAnimIfDifferent(sprite, 0);
         if (sprite->pos1.x > -32)
-        {
             sprite->pos1.x -= 1;
-        }
         break;
     }
 }
@@ -1363,167 +1421,137 @@ static void spritecb_rival_8145420(struct Sprite *sprite)
         return;
     }
 
-    switch (sprite->data0)
+    switch (sprite->data[0])
     {
     case 0:
         sprite->pos2.y = 0;
         StartSpriteAnimIfDifferent(sprite, 0);
         break;
-
     case 1:
         if (sprite->pos1.x > 200)
-        {
             StartSpriteAnimIfDifferent(sprite, 1);
-        }
         else
-        {
             StartSpriteAnimIfDifferent(sprite, 2);
-        }
-
         if (sprite->pos1.x > -32)
-        {
             sprite->pos1.x -= 2;
-        }
-
         sprite->pos2.y = -gUnknown_0203935A;
         break;
-
     case 2:
-        sprite->data7 += 1;
+        sprite->data[7] += 1;
         StartSpriteAnimIfDifferent(sprite, 0);
-
-        if ((sprite->data7 & 3) == 0)
-        {
+        if ((sprite->data[7] & 3) == 0)
             sprite->pos1.x += 1;
-        }
         break;
-
     case 3:
         StartSpriteAnimIfDifferent(sprite, 0);
-
         if (sprite->pos1.x > -32)
-        {
             sprite->pos1.x -= 1;
-        }
         break;
-
-
     }
 }
 
-void spritecb_81454E0(struct Sprite *sprite) {
+void spritecb_81454E0(struct Sprite *sprite)
+{
     if (gUnknown_0203935C)
     {
         DestroySprite(sprite);
         return;
     }
 
-    sprite->data7 += 1;
-    switch (sprite->data0)
+    sprite->data[7] += 1;
+    switch (sprite->data[0])
     {
     case 0:
     default:
         sprite->oam.affineMode = 1;
-        sprite->oam.matrixNum = sprite->data1;
-        sprite->data2 = 16;
-        SetOamMatrix(sprite->data1, 0x10000 / sprite->data2, 0, 0, 0x10000 / sprite->data2);
+        sprite->oam.matrixNum = sprite->data[1];
+        sprite->data[2] = 16;
+        SetOamMatrix(sprite->data[1], 0x10000 / sprite->data[2], 0, 0, 0x10000 / sprite->data[2]);
         sprite->invisible = FALSE;
-        sprite->data0 = 1;
+        sprite->data[0] = 1;
         break;
-
     case 1:
-        if (sprite->data2 < 256)
+        if (sprite->data[2] < 256)
         {
-            sprite->data2 += 8;
-            SetOamMatrix(sprite->data1, 0x10000 / sprite->data2, 0, 0, 0x10000 / sprite->data2);
+            sprite->data[2] += 8;
+            SetOamMatrix(sprite->data[1], 0x10000 / sprite->data[2], 0, 0, 0x10000 / sprite->data[2]);
         }
         else
         {
-            sprite->data0 += 1;
+            sprite->data[0] += 1;
         }
-        switch (sprite->data1)
+        switch (sprite->data[1])
         {
         case 1:
-            if ((sprite->data7 & 3) == 0)
-            {
+            if ((sprite->data[7] & 3) == 0)
                 sprite->pos1.y += 1;
-            }
             sprite->pos1.x -= 2;
             break;
         case 2:
             break;
         case 3:
-            if ((sprite->data7 & 3) == 0)
-            {
+            if ((sprite->data[7] & 3) == 0)
                 sprite->pos1.y += 1;
-            }
             sprite->pos1.x += 2;
             break;
         }
         break;
-
     case 2:
-        if (sprite->data3 != 0)
+        if (sprite->data[3] != 0)
         {
-            sprite->data3 -= 1;
+            sprite->data[3] -= 1;
         }
         else
         {
             REG_BLDCNT = 0xF40;
             REG_BLDALPHA = 0x10;
             sprite->oam.objMode = 1;
-            sprite->data3 = 16;
-            sprite->data0 += 1;
+            sprite->data[3] = 16;
+            sprite->data[0] += 1;
         }
         break;
-
     case 3:
-        if (sprite->data3 != 0)
+        if (sprite->data[3] != 0)
         {
             int data3;
             vu16 *reg;
 
-            sprite->data3 -= 1;
+            sprite->data[3] -= 1;
 
             reg = &REG_BLDALPHA;
-            data3 = 16 - sprite->data3;
-            *reg = (data3 << 8) + sprite->data3;
+            data3 = 16 - sprite->data[3];
+            *reg = (data3 << 8) + sprite->data[3];
         }
         else
         {
             sprite->invisible = TRUE;
-            sprite->data0 = 10;
+            sprite->data[0] = 10;
         }
         break;
-
     case 10:
         REG_BLDCNT = 0;
         REG_BLDALPHA = 0;
         DestroySprite(sprite);
         break;
-
     }
 }
 
 static u8 sub_81456B4(u16 species, u16 x, u16 y, u16 position)
 {
     u32 personality;
-    void *palette;
+    const u8 *lzPaletteData;
     u8 spriteId;
     u8 spriteId2;
 
     species = NationalPokedexNumToSpecies(species);
-
     switch (species)
     {
     default:
         personality = 0;
         break;
-
     case SPECIES_SPINDA:
         personality = gSaveBlock2.pokedex.spindaPersonality;
         break;
-
     case SPECIES_UNOWN:
         personality = gSaveBlock2.pokedex.unownPersonality;
         break;
@@ -1540,19 +1568,19 @@ static u8 sub_81456B4(u16 species, u16 x, u16 y, u16 position)
         1
     );
 
-    palette = species_and_otid_get_pal(species, 0, 0xFFFF);
-    LoadCompressedPalette(palette, 0x100 + (position * 16), 0x20);
+    lzPaletteData = GetMonSpritePalFromOtIdPersonality(species, 0, 0xFFFF);
+    LoadCompressedPalette(lzPaletteData, 0x100 + (position * 16), 0x20);
     sub_8143648(position, position);
 
     spriteId = CreateSprite(&gUnknown_02024E8C, x, y, 0);
     gSprites[spriteId].oam.paletteNum = position;
     gSprites[spriteId].oam.priority = 1;
-    gSprites[spriteId].data1 = position + 1;
+    gSprites[spriteId].data[1] = position + 1;
     gSprites[spriteId].invisible = TRUE;
     gSprites[spriteId].callback = spritecb_81454E0;
 
     spriteId2 = CreateSprite(&gSpriteTemplate_840CAEC, gSprites[spriteId].pos1.x, gSprites[spriteId].pos1.y, 1);
-    gSprites[spriteId2].data0 = spriteId;
+    gSprites[spriteId2].data[0] = spriteId;
 
     StartSpriteAnimIfDifferent(&gSprites[spriteId2], position);
 
@@ -1561,23 +1589,24 @@ static u8 sub_81456B4(u16 species, u16 x, u16 y, u16 position)
 
 void spritecb_814580C(struct Sprite *sprite)
 {
-    if (gSprites[sprite->data0].data0 == 10 || gUnknown_0203935C)
+    if (gSprites[sprite->data[0]].data[0] == 10 || gUnknown_0203935C)
     {
         DestroySprite(sprite);
         return;
     }
 
-    sprite->invisible = gSprites[sprite->data0].invisible;
-    sprite->oam.objMode = gSprites[sprite->data0].oam.objMode;
-    sprite->oam.affineMode = gSprites[sprite->data0].oam.affineMode;
-    sprite->oam.matrixNum = gSprites[sprite->data0].oam.matrixNum;
-    sprite->pos1.x = gSprites[sprite->data0].pos1.x;
-    sprite->pos1.y = gSprites[sprite->data0].pos1.y;
+    sprite->invisible = gSprites[sprite->data[0]].invisible;
+    sprite->oam.objMode = gSprites[sprite->data[0]].oam.objMode;
+    sprite->oam.affineMode = gSprites[sprite->data[0]].oam.affineMode;
+    sprite->oam.matrixNum = gSprites[sprite->data[0]].oam.matrixNum;
+    sprite->pos1.x = gSprites[sprite->data[0]].pos1.x;
+    sprite->pos1.y = gSprites[sprite->data[0]].pos1.y;
 }
 
-static void sub_81458DC(void) {
+static void sub_81458DC(void)
+{
     struct Unk201C000 *unk201C000 = &ewram1c000;
-    u16 starter = SpeciesToNationalPokedexNum(GetStarterPokemon(VarGet(VAR_FIRST_POKE)));
+    u16 starter = SpeciesToNationalPokedexNum(GetStarterPokemon(VarGet(VAR_STARTER_MON)));
     u16 seenTypesCount;
     u16 page;
     u16 dexNum;
@@ -1585,7 +1614,7 @@ static void sub_81458DC(void) {
 
     for (dexNum = 1, seenTypesCount = 0; dexNum < 386; dexNum++)
     {
-        if (sub_8090D90(dexNum, 1))
+        if (GetSetPokedexFlag(dexNum, 1))
         {
             unk201C000->unk90[seenTypesCount] = dexNum;
             seenTypesCount++;
@@ -1593,19 +1622,13 @@ static void sub_81458DC(void) {
     }
 
     for (dexNum = seenTypesCount; dexNum < 386; dexNum++)
-    {
         unk201C000->unk90[dexNum] = 0;
-    }
 
     unk201C000->unk394 = seenTypesCount;
     if (unk201C000->unk394 < POKEMON_TILE_COUNT)
-    {
         unk201C000->unk8E = seenTypesCount;
-    }
     else
-    {
         unk201C000->unk8E = POKEMON_TILE_COUNT;
-    }
 
     j = 0;
     do
@@ -1638,7 +1661,6 @@ static void sub_81458DC(void) {
     }
     else
     {
-
         for (dexNum = 0; unk201C000->unk0[dexNum] != starter && dexNum < POKEMON_TILE_COUNT; dexNum++);
 
         if (dexNum < unk201C000->unk8E - 1)
@@ -1647,7 +1669,9 @@ static void sub_81458DC(void) {
             unk201C000->unk0[POKEMON_TILE_COUNT - 1] = starter;
         }
         else
+        {
             unk201C000->unk0[POKEMON_TILE_COUNT - 1] = starter;
+        }
     }
     unk201C000->unk8E = POKEMON_TILE_COUNT;
 }
