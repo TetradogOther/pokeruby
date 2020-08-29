@@ -1,8 +1,8 @@
 Route110_TrickHousePuzzle7_MapScripts:: @ 816314C
-	map_script 5, Route110_TrickHousePuzzle7_MapScript1_163161
-	map_script 3, Route110_TrickHousePuzzle7_MapScript1_163253
-	map_script 1, Route110_TrickHousePuzzle7_MapScript1_16326F
-	map_script 2, Route110_TrickHousePuzzle7_MapScript2_16327B
+	map_script MAP_SCRIPT_ON_RESUME, Route110_TrickHousePuzzle7_MapScript1_163161
+	map_script MAP_SCRIPT_ON_TRANSITION, Route110_TrickHousePuzzle7_MapScript1_163253
+	map_script MAP_SCRIPT_ON_LOAD, Route110_TrickHousePuzzle7_MapScript1_16326F
+	map_script MAP_SCRIPT_ON_FRAME_TABLE, Route110_TrickHousePuzzle7_MapScript2_16327B
 	.byte 0
 
 Route110_TrickHousePuzzle7_MapScript1_163161:: @ 8163161
@@ -18,53 +18,53 @@ Route110_TrickHousePuzzle7_EventScript_163167:: @ 8163167
 	return
 
 Route110_TrickHousePuzzle7_EventScript_163195:: @ 8163195
-	setmetatile 13, 17, 610, 0
-	setmetatile 12, 16, 575, 1
+	setmetatile 13, 17, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Up, 0
+	setmetatile 12, 16, METATILE_TrickHousePuzzle_Lever_On, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_1631A8:: @ 81631A8
-	setmetatile 12, 13, 610, 0
-	setmetatile 12, 11, 575, 1
+	setmetatile 12, 13, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Up, 0
+	setmetatile 12, 11, METATILE_TrickHousePuzzle_Lever_On, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_1631BB:: @ 81631BB
-	setmetatile 7, 12, 610, 0
-	setmetatile 5, 10, 575, 1
+	setmetatile 7, 12, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Up, 0
+	setmetatile 5, 10, METATILE_TrickHousePuzzle_Lever_On, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_1631CE:: @ 81631CE
-	setmetatile 6, 6, 636, 0
-	setmetatile 4, 4, 575, 1
+	setmetatile 6, 6, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Right_Alt, 0
+	setmetatile 4, 4, METATILE_TrickHousePuzzle_Lever_On, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_1631E1:: @ 81631E1
-	setmetatile 8, 4, 609, 0
-	setmetatile 7, 5, 575, 1
+	setmetatile 8, 4, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Left, 0
+	setmetatile 7, 5, METATILE_TrickHousePuzzle_Lever_On, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_1631F4:: @ 81631F4
-	setmetatile 13, 17, 611, 0
-	setmetatile 12, 16, 574, 1
+	setmetatile 13, 17, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Down, 0
+	setmetatile 12, 16, METATILE_TrickHousePuzzle_Lever_Off, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_163207:: @ 8163207
-	setmetatile 12, 13, 609, 0
-	setmetatile 12, 11, 574, 1
+	setmetatile 12, 13, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Left, 0
+	setmetatile 12, 11, METATILE_TrickHousePuzzle_Lever_Off, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_16321A:: @ 816321A
-	setmetatile 7, 12, 611, 0
-	setmetatile 5, 10, 574, 1
+	setmetatile 7, 12, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Down, 0
+	setmetatile 5, 10, METATILE_TrickHousePuzzle_Lever_Off, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_16322D:: @ 816322D
-	setmetatile 6, 6, 635, 0
-	setmetatile 4, 4, 574, 1
+	setmetatile 6, 6, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Left_Alt, 0
+	setmetatile 4, 4, METATILE_TrickHousePuzzle_Lever_Off, 1
 	return
 
 Route110_TrickHousePuzzle7_EventScript_163240:: @ 8163240
-	setmetatile 8, 4, 608, 0
-	setmetatile 7, 5, 574, 1
+	setmetatile 8, 4, METATILE_TrickHousePuzzle_Arrow_RedOnBlack_Right, 0
+	setmetatile 7, 5, METATILE_TrickHousePuzzle_Lever_Off, 1
 	return
 
 Route110_TrickHousePuzzle7_MapScript1_163253:: @ 8163253
@@ -219,16 +219,16 @@ Route110_TrickHousePuzzle7_EventScript_1633D1:: @ 81633D1
 	end
 
 Route110_TrickHousePuzzle7_EventScript_1633D6:: @ 81633D6
-	trainerbattle 0, TRAINER_JOSHUA, 0, Route110_TrickHousePuzzle7_Text_19DF0B, Route110_TrickHousePuzzle7_Text_19DF4B
-	msgbox Route110_TrickHousePuzzle7_Text_19DF7E, 6
+	trainerbattle_single TRAINER_JOSHUA, Route110_TrickHousePuzzle7_Text_19DF0B, Route110_TrickHousePuzzle7_Text_19DF4B
+	msgbox Route110_TrickHousePuzzle7_Text_19DF7E, MSGBOX_AUTOCLOSE
 	end
 
 Route110_TrickHousePuzzle7_EventScript_1633ED:: @ 81633ED
-	trainerbattle 0, TRAINER_PATRICIA, 0, Route110_TrickHousePuzzle7_Text_19DFBB, Route110_TrickHousePuzzle7_Text_19DFF2
-	msgbox Route110_TrickHousePuzzle7_Text_19E00F, 6
+	trainerbattle_single TRAINER_PATRICIA, Route110_TrickHousePuzzle7_Text_19DFBB, Route110_TrickHousePuzzle7_Text_19DFF2
+	msgbox Route110_TrickHousePuzzle7_Text_19E00F, MSGBOX_AUTOCLOSE
 	end
 
 Route110_TrickHousePuzzle7_EventScript_163404:: @ 8163404
-	trainerbattle 0, TRAINER_ALEXIS, 0, Route110_TrickHousePuzzle7_Text_19E054, Route110_TrickHousePuzzle7_Text_19E098
-	msgbox Route110_TrickHousePuzzle7_Text_19E0B2, 6
+	trainerbattle_single TRAINER_ALEXIS, Route110_TrickHousePuzzle7_Text_19E054, Route110_TrickHousePuzzle7_Text_19E098
+	msgbox Route110_TrickHousePuzzle7_Text_19E0B2, MSGBOX_AUTOCLOSE
 	end

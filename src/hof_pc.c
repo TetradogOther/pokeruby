@@ -20,7 +20,7 @@ void AccessHallOfFamePC(void)
 
 void ReturnFromHallOfFamePC(void)
 {
-    SetMainCallback2(c2_exit_to_overworld_2_switch);
+    SetMainCallback2(CB2_ReturnToField);
     gFieldCallback = ReshowPCMenuAfterHallOfFamePC;
 }
 
@@ -29,7 +29,7 @@ static void ReshowPCMenuAfterHallOfFamePC(void)
     ScriptContext2_Enable();
     Overworld_PlaySpecialMapMusic();
     BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB(0, 0, 0));
-    ScrSpecial_CreatePCMenu();
+    ScriptMenu_CreatePCMultichoice();
     ScriptMenu_DisplayPCStartupPrompt();
     CreateTask(Task_WaitForPaletteFade, 10);
 }

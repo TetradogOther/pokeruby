@@ -1,7 +1,7 @@
 #include "global.h"
 #include "berry.h"
-#include "field_control_avatar.h"
 #include "event_object_movement.h"
+#include "field_control_avatar.h"
 #include "fieldmap.h"
 #include "item.h"
 #include "item_menu.h"
@@ -11,7 +11,8 @@
 #include "random.h"
 #include "task.h"
 #include "text.h"
-#include "constants/event_object_movement_constants.h"
+#include "constants/berry.h"
+#include "constants/event_object_movement.h"
 #include "constants/items.h"
 
 #ifdef ENGLISH
@@ -59,92 +60,92 @@
 #define NAME_STARF_BERRY   _("STARF")
 #define NAME_ENIGMA_BERRY  _("ENIGMA")
 
-static const u8 gBerryDescriptionPart1_Cheri[] = _("Blooms with delicate pretty flowers.");
-static const u8 gBerryDescriptionPart2_Cheri[] = _("The bright red BERRY is very spicy.");
-static const u8 gBerryDescriptionPart1_Chesto[] = _("The BERRY’s thick skin and fruit are");
-static const u8 gBerryDescriptionPart2_Chesto[] = _("very tough. It is dry-tasting all over.");
-static const u8 gBerryDescriptionPart1_Pecha[] = _("Very sweet and delicious.");
-static const u8 gBerryDescriptionPart2_Pecha[] = _("Also very tender - handle with care.");
-static const u8 gBerryDescriptionPart1_Rawst[] = _("If the leaves grow long and curly,");
-static const u8 gBerryDescriptionPart2_Rawst[] = _("the BERRY seems to grow very bitter.");
-static const u8 gBerryDescriptionPart1_Aspear[] = _("The hard BERRY is dense with a rich");
-static const u8 gBerryDescriptionPart2_Aspear[] = _("juice. It is quite sour.");
-static const u8 gBerryDescriptionPart1_Leppa[] = _("Grows slower than CHERI and others.");
-static const u8 gBerryDescriptionPart2_Leppa[] = _("The smaller the BERRY, the tastier.");
-static const u8 gBerryDescriptionPart1_Oran[] = _("A peculiar BERRY with a mix of flavors.");
-static const u8 gBerryDescriptionPart2_Oran[] = _("BERRIES grow in half a day.");
-static const u8 gBerryDescriptionPart1_Persim[] = _("Loves sunlight. The BERRY’s color");
-static const u8 gBerryDescriptionPart2_Persim[] = _("grows vivid when exposed to the sun.");
-static const u8 gBerryDescriptionPart1_Lum[] = _("Slow to grow. If raised with loving");
-static const u8 gBerryDescriptionPart2_Lum[] = _("care, it may grow two BERRIES.");
-static const u8 gBerryDescriptionPart1_Sitrus[] = _("Closely related to ORAN. The large");
-static const u8 gBerryDescriptionPart2_Sitrus[] = _("BERRY has a well-rounded flavor.");
-static const u8 gBerryDescriptionPart1_Figy[] = _("The BERRY, which looks chewed up,");
-static const u8 gBerryDescriptionPart2_Figy[] = _("brims with spicy substances.");
-static const u8 gBerryDescriptionPart1_Wiki[] = _("The BERRY is said to have grown lumpy");
-static const u8 gBerryDescriptionPart2_Wiki[] = _("to help POKéMON grip it.");
-static const u8 gBerryDescriptionPart1_Mago[] = _("The BERRY turns curvy as it grows.");
-static const u8 gBerryDescriptionPart2_Mago[] = _("The curvier, the sweeter and tastier.");
-static const u8 gBerryDescriptionPart1_Aguav[] = _("The flower is dainty. It is rare in its");
-static const u8 gBerryDescriptionPart2_Aguav[] = _("ability to grow without light.");
-static const u8 gBerryDescriptionPart1_Iapapa[] = _("The BERRY is very big and sour.");
-static const u8 gBerryDescriptionPart2_Iapapa[] = _("It takes at least a day to grow.");
-static const u8 gBerryDescriptionPart1_Razz[] = _("The red BERRY tastes slightly spicy.");
-static const u8 gBerryDescriptionPart2_Razz[] = _("It grows quickly in just four hours.");
-static const u8 gBerryDescriptionPart1_Bluk[] = _("The BERRY is blue on the outside, but");
-static const u8 gBerryDescriptionPart2_Bluk[] = _("it blackens the mouth when eaten.");
-static const u8 gBerryDescriptionPart1_Nanab[] = _("This BERRY was the seventh");
-static const u8 gBerryDescriptionPart2_Nanab[] = _("discovered in the world. It is sweet.");
-static const u8 gBerryDescriptionPart1_Wepear[] = _("The flower is small and white. It has a");
-static const u8 gBerryDescriptionPart2_Wepear[] = _("delicate balance of bitter and sour.");
-static const u8 gBerryDescriptionPart1_Pinap[] = _("Weak against wind and cold.");
-static const u8 gBerryDescriptionPart2_Pinap[] = _("The fruit is spicy and the skin, sour.");
-static const u8 gBerryDescriptionPart1_Pomeg[] = _("However much it is watered,");
-static const u8 gBerryDescriptionPart2_Pomeg[] = _("it only grows up to six BERRIES.");
-static const u8 gBerryDescriptionPart1_Kelpsy[] = _("A rare variety shaped like a root.");
-static const u8 gBerryDescriptionPart2_Kelpsy[] = _("Grows a very large flower.");
-static const u8 gBerryDescriptionPart1_Qualot[] = _("Loves water. Grows strong even in");
-static const u8 gBerryDescriptionPart2_Qualot[] = _("locations with constant rainfall.");
-static const u8 gBerryDescriptionPart1_Hondew[] = _("A BERRY that is very valuable and");
-static const u8 gBerryDescriptionPart2_Hondew[] = _("rarely seen. It is very delicious.");
-static const u8 gBerryDescriptionPart1_Grepa[] = _("Despite its tenderness and round");
-static const u8 gBerryDescriptionPart2_Grepa[] = _("shape, the BERRY is unimaginably sour.");
-static const u8 gBerryDescriptionPart1_Tamato[] = _("The BERRY is lip-bendingly spicy.");
-static const u8 gBerryDescriptionPart2_Tamato[] = _("It takes time to grow.");
-static const u8 gBerryDescriptionPart1_Cornn[] = _("A BERRY from an ancient era. May not");
-static const u8 gBerryDescriptionPart2_Cornn[] = _("grow unless planted in quantity.");
-static const u8 gBerryDescriptionPart1_Magost[] = _("A BERRY that is widely said to have");
-static const u8 gBerryDescriptionPart2_Magost[] = _("a finely balanced flavor.");
-static const u8 gBerryDescriptionPart1_Rabuta[] = _("A rare variety that is overgrown with");
-static const u8 gBerryDescriptionPart2_Rabuta[] = _("hair. It is quite bitter.");
-static const u8 gBerryDescriptionPart1_Nomel[] = _("Quite sour. Just one bite makes it");
-static const u8 gBerryDescriptionPart2_Nomel[] = _("impossible to taste for three days.");
-static const u8 gBerryDescriptionPart1_Spelon[] = _("The vividly red BERRY is very spicy.");
-static const u8 gBerryDescriptionPart2_Spelon[] = _("Its warts secrete a spicy substance.");
-static const u8 gBerryDescriptionPart1_Pamtre[] = _("Drifts on the sea from somewhere.");
-static const u8 gBerryDescriptionPart2_Pamtre[] = _("It is thought to grow elsewhere.");
-static const u8 gBerryDescriptionPart1_Watmel[] = _("A huge BERRY, with some over 20");
-static const u8 gBerryDescriptionPart2_Watmel[] = _("inches discovered. Exceedingly sweet.");
-static const u8 gBerryDescriptionPart1_Durin[] = _("Bitter to even look at. It is so");
-static const u8 gBerryDescriptionPart2_Durin[] = _("bitter, no one has ever eaten it as is.");
-static const u8 gBerryDescriptionPart1_Belue[] = _("It is glossy and looks delicious, but");
-static const u8 gBerryDescriptionPart2_Belue[] = _("it is awfully sour. Takes time to grow.");
-static const u8 gBerryDescriptionPart1_Liechi[] = _("A mysterious BERRY. It is rumored to");
-static const u8 gBerryDescriptionPart2_Liechi[] = _("contain the power of the sea.");
-static const u8 gBerryDescriptionPart1_Ganlon[] = _("A mysterious BERRY. It is rumored to");
-static const u8 gBerryDescriptionPart2_Ganlon[] = _("contain the power of the land.");
-static const u8 gBerryDescriptionPart1_Salac[] = _("A mysterious BERRY. It is rumored to");
-static const u8 gBerryDescriptionPart2_Salac[] = _("contain the power of the sky.");
-static const u8 gBerryDescriptionPart1_Petaya[] = _("A mysterious BERRY. It is rumored to");
-static const u8 gBerryDescriptionPart2_Petaya[] = _("contain the power of all living things.");
-static const u8 gBerryDescriptionPart1_Apicot[] = _("A very mystifying BERRY. No telling");
-static const u8 gBerryDescriptionPart2_Apicot[] = _("what may happen or how it can be used.");
-static const u8 gBerryDescriptionPart1_Lansat[] = _("Said to be a legendary BERRY.");
-static const u8 gBerryDescriptionPart2_Lansat[] = _("Holding it supposedly brings joy.");
-static const u8 gBerryDescriptionPart1_Starf[] = _("So strong, it was abandoned at the");
-static const u8 gBerryDescriptionPart2_Starf[] = _("world’s edge. Considered a mirage.");
-static const u8 gBerryDescriptionPart1_Enigma[] = _("A completely enigmatic BERRY.");
-static const u8 gBerryDescriptionPart2_Enigma[] = _("Appears to have the power of stars.");
+static const u8 sBerryDescriptionPart1_Cheri[] = _("Blooms with delicate pretty flowers.");
+static const u8 sBerryDescriptionPart2_Cheri[] = _("The bright red BERRY is very spicy.");
+static const u8 sBerryDescriptionPart1_Chesto[] = _("The BERRY's thick skin and fruit are");
+static const u8 sBerryDescriptionPart2_Chesto[] = _("very tough. It is dry-tasting all over.");
+static const u8 sBerryDescriptionPart1_Pecha[] = _("Very sweet and delicious.");
+static const u8 sBerryDescriptionPart2_Pecha[] = _("Also very tender - handle with care.");
+static const u8 sBerryDescriptionPart1_Rawst[] = _("If the leaves grow long and curly,");
+static const u8 sBerryDescriptionPart2_Rawst[] = _("the BERRY seems to grow very bitter.");
+static const u8 sBerryDescriptionPart1_Aspear[] = _("The hard BERRY is dense with a rich");
+static const u8 sBerryDescriptionPart2_Aspear[] = _("juice. It is quite sour.");
+static const u8 sBerryDescriptionPart1_Leppa[] = _("Grows slower than CHERI and others.");
+static const u8 sBerryDescriptionPart2_Leppa[] = _("The smaller the BERRY, the tastier.");
+static const u8 sBerryDescriptionPart1_Oran[] = _("A peculiar BERRY with a mix of flavors.");
+static const u8 sBerryDescriptionPart2_Oran[] = _("BERRIES grow in half a day.");
+static const u8 sBerryDescriptionPart1_Persim[] = _("Loves sunlight. The BERRY's color");
+static const u8 sBerryDescriptionPart2_Persim[] = _("grows vivid when exposed to the sun.");
+static const u8 sBerryDescriptionPart1_Lum[] = _("Slow to grow. If raised with loving");
+static const u8 sBerryDescriptionPart2_Lum[] = _("care, it may grow two BERRIES.");
+static const u8 sBerryDescriptionPart1_Sitrus[] = _("Closely related to ORAN. The large");
+static const u8 sBerryDescriptionPart2_Sitrus[] = _("BERRY has a well-rounded flavor.");
+static const u8 sBerryDescriptionPart1_Figy[] = _("The BERRY, which looks chewed up,");
+static const u8 sBerryDescriptionPart2_Figy[] = _("brims with spicy substances.");
+static const u8 sBerryDescriptionPart1_Wiki[] = _("The BERRY is said to have grown lumpy");
+static const u8 sBerryDescriptionPart2_Wiki[] = _("to help POKéMON grip it.");
+static const u8 sBerryDescriptionPart1_Mago[] = _("The BERRY turns curvy as it grows.");
+static const u8 sBerryDescriptionPart2_Mago[] = _("The curvier, the sweeter and tastier.");
+static const u8 sBerryDescriptionPart1_Aguav[] = _("The flower is dainty. It is rare in its");
+static const u8 sBerryDescriptionPart2_Aguav[] = _("ability to grow without light.");
+static const u8 sBerryDescriptionPart1_Iapapa[] = _("The BERRY is very big and sour.");
+static const u8 sBerryDescriptionPart2_Iapapa[] = _("It takes at least a day to grow.");
+static const u8 sBerryDescriptionPart1_Razz[] = _("The red BERRY tastes slightly spicy.");
+static const u8 sBerryDescriptionPart2_Razz[] = _("It grows quickly in just four hours.");
+static const u8 sBerryDescriptionPart1_Bluk[] = _("The BERRY is blue on the outside, but");
+static const u8 sBerryDescriptionPart2_Bluk[] = _("it blackens the mouth when eaten.");
+static const u8 sBerryDescriptionPart1_Nanab[] = _("This BERRY was the seventh");
+static const u8 sBerryDescriptionPart2_Nanab[] = _("discovered in the world. It is sweet.");
+static const u8 sBerryDescriptionPart1_Wepear[] = _("The flower is small and white. It has a");
+static const u8 sBerryDescriptionPart2_Wepear[] = _("delicate balance of bitter and sour.");
+static const u8 sBerryDescriptionPart1_Pinap[] = _("Weak against wind and cold.");
+static const u8 sBerryDescriptionPart2_Pinap[] = _("The fruit is spicy and the skin, sour.");
+static const u8 sBerryDescriptionPart1_Pomeg[] = _("However much it is watered,");
+static const u8 sBerryDescriptionPart2_Pomeg[] = _("it only grows up to six BERRIES.");
+static const u8 sBerryDescriptionPart1_Kelpsy[] = _("A rare variety shaped like a root.");
+static const u8 sBerryDescriptionPart2_Kelpsy[] = _("Grows a very large flower.");
+static const u8 sBerryDescriptionPart1_Qualot[] = _("Loves water. Grows strong even in");
+static const u8 sBerryDescriptionPart2_Qualot[] = _("locations with constant rainfall.");
+static const u8 sBerryDescriptionPart1_Hondew[] = _("A BERRY that is very valuable and");
+static const u8 sBerryDescriptionPart2_Hondew[] = _("rarely seen. It is very delicious.");
+static const u8 sBerryDescriptionPart1_Grepa[] = _("Despite its tenderness and round");
+static const u8 sBerryDescriptionPart2_Grepa[] = _("shape, the BERRY is unimaginably sour.");
+static const u8 sBerryDescriptionPart1_Tamato[] = _("The BERRY is lip-bendingly spicy.");
+static const u8 sBerryDescriptionPart2_Tamato[] = _("It takes time to grow.");
+static const u8 sBerryDescriptionPart1_Cornn[] = _("A BERRY from an ancient era. May not");
+static const u8 sBerryDescriptionPart2_Cornn[] = _("grow unless planted in quantity.");
+static const u8 sBerryDescriptionPart1_Magost[] = _("A BERRY that is widely said to have");
+static const u8 sBerryDescriptionPart2_Magost[] = _("a finely balanced flavor.");
+static const u8 sBerryDescriptionPart1_Rabuta[] = _("A rare variety that is overgrown with");
+static const u8 sBerryDescriptionPart2_Rabuta[] = _("hair. It is quite bitter.");
+static const u8 sBerryDescriptionPart1_Nomel[] = _("Quite sour. Just one bite makes it");
+static const u8 sBerryDescriptionPart2_Nomel[] = _("impossible to taste for three days.");
+static const u8 sBerryDescriptionPart1_Spelon[] = _("The vividly red BERRY is very spicy.");
+static const u8 sBerryDescriptionPart2_Spelon[] = _("Its warts secrete a spicy substance.");
+static const u8 sBerryDescriptionPart1_Pamtre[] = _("Drifts on the sea from somewhere.");
+static const u8 sBerryDescriptionPart2_Pamtre[] = _("It is thought to grow elsewhere.");
+static const u8 sBerryDescriptionPart1_Watmel[] = _("A huge BERRY, with some over 20");
+static const u8 sBerryDescriptionPart2_Watmel[] = _("inches discovered. Exceedingly sweet.");
+static const u8 sBerryDescriptionPart1_Durin[] = _("Bitter to even look at. It is so");
+static const u8 sBerryDescriptionPart2_Durin[] = _("bitter, no one has ever eaten it as is.");
+static const u8 sBerryDescriptionPart1_Belue[] = _("It is glossy and looks delicious, but");
+static const u8 sBerryDescriptionPart2_Belue[] = _("it is awfully sour. Takes time to grow.");
+static const u8 sBerryDescriptionPart1_Liechi[] = _("A mysterious BERRY. It is rumored to");
+static const u8 sBerryDescriptionPart2_Liechi[] = _("contain the power of the sea.");
+static const u8 sBerryDescriptionPart1_Ganlon[] = _("A mysterious BERRY. It is rumored to");
+static const u8 sBerryDescriptionPart2_Ganlon[] = _("contain the power of the land.");
+static const u8 sBerryDescriptionPart1_Salac[] = _("A mysterious BERRY. It is rumored to");
+static const u8 sBerryDescriptionPart2_Salac[] = _("contain the power of the sky.");
+static const u8 sBerryDescriptionPart1_Petaya[] = _("A mysterious BERRY. It is rumored to");
+static const u8 sBerryDescriptionPart2_Petaya[] = _("contain the power of all living things.");
+static const u8 sBerryDescriptionPart1_Apicot[] = _("A very mystifying BERRY. No telling");
+static const u8 sBerryDescriptionPart2_Apicot[] = _("what may happen or how it can be used.");
+static const u8 sBerryDescriptionPart1_Lansat[] = _("Said to be a legendary BERRY.");
+static const u8 sBerryDescriptionPart2_Lansat[] = _("Holding it supposedly brings joy.");
+static const u8 sBerryDescriptionPart1_Starf[] = _("So strong, it was abandoned at the");
+static const u8 sBerryDescriptionPart2_Starf[] = _("world's edge. Considered a mirage.");
+static const u8 sBerryDescriptionPart1_Enigma[] = _("A completely enigmatic BERRY.");
+static const u8 sBerryDescriptionPart2_Enigma[] = _("Appears to have the power of stars.");
 #elif defined(GERMAN)
 #define NAME_CHERI_BERRY   _("AMRENA")
 #define NAME_CHESTO_BERRY  _("MARON")
@@ -190,92 +191,92 @@ static const u8 gBerryDescriptionPart2_Enigma[] = _("Appears to have the power o
 #define NAME_STARF_BERRY   _("KRAMBO")
 #define NAME_ENIGMA_BERRY  _("ENIGMA")
 
-static const u8 gBerryDescriptionPart1_Cheri[] = _("Erblüht mit hübschen, zarten Blumen.");
-static const u8 gBerryDescriptionPart2_Cheri[] = _("Diese knallrote BEERE ist sehr scharf.");
-static const u8 gBerryDescriptionPart1_Chesto[] = _("Diese BEERE hat eine dicke Haut und");
-static const u8 gBerryDescriptionPart2_Chesto[] = _("hartes Fruchtfleisch. Trocken!");
-static const u8 gBerryDescriptionPart1_Pecha[] = _("Sehr süß und delikat.");
-static const u8 gBerryDescriptionPart2_Pecha[] = _("Sehr zart. Vorsichtig anfassen!");
-static const u8 gBerryDescriptionPart1_Rawst[] = _("Wenn die Blätter lang und wellig sind,");
-static const u8 gBerryDescriptionPart2_Rawst[] = _("wird die BEERE sehr bitter.");
-static const u8 gBerryDescriptionPart1_Aspear[] = _("Diese harte BEERE ist sehr");
-static const u8 gBerryDescriptionPart2_Aspear[] = _("saftig und sauer im Geschmack!");
-static const u8 gBerryDescriptionPart1_Leppa[] = _("Wächst langsamer als AMRENA und");
-static const u8 gBerryDescriptionPart2_Leppa[] = _("andere. Je kleiner, desto delikater.");
-static const u8 gBerryDescriptionPart1_Oran[] = _("Eine BEERE unterschiedlichsten Ge-");
-static const u8 gBerryDescriptionPart2_Oran[] = _("schmacks. Wächst an einem halben Tag.");
-static const u8 gBerryDescriptionPart1_Persim[] = _("Liebt Sonnenlicht. Die BEERE");
-static const u8 gBerryDescriptionPart2_Persim[] = _("wächst im Sonnenlicht sehr schnell.");
-static const u8 gBerryDescriptionPart1_Lum[] = _("Langsamer Wuchs. Wird sie liebevoll ge-");
-static const u8 gBerryDescriptionPart2_Lum[] = _("pflegt, kann sie 2 BEEREN tragen.");
-static const u8 gBerryDescriptionPart1_Sitrus[] = _("Eng verwandt mit SINEL. Diese große");
-static const u8 gBerryDescriptionPart2_Sitrus[] = _("BEERE ist von rundem Geschmack.");
-static const u8 gBerryDescriptionPart1_Figy[] = _("Die BEERE sieht angekaut aus. Sie ist");
-static const u8 gBerryDescriptionPart2_Figy[] = _("voller scharfer Substanzen.");
-static const u8 gBerryDescriptionPart1_Wiki[] = _("Die BEERE wächst unförmig,");
-static const u8 gBerryDescriptionPart2_Wiki[] = _("damit PKMN sie besser greifen können.");
-static const u8 gBerryDescriptionPart1_Mago[] = _("Die BEERE hat Ausbeulungen. Je mehr");
-static const u8 gBerryDescriptionPart2_Mago[] = _("Beulen, desto schmackhafter ist sie.");
-static const u8 gBerryDescriptionPart1_Aguav[] = _("Die Blume ist zart. Sie ist fähig,");
-static const u8 gBerryDescriptionPart2_Aguav[] = _("ohne Licht wachsen zu können.");
-static const u8 gBerryDescriptionPart1_Iapapa[] = _("Die BEERE ist groß und sauer.");
-static const u8 gBerryDescriptionPart2_Iapapa[] = _("Sie braucht einen Tag zum Wachsen.");
-static const u8 gBerryDescriptionPart1_Razz[] = _("Diese rote BEERE schmeckt etwas");
-static const u8 gBerryDescriptionPart2_Razz[] = _("scharf. Sie wächst in nur 4 Stunden.");
-static const u8 gBerryDescriptionPart1_Bluk[] = _("Die BEERE ist außen blau, verfärbt");
-static const u8 gBerryDescriptionPart2_Bluk[] = _("sich im Mund aber schwarz.");
-static const u8 gBerryDescriptionPart1_Nanab[] = _("Diese BEERE war die 7., die auf der");
-static const u8 gBerryDescriptionPart2_Nanab[] = _("Welt entdeckt wurde. Sie ist süß.");
-static const u8 gBerryDescriptionPart1_Wepear[] = _("Die Blume ist klein und weiß. Angenehm");
-static const u8 gBerryDescriptionPart2_Wepear[] = _("bitter und sauer zugleich.");
-static const u8 gBerryDescriptionPart1_Pinap[] = _("Wind und Kälte verträgt sie nicht.");
-static const u8 gBerryDescriptionPart2_Pinap[] = _("Fruchtfleisch: Scharf. Haut: Sauer.");
-static const u8 gBerryDescriptionPart1_Pomeg[] = _("Egal wie viel Wasser sie bekommt, sie");
-static const u8 gBerryDescriptionPart2_Pomeg[] = _("trägt immer bis zu 6 BEEREN.");
-static const u8 gBerryDescriptionPart1_Kelpsy[] = _("Eine Seltenheit. Geformt wie eine");
-static const u8 gBerryDescriptionPart2_Kelpsy[] = _("Wurzel. Hat eine große Blume.");
-static const u8 gBerryDescriptionPart1_Qualot[] = _("Liebt das Wasser. Wächst besonders");
-static const u8 gBerryDescriptionPart2_Qualot[] = _("gut in regenreichen Gegenden.");
-static const u8 gBerryDescriptionPart1_Hondew[] = _("Eine wertvolle und seltene BEERE.");
-static const u8 gBerryDescriptionPart2_Hondew[] = _("Sie ist sehr schmackhaft.");
-static const u8 gBerryDescriptionPart1_Grepa[] = _("Die BEERE ist zart und von runder");
-static const u8 gBerryDescriptionPart2_Grepa[] = _("Form. Aber sie ist unglaublich sauer!");
-static const u8 gBerryDescriptionPart1_Tamato[] = _("Die Schärfe der BEERE verbrennt die");
-static const u8 gBerryDescriptionPart2_Tamato[] = _("Lippen. Sie braucht Zeit zum Wachsen.");
-static const u8 gBerryDescriptionPart1_Cornn[] = _("Eine BEERE aus alten Zeiten. Wächst");
-static const u8 gBerryDescriptionPart2_Cornn[] = _("nur, wenn in großen Mengen gepflanzt.");
-static const u8 gBerryDescriptionPart1_Magost[] = _("Eine BEERE, die für ihren feinen, aus-");
-static const u8 gBerryDescriptionPart2_Magost[] = _("gewogenen Geschmack bekannt ist.");
-static const u8 gBerryDescriptionPart1_Rabuta[] = _("Eine Seltenheit, die über und über mit");
-static const u8 gBerryDescriptionPart2_Rabuta[] = _("Haaren bewachsen ist. Sehr bitter!");
-static const u8 gBerryDescriptionPart1_Nomel[] = _("Sehr sauer. Ein Biss betäubt die");
-static const u8 gBerryDescriptionPart2_Nomel[] = _("Geschmacksnerven für 3 Tage!");
-static const u8 gBerryDescriptionPart1_Spelon[] = _("Die leuchtend rote BEERE ist sehr");
-static const u8 gBerryDescriptionPart2_Spelon[] = _("scharf. Gibt scharfe Substanzen ab!");
-static const u8 gBerryDescriptionPart1_Pamtre[] = _("Wird vom Meer angespült. Sie wächst");
-static const u8 gBerryDescriptionPart2_Pamtre[] = _("an einem anderen Ort.");
-static const u8 gBerryDescriptionPart1_Watmel[] = _("Eine große BEERE, 25 cm groß.");
-static const u8 gBerryDescriptionPart2_Watmel[] = _("Außergewöhnlich süß.");
-static const u8 gBerryDescriptionPart1_Durin[] = _("Bitter schon ihr Anblick! Sie ist so");
-static const u8 gBerryDescriptionPart2_Durin[] = _("bitter, dass niemand sie pur isst.");
-static const u8 gBerryDescriptionPart1_Belue[] = _("Sie glänzt, sieht zart aus, ist extrem");
-static const u8 gBerryDescriptionPart2_Belue[] = _("sauer und braucht Zeit zum Wachsen.");
-static const u8 gBerryDescriptionPart1_Liechi[] = _("Eine geheimnisvolle BEERE. Man sagt,");
-static const u8 gBerryDescriptionPart2_Liechi[] = _("sie enthalte die Kraft des Meeres.");
-static const u8 gBerryDescriptionPart1_Ganlon[] = _("Eine geheimnisvolle BEERE. Man sagt,");
-static const u8 gBerryDescriptionPart2_Ganlon[] = _("sie enthalte die Kraft des Landes.");
-static const u8 gBerryDescriptionPart1_Salac[] = _("Eine geheimnisvolle BEERE. Man sagt,");
-static const u8 gBerryDescriptionPart2_Salac[] = _("sie enthalte die Kraft des Himmels.");
-static const u8 gBerryDescriptionPart1_Petaya[] = _("Eine geheimnisvolle BEERE. Man sagt,");
-static const u8 gBerryDescriptionPart2_Petaya[] = _("sie enthalte die Kraft allen Lebens.");
-static const u8 gBerryDescriptionPart1_Apicot[] = _("Eine rätselhafte BEERE. Man kann");
-static const u8 gBerryDescriptionPart2_Apicot[] = _("nicht sagen, wie und was sie ist.");
-static const u8 gBerryDescriptionPart1_Lansat[] = _("Eine legendäre BEERE. Sie zu");
-static const u8 gBerryDescriptionPart2_Lansat[] = _("tragen bringt Freude.");
-static const u8 gBerryDescriptionPart1_Starf[] = _("So stark, dass sie an den Rand der");
-static const u8 gBerryDescriptionPart2_Starf[] = _("Welt verbannt wurde. Ein Märchen?");
-static const u8 gBerryDescriptionPart1_Enigma[] = _("Eine enigmatische BEERE. Sie scheint");
-static const u8 gBerryDescriptionPart2_Enigma[] = _("die Macht der Sterne zu besitzen.");
+static const u8 sBerryDescriptionPart1_Cheri[] = _("Erblüht mit hübschen, zarten Blumen.");
+static const u8 sBerryDescriptionPart2_Cheri[] = _("Diese knallrote BEERE ist sehr scharf.");
+static const u8 sBerryDescriptionPart1_Chesto[] = _("Diese BEERE hat eine dicke Haut und");
+static const u8 sBerryDescriptionPart2_Chesto[] = _("hartes Fruchtfleisch. Trocken!");
+static const u8 sBerryDescriptionPart1_Pecha[] = _("Sehr süß und delikat.");
+static const u8 sBerryDescriptionPart2_Pecha[] = _("Sehr zart. Vorsichtig anfassen!");
+static const u8 sBerryDescriptionPart1_Rawst[] = _("Wenn die Blätter lang und wellig sind,");
+static const u8 sBerryDescriptionPart2_Rawst[] = _("wird die BEERE sehr bitter.");
+static const u8 sBerryDescriptionPart1_Aspear[] = _("Diese harte BEERE ist sehr");
+static const u8 sBerryDescriptionPart2_Aspear[] = _("saftig und sauer im Geschmack!");
+static const u8 sBerryDescriptionPart1_Leppa[] = _("Wächst langsamer als AMRENA und");
+static const u8 sBerryDescriptionPart2_Leppa[] = _("andere. Je kleiner, desto delikater.");
+static const u8 sBerryDescriptionPart1_Oran[] = _("Eine BEERE unterschiedlichsten Ge-");
+static const u8 sBerryDescriptionPart2_Oran[] = _("schmacks. Wächst an einem halben Tag.");
+static const u8 sBerryDescriptionPart1_Persim[] = _("Liebt Sonnenlicht. Die BEERE");
+static const u8 sBerryDescriptionPart2_Persim[] = _("wächst im Sonnenlicht sehr schnell.");
+static const u8 sBerryDescriptionPart1_Lum[] = _("Langsamer Wuchs. Wird sie liebevoll ge-");
+static const u8 sBerryDescriptionPart2_Lum[] = _("pflegt, kann sie 2 BEEREN tragen.");
+static const u8 sBerryDescriptionPart1_Sitrus[] = _("Eng verwandt mit SINEL. Diese große");
+static const u8 sBerryDescriptionPart2_Sitrus[] = _("BEERE ist von rundem Geschmack.");
+static const u8 sBerryDescriptionPart1_Figy[] = _("Die BEERE sieht angekaut aus. Sie ist");
+static const u8 sBerryDescriptionPart2_Figy[] = _("voller scharfer Substanzen.");
+static const u8 sBerryDescriptionPart1_Wiki[] = _("Die BEERE wächst unförmig,");
+static const u8 sBerryDescriptionPart2_Wiki[] = _("damit PKMN sie besser greifen können.");
+static const u8 sBerryDescriptionPart1_Mago[] = _("Die BEERE hat Ausbeulungen. Je mehr");
+static const u8 sBerryDescriptionPart2_Mago[] = _("Beulen, desto schmackhafter ist sie.");
+static const u8 sBerryDescriptionPart1_Aguav[] = _("Die Blume ist zart. Sie ist fähig,");
+static const u8 sBerryDescriptionPart2_Aguav[] = _("ohne Licht wachsen zu können.");
+static const u8 sBerryDescriptionPart1_Iapapa[] = _("Die BEERE ist groß und sauer.");
+static const u8 sBerryDescriptionPart2_Iapapa[] = _("Sie braucht einen Tag zum Wachsen.");
+static const u8 sBerryDescriptionPart1_Razz[] = _("Diese rote BEERE schmeckt etwas");
+static const u8 sBerryDescriptionPart2_Razz[] = _("scharf. Sie wächst in nur 4 Stunden.");
+static const u8 sBerryDescriptionPart1_Bluk[] = _("Die BEERE ist außen blau, verfärbt");
+static const u8 sBerryDescriptionPart2_Bluk[] = _("sich im Mund aber schwarz.");
+static const u8 sBerryDescriptionPart1_Nanab[] = _("Diese BEERE war die 7., die auf der");
+static const u8 sBerryDescriptionPart2_Nanab[] = _("Welt entdeckt wurde. Sie ist süß.");
+static const u8 sBerryDescriptionPart1_Wepear[] = _("Die Blume ist klein und weiß. Angenehm");
+static const u8 sBerryDescriptionPart2_Wepear[] = _("bitter und sauer zugleich.");
+static const u8 sBerryDescriptionPart1_Pinap[] = _("Wind und Kälte verträgt sie nicht.");
+static const u8 sBerryDescriptionPart2_Pinap[] = _("Fruchtfleisch: Scharf. Haut: Sauer.");
+static const u8 sBerryDescriptionPart1_Pomeg[] = _("Egal wie viel Wasser sie bekommt, sie");
+static const u8 sBerryDescriptionPart2_Pomeg[] = _("trägt immer bis zu 6 BEEREN.");
+static const u8 sBerryDescriptionPart1_Kelpsy[] = _("Eine Seltenheit. Geformt wie eine");
+static const u8 sBerryDescriptionPart2_Kelpsy[] = _("Wurzel. Hat eine große Blume.");
+static const u8 sBerryDescriptionPart1_Qualot[] = _("Liebt das Wasser. Wächst besonders");
+static const u8 sBerryDescriptionPart2_Qualot[] = _("gut in regenreichen Gegenden.");
+static const u8 sBerryDescriptionPart1_Hondew[] = _("Eine wertvolle und seltene BEERE.");
+static const u8 sBerryDescriptionPart2_Hondew[] = _("Sie ist sehr schmackhaft.");
+static const u8 sBerryDescriptionPart1_Grepa[] = _("Die BEERE ist zart und von runder");
+static const u8 sBerryDescriptionPart2_Grepa[] = _("Form. Aber sie ist unglaublich sauer!");
+static const u8 sBerryDescriptionPart1_Tamato[] = _("Die Schärfe der BEERE verbrennt die");
+static const u8 sBerryDescriptionPart2_Tamato[] = _("Lippen. Sie braucht Zeit zum Wachsen.");
+static const u8 sBerryDescriptionPart1_Cornn[] = _("Eine BEERE aus alten Zeiten. Wächst");
+static const u8 sBerryDescriptionPart2_Cornn[] = _("nur, wenn in großen Mengen gepflanzt.");
+static const u8 sBerryDescriptionPart1_Magost[] = _("Eine BEERE, die für ihren feinen, aus-");
+static const u8 sBerryDescriptionPart2_Magost[] = _("gewogenen Geschmack bekannt ist.");
+static const u8 sBerryDescriptionPart1_Rabuta[] = _("Eine Seltenheit, die über und über mit");
+static const u8 sBerryDescriptionPart2_Rabuta[] = _("Haaren bewachsen ist. Sehr bitter!");
+static const u8 sBerryDescriptionPart1_Nomel[] = _("Sehr sauer. Ein Biss betäubt die");
+static const u8 sBerryDescriptionPart2_Nomel[] = _("Geschmacksnerven für 3 Tage!");
+static const u8 sBerryDescriptionPart1_Spelon[] = _("Die leuchtend rote BEERE ist sehr");
+static const u8 sBerryDescriptionPart2_Spelon[] = _("scharf. Gibt scharfe Substanzen ab!");
+static const u8 sBerryDescriptionPart1_Pamtre[] = _("Wird vom Meer angespült. Sie wächst");
+static const u8 sBerryDescriptionPart2_Pamtre[] = _("an einem anderen Ort.");
+static const u8 sBerryDescriptionPart1_Watmel[] = _("Eine große BEERE, 25 cm groß.");
+static const u8 sBerryDescriptionPart2_Watmel[] = _("Außergewöhnlich süß.");
+static const u8 sBerryDescriptionPart1_Durin[] = _("Bitter schon ihr Anblick! Sie ist so");
+static const u8 sBerryDescriptionPart2_Durin[] = _("bitter, dass niemand sie pur isst.");
+static const u8 sBerryDescriptionPart1_Belue[] = _("Sie glänzt, sieht zart aus, ist extrem");
+static const u8 sBerryDescriptionPart2_Belue[] = _("sauer und braucht Zeit zum Wachsen.");
+static const u8 sBerryDescriptionPart1_Liechi[] = _("Eine geheimnisvolle BEERE. Man sagt,");
+static const u8 sBerryDescriptionPart2_Liechi[] = _("sie enthalte die Kraft des Meeres.");
+static const u8 sBerryDescriptionPart1_Ganlon[] = _("Eine geheimnisvolle BEERE. Man sagt,");
+static const u8 sBerryDescriptionPart2_Ganlon[] = _("sie enthalte die Kraft des Landes.");
+static const u8 sBerryDescriptionPart1_Salac[] = _("Eine geheimnisvolle BEERE. Man sagt,");
+static const u8 sBerryDescriptionPart2_Salac[] = _("sie enthalte die Kraft des Himmels.");
+static const u8 sBerryDescriptionPart1_Petaya[] = _("Eine geheimnisvolle BEERE. Man sagt,");
+static const u8 sBerryDescriptionPart2_Petaya[] = _("sie enthalte die Kraft allen Lebens.");
+static const u8 sBerryDescriptionPart1_Apicot[] = _("Eine rätselhafte BEERE. Man kann");
+static const u8 sBerryDescriptionPart2_Apicot[] = _("nicht sagen, wie und was sie ist.");
+static const u8 sBerryDescriptionPart1_Lansat[] = _("Eine legendäre BEERE. Sie zu");
+static const u8 sBerryDescriptionPart2_Lansat[] = _("tragen bringt Freude.");
+static const u8 sBerryDescriptionPart1_Starf[] = _("So stark, dass sie an den Rand der");
+static const u8 sBerryDescriptionPart2_Starf[] = _("Welt verbannt wurde. Ein Märchen?");
+static const u8 sBerryDescriptionPart1_Enigma[] = _("Eine enigmatische BEERE. Sie scheint");
+static const u8 sBerryDescriptionPart2_Enigma[] = _("die Macht der Sterne zu besitzen.");
 #endif
 
 const struct Berry gBerries[] =
@@ -286,8 +287,8 @@ const struct Berry gBerries[] =
         .size = 20,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Cheri,
-        .description2 = gBerryDescriptionPart2_Cheri,
+        .description1 = sBerryDescriptionPart1_Cheri,
+        .description2 = sBerryDescriptionPart2_Cheri,
         .stageDuration = 3,
         .spicy = 10,
         .dry = 0,
@@ -302,8 +303,8 @@ const struct Berry gBerries[] =
         .size = 80,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Chesto,
-        .description2 = gBerryDescriptionPart2_Chesto,
+        .description1 = sBerryDescriptionPart1_Chesto,
+        .description2 = sBerryDescriptionPart2_Chesto,
         .stageDuration = 3,
         .spicy = 0,
         .dry = 10,
@@ -318,8 +319,8 @@ const struct Berry gBerries[] =
         .size = 40,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Pecha,
-        .description2 = gBerryDescriptionPart2_Pecha,
+        .description1 = sBerryDescriptionPart1_Pecha,
+        .description2 = sBerryDescriptionPart2_Pecha,
         .stageDuration = 3,
         .spicy = 0,
         .dry = 0,
@@ -334,8 +335,8 @@ const struct Berry gBerries[] =
         .size = 32,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Rawst,
-        .description2 = gBerryDescriptionPart2_Rawst,
+        .description1 = sBerryDescriptionPart1_Rawst,
+        .description2 = sBerryDescriptionPart2_Rawst,
         .stageDuration = 3,
         .spicy = 0,
         .dry = 0,
@@ -350,8 +351,8 @@ const struct Berry gBerries[] =
         .size = 50,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Aspear,
-        .description2 = gBerryDescriptionPart2_Aspear,
+        .description1 = sBerryDescriptionPart1_Aspear,
+        .description2 = sBerryDescriptionPart2_Aspear,
         .stageDuration = 3,
         .spicy = 0,
         .dry = 0,
@@ -366,8 +367,8 @@ const struct Berry gBerries[] =
         .size = 28,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Leppa,
-        .description2 = gBerryDescriptionPart2_Leppa,
+        .description1 = sBerryDescriptionPart1_Leppa,
+        .description2 = sBerryDescriptionPart2_Leppa,
         .stageDuration = 4,
         .spicy = 10,
         .dry = 0,
@@ -382,8 +383,8 @@ const struct Berry gBerries[] =
         .size = 35,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Oran,
-        .description2 = gBerryDescriptionPart2_Oran,
+        .description1 = sBerryDescriptionPart1_Oran,
+        .description2 = sBerryDescriptionPart2_Oran,
         .stageDuration = 3,
         .spicy = 10,
         .dry = 10,
@@ -398,8 +399,8 @@ const struct Berry gBerries[] =
         .size = 47,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Persim,
-        .description2 = gBerryDescriptionPart2_Persim,
+        .description1 = sBerryDescriptionPart1_Persim,
+        .description2 = sBerryDescriptionPart2_Persim,
         .stageDuration = 3,
         .spicy = 10,
         .dry = 10,
@@ -414,8 +415,8 @@ const struct Berry gBerries[] =
         .size = 34,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Lum,
-        .description2 = gBerryDescriptionPart2_Lum,
+        .description1 = sBerryDescriptionPart1_Lum,
+        .description2 = sBerryDescriptionPart2_Lum,
         .stageDuration = 12,
         .spicy = 10,
         .dry = 10,
@@ -430,8 +431,8 @@ const struct Berry gBerries[] =
         .size = 95,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Sitrus,
-        .description2 = gBerryDescriptionPart2_Sitrus,
+        .description1 = sBerryDescriptionPart1_Sitrus,
+        .description2 = sBerryDescriptionPart2_Sitrus,
         .stageDuration = 6,
         .spicy = 10,
         .dry = 10,
@@ -446,8 +447,8 @@ const struct Berry gBerries[] =
         .size = 100,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Figy,
-        .description2 = gBerryDescriptionPart2_Figy,
+        .description1 = sBerryDescriptionPart1_Figy,
+        .description2 = sBerryDescriptionPart2_Figy,
         .stageDuration = 6,
         .spicy = 10,
         .dry = 0,
@@ -462,8 +463,8 @@ const struct Berry gBerries[] =
         .size = 115,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Wiki,
-        .description2 = gBerryDescriptionPart2_Wiki,
+        .description1 = sBerryDescriptionPart1_Wiki,
+        .description2 = sBerryDescriptionPart2_Wiki,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 10,
@@ -478,8 +479,8 @@ const struct Berry gBerries[] =
         .size = 126,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Mago,
-        .description2 = gBerryDescriptionPart2_Mago,
+        .description1 = sBerryDescriptionPart1_Mago,
+        .description2 = sBerryDescriptionPart2_Mago,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 0,
@@ -494,8 +495,8 @@ const struct Berry gBerries[] =
         .size = 64,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Aguav,
-        .description2 = gBerryDescriptionPart2_Aguav,
+        .description1 = sBerryDescriptionPart1_Aguav,
+        .description2 = sBerryDescriptionPart2_Aguav,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 0,
@@ -510,8 +511,8 @@ const struct Berry gBerries[] =
         .size = 223,
         .maxYield = 3,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Iapapa,
-        .description2 = gBerryDescriptionPart2_Iapapa,
+        .description1 = sBerryDescriptionPart1_Iapapa,
+        .description2 = sBerryDescriptionPart2_Iapapa,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 0,
@@ -526,8 +527,8 @@ const struct Berry gBerries[] =
         .size = 120,
         .maxYield = 6,
         .minYield = 3,
-        .description1 = gBerryDescriptionPart1_Razz,
-        .description2 = gBerryDescriptionPart2_Razz,
+        .description1 = sBerryDescriptionPart1_Razz,
+        .description2 = sBerryDescriptionPart2_Razz,
         .stageDuration = 1,
         .spicy = 10,
         .dry = 10,
@@ -542,8 +543,8 @@ const struct Berry gBerries[] =
         .size = 108,
         .maxYield = 6,
         .minYield = 3,
-        .description1 = gBerryDescriptionPart1_Bluk,
-        .description2 = gBerryDescriptionPart2_Bluk,
+        .description1 = sBerryDescriptionPart1_Bluk,
+        .description2 = sBerryDescriptionPart2_Bluk,
         .stageDuration = 1,
         .spicy = 0,
         .dry = 10,
@@ -558,8 +559,8 @@ const struct Berry gBerries[] =
         .size = 77,
         .maxYield = 6,
         .minYield = 3,
-        .description1 = gBerryDescriptionPart1_Nanab,
-        .description2 = gBerryDescriptionPart2_Nanab,
+        .description1 = sBerryDescriptionPart1_Nanab,
+        .description2 = sBerryDescriptionPart2_Nanab,
         .stageDuration = 1,
         .spicy = 0,
         .dry = 0,
@@ -574,8 +575,8 @@ const struct Berry gBerries[] =
         .size = 74,
         .maxYield = 6,
         .minYield = 3,
-        .description1 = gBerryDescriptionPart1_Wepear,
-        .description2 = gBerryDescriptionPart2_Wepear,
+        .description1 = sBerryDescriptionPart1_Wepear,
+        .description2 = sBerryDescriptionPart2_Wepear,
         .stageDuration = 1,
         .spicy = 0,
         .dry = 0,
@@ -590,8 +591,8 @@ const struct Berry gBerries[] =
         .size = 80,
         .maxYield = 6,
         .minYield = 3,
-        .description1 = gBerryDescriptionPart1_Pinap,
-        .description2 = gBerryDescriptionPart2_Pinap,
+        .description1 = sBerryDescriptionPart1_Pinap,
+        .description2 = sBerryDescriptionPart2_Pinap,
         .stageDuration = 1,
         .spicy = 10,
         .dry = 0,
@@ -606,8 +607,8 @@ const struct Berry gBerries[] =
         .size = 135,
         .maxYield = 6,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Pomeg,
-        .description2 = gBerryDescriptionPart2_Pomeg,
+        .description1 = sBerryDescriptionPart1_Pomeg,
+        .description2 = sBerryDescriptionPart2_Pomeg,
         .stageDuration = 3,
         .spicy = 10,
         .dry = 0,
@@ -622,8 +623,8 @@ const struct Berry gBerries[] =
         .size = 150,
         .maxYield = 6,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Kelpsy,
-        .description2 = gBerryDescriptionPart2_Kelpsy,
+        .description1 = sBerryDescriptionPart1_Kelpsy,
+        .description2 = sBerryDescriptionPart2_Kelpsy,
         .stageDuration = 3,
         .spicy = 0,
         .dry = 10,
@@ -638,8 +639,8 @@ const struct Berry gBerries[] =
         .size = 110,
         .maxYield = 6,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Qualot,
-        .description2 = gBerryDescriptionPart2_Qualot,
+        .description1 = sBerryDescriptionPart1_Qualot,
+        .description2 = sBerryDescriptionPart2_Qualot,
         .stageDuration = 3,
         .spicy = 10,
         .dry = 0,
@@ -654,8 +655,8 @@ const struct Berry gBerries[] =
         .size = 162,
         .maxYield = 6,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Hondew,
-        .description2 = gBerryDescriptionPart2_Hondew,
+        .description1 = sBerryDescriptionPart1_Hondew,
+        .description2 = sBerryDescriptionPart2_Hondew,
         .stageDuration = 3,
         .spicy = 10,
         .dry = 10,
@@ -670,8 +671,8 @@ const struct Berry gBerries[] =
         .size = 149,
         .maxYield = 6,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Grepa,
-        .description2 = gBerryDescriptionPart2_Grepa,
+        .description1 = sBerryDescriptionPart1_Grepa,
+        .description2 = sBerryDescriptionPart2_Grepa,
         .stageDuration = 3,
         .spicy = 0,
         .dry = 10,
@@ -686,8 +687,8 @@ const struct Berry gBerries[] =
         .size = 200,
         .maxYield = 4,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Tamato,
-        .description2 = gBerryDescriptionPart2_Tamato,
+        .description1 = sBerryDescriptionPart1_Tamato,
+        .description2 = sBerryDescriptionPart2_Tamato,
         .stageDuration = 6,
         .spicy = 20,
         .dry = 10,
@@ -702,8 +703,8 @@ const struct Berry gBerries[] =
         .size = 75,
         .maxYield = 4,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Cornn,
-        .description2 = gBerryDescriptionPart2_Cornn,
+        .description1 = sBerryDescriptionPart1_Cornn,
+        .description2 = sBerryDescriptionPart2_Cornn,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 20,
@@ -718,8 +719,8 @@ const struct Berry gBerries[] =
         .size = 140,
         .maxYield = 4,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Magost,
-        .description2 = gBerryDescriptionPart2_Magost,
+        .description1 = sBerryDescriptionPart1_Magost,
+        .description2 = sBerryDescriptionPart2_Magost,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 0,
@@ -734,8 +735,8 @@ const struct Berry gBerries[] =
         .size = 226,
         .maxYield = 4,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Rabuta,
-        .description2 = gBerryDescriptionPart2_Rabuta,
+        .description1 = sBerryDescriptionPart1_Rabuta,
+        .description2 = sBerryDescriptionPart2_Rabuta,
         .stageDuration = 6,
         .spicy = 0,
         .dry = 0,
@@ -750,8 +751,8 @@ const struct Berry gBerries[] =
         .size = 285,
         .maxYield = 4,
         .minYield = 2,
-        .description1 = gBerryDescriptionPart1_Nomel,
-        .description2 = gBerryDescriptionPart2_Nomel,
+        .description1 = sBerryDescriptionPart1_Nomel,
+        .description2 = sBerryDescriptionPart2_Nomel,
         .stageDuration = 6,
         .spicy = 10,
         .dry = 0,
@@ -766,8 +767,8 @@ const struct Berry gBerries[] =
         .size = 133,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Spelon,
-        .description2 = gBerryDescriptionPart2_Spelon,
+        .description1 = sBerryDescriptionPart1_Spelon,
+        .description2 = sBerryDescriptionPart2_Spelon,
         .stageDuration = 18,
         .spicy = 40,
         .dry = 10,
@@ -782,8 +783,8 @@ const struct Berry gBerries[] =
         .size = 244,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Pamtre,
-        .description2 = gBerryDescriptionPart2_Pamtre,
+        .description1 = sBerryDescriptionPart1_Pamtre,
+        .description2 = sBerryDescriptionPart2_Pamtre,
         .stageDuration = 18,
         .spicy = 0,
         .dry = 40,
@@ -798,8 +799,8 @@ const struct Berry gBerries[] =
         .size = 250,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Watmel,
-        .description2 = gBerryDescriptionPart2_Watmel,
+        .description1 = sBerryDescriptionPart1_Watmel,
+        .description2 = sBerryDescriptionPart2_Watmel,
         .stageDuration = 18,
         .spicy = 0,
         .dry = 0,
@@ -814,8 +815,8 @@ const struct Berry gBerries[] =
         .size = 280,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Durin,
-        .description2 = gBerryDescriptionPart2_Durin,
+        .description1 = sBerryDescriptionPart1_Durin,
+        .description2 = sBerryDescriptionPart2_Durin,
         .stageDuration = 18,
         .spicy = 0,
         .dry = 0,
@@ -830,8 +831,8 @@ const struct Berry gBerries[] =
         .size = 300,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Belue,
-        .description2 = gBerryDescriptionPart2_Belue,
+        .description1 = sBerryDescriptionPart1_Belue,
+        .description2 = sBerryDescriptionPart2_Belue,
         .stageDuration = 18,
         .spicy = 10,
         .dry = 0,
@@ -846,8 +847,8 @@ const struct Berry gBerries[] =
         .size = 111,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Liechi,
-        .description2 = gBerryDescriptionPart2_Liechi,
+        .description1 = sBerryDescriptionPart1_Liechi,
+        .description2 = sBerryDescriptionPart2_Liechi,
         .stageDuration = 24,
         .spicy = 40,
         .dry = 0,
@@ -862,8 +863,8 @@ const struct Berry gBerries[] =
         .size = 33,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Ganlon,
-        .description2 = gBerryDescriptionPart2_Ganlon,
+        .description1 = sBerryDescriptionPart1_Ganlon,
+        .description2 = sBerryDescriptionPart2_Ganlon,
         .stageDuration = 24,
         .spicy = 0,
         .dry = 40,
@@ -878,8 +879,8 @@ const struct Berry gBerries[] =
         .size = 95,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Salac,
-        .description2 = gBerryDescriptionPart2_Salac,
+        .description1 = sBerryDescriptionPart1_Salac,
+        .description2 = sBerryDescriptionPart2_Salac,
         .stageDuration = 24,
         .spicy = 0,
         .dry = 0,
@@ -894,8 +895,8 @@ const struct Berry gBerries[] =
         .size = 237,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Petaya,
-        .description2 = gBerryDescriptionPart2_Petaya,
+        .description1 = sBerryDescriptionPart1_Petaya,
+        .description2 = sBerryDescriptionPart2_Petaya,
         .stageDuration = 24,
         .spicy = 40,
         .dry = 0,
@@ -910,8 +911,8 @@ const struct Berry gBerries[] =
         .size = 75,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Apicot,
-        .description2 = gBerryDescriptionPart2_Apicot,
+        .description1 = sBerryDescriptionPart1_Apicot,
+        .description2 = sBerryDescriptionPart2_Apicot,
         .stageDuration = 24,
         .spicy = 0,
         .dry = 40,
@@ -926,8 +927,8 @@ const struct Berry gBerries[] =
         .size = 97,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Lansat,
-        .description2 = gBerryDescriptionPart2_Lansat,
+        .description1 = sBerryDescriptionPart1_Lansat,
+        .description2 = sBerryDescriptionPart2_Lansat,
         .stageDuration = 24,
         .spicy = 10,
         .dry = 10,
@@ -942,8 +943,8 @@ const struct Berry gBerries[] =
         .size = 153,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Starf,
-        .description2 = gBerryDescriptionPart2_Starf,
+        .description1 = sBerryDescriptionPart1_Starf,
+        .description2 = sBerryDescriptionPart2_Starf,
         .stageDuration = 24,
         .spicy = 10,
         .dry = 10,
@@ -958,8 +959,8 @@ const struct Berry gBerries[] =
         .size = 0,
         .maxYield = 2,
         .minYield = 1,
-        .description1 = gBerryDescriptionPart1_Enigma,
-        .description2 = gBerryDescriptionPart2_Enigma,
+        .description1 = sBerryDescriptionPart1_Enigma,
+        .description2 = sBerryDescriptionPart2_Enigma,
         .stageDuration = 24,
         .spicy = 40,
         .dry = 40,
@@ -1072,8 +1073,8 @@ extern const u8 gSpriteImage_UnusedCherry[];
 extern const u16 gSpritePalette_UnusedCherry[];
 extern u8 gUnknown_Debug_839B6CE[];
 
-static const u8 gUnknown_Debug_083F7F84[] = _("そとから　きた　きのみ");
-static const u8 gUnknown_Debug_083F7F90[] = _("ただいま　かいはつちゅう");
+static const u8 gUnknown_Debug_083F7F84[] = DTR("そとから　きた　きのみ", "An exterior BERRY");
+static const u8 gUnknown_Debug_083F7F90[] = DTR("ただいま　かいはつちゅう", "Currently under development");
 
 void debug_sub_80C2C18(const u8 *name, u8 holdEffect, u8 holdEffectParam)
 {
@@ -1127,7 +1128,7 @@ const struct Berry *GetBerryInfo(u8 berry)
     // when getting the pointer to the berry info, enigma berries are handled differently. if your
     // berry is an Enigma Berry and its checksum is valid, fetch the pointer to its information in
     // the save block.
-    if (berry == GETBERRYID(ITEM_ENIGMA_BERRY) && IsEnigmaBerryValid())
+    if (berry == ITEM_TO_BERRY(ITEM_ENIGMA_BERRY) && IsEnigmaBerryValid())
         return &gSaveBlock1.enigmaBerry.berry;
     else
     {
@@ -1135,8 +1136,8 @@ const struct Berry *GetBerryInfo(u8 berry)
         // an enigma berry whos checksum failed, the game will use the Enigma Berry information
         // for this: meaning if you see the Enigma Berry information, its actually because the
         // checksum failed.
-        if (berry == BERRY_NONE || berry > GETBERRYID(LAST_BERRY))
-            berry = GETBERRYID(FIRST_BERRY);
+        if (berry == BERRY_NONE || berry > ITEM_TO_BERRY(LAST_BERRY_INDEX))
+            berry = ITEM_TO_BERRY(FIRST_BERRY_INDEX);
         return &gBerries[berry - 1];
     }
 }
@@ -1151,11 +1152,11 @@ static struct BerryTree *GetBerryTreeInfo(u8 id)
 // this was called because the berry script was successful: meaning the player chose to
 // water the tree. We need to check for the current tree stage and set the appropriate
 // water flag to true.
-bool32 EventObjectInteractionWaterBerryTree(void)
+bool32 ObjectEventInteractionWaterBerryTree(void)
 {
     // GetBerryTreeInfo does not sanitize the tree retrieved, but there are no known
     // instances where this can cause problems.
-    struct BerryTree *tree = GetBerryTreeInfo(EventObjectGetBerryTreeId(gSelectedEventObject));
+    struct BerryTree *tree = GetBerryTreeInfo(ObjectEventGetBerryTreeId(gSelectedObjectEvent));
 
     switch (tree->stage)
     {
@@ -1179,8 +1180,8 @@ bool32 EventObjectInteractionWaterBerryTree(void)
 
 bool8 IsPlayerFacingUnplantedSoil(void)
 {
-    if (GetEventObjectScriptPointerPlayerFacing() == S_BerryTree
-     && GetStageByBerryTreeId(EventObjectGetBerryTreeId(gSelectedEventObject)) == BERRY_STAGE_NO_BERRY)
+    if (GetObjectEventScriptPointerPlayerFacing() == S_BerryTree
+     && GetStageByBerryTreeId(ObjectEventGetBerryTreeId(gSelectedObjectEvent)) == BERRY_STAGE_NO_BERRY)
         return TRUE;
     else
         return FALSE;
@@ -1188,10 +1189,10 @@ bool8 IsPlayerFacingUnplantedSoil(void)
 
 bool8 TryToWaterBerryTree(void)
 {
-    if (GetEventObjectScriptPointerPlayerFacing() != S_BerryTree)
+    if (GetObjectEventScriptPointerPlayerFacing() != S_BerryTree)
         return FALSE;
     else
-        return EventObjectInteractionWaterBerryTree();
+        return ObjectEventInteractionWaterBerryTree();
 }
 
 void ClearBerryTrees(void)
@@ -1285,7 +1286,7 @@ void BerryTreeTimeUpdate(s32 minutesPassed)
     }
 }
 
-void PlantBerryTree(u8 id, u8 berry, u8 stage, bool8 noSparkle)
+void PlantBerryTree(u8 id, u8 berry, u8 stage, bool8 sparkle)
 {
     struct BerryTree *tree = GetBerryTreeInfo(id);
 
@@ -1298,7 +1299,7 @@ void PlantBerryTree(u8 id, u8 berry, u8 stage, bool8 noSparkle)
         tree->berryYield = CalcBerryYield(tree);
         tree->minutesUntilNextStage *= 4;
     }
-    if (noSparkle == FALSE)
+    if (!sparkle)
     {
         tree->growthSparkle = TRUE;
     }
@@ -1321,22 +1322,22 @@ u8 GetStageByBerryTreeId(u8 id)
 
 u8 ItemIdToBerryType(u16 item)
 {
-    u16 berry = item - FIRST_BERRY;
+    u16 berry = item - FIRST_BERRY_INDEX;
 
-    if (berry > LAST_BERRY - FIRST_BERRY)
-        return GETBERRYID(FIRST_BERRY);
+    if (berry > LAST_BERRY_INDEX - FIRST_BERRY_INDEX)
+        return ITEM_TO_BERRY(FIRST_BERRY_INDEX);
     else
-        return GETBERRYID(item);
+        return ITEM_TO_BERRY(item);
 }
 
 static u16 BerryTypeToItemId(u16 berry)
 {
     u16 item = berry - 1;
 
-    if (item > LAST_BERRY - FIRST_BERRY)
-        return FIRST_BERRY;
+    if (item > LAST_BERRY_INDEX - FIRST_BERRY_INDEX)
+        return FIRST_BERRY_INDEX;
     else
-        return GETITEMID(berry);
+        return berry + FIRST_BERRY_INDEX - 1;
 }
 
 void GetBerryNameByBerryType(u8 berry, u8 *string)
@@ -1414,7 +1415,7 @@ static u16 GetStageDurationByBerryType(u8 berry)
     return GetBerryInfo(berry)->stageDuration * 60;
 }
 
-void EventObjectInteractionGetBerryTreeData(void)
+void ObjectEventInteractionGetBerryTreeData(void)
 {
     u8 id;
     u8 berry;
@@ -1422,7 +1423,7 @@ void EventObjectInteractionGetBerryTreeData(void)
     u8 group;
     u8 num;
 
-    id = EventObjectGetBerryTreeId(gSelectedEventObject);
+    id = ObjectEventGetBerryTreeId(gSelectedObjectEvent);
     berry = GetBerryTypeByBerryTreeId(id);
     ResetBerryTreeSparkleFlag(id);
     localId = gSpecialVar_LastTalked;
@@ -1444,28 +1445,28 @@ void EventObjectInteractionGetBerryTreeData(void)
 
 void Berry_FadeAndGoToBerryBagMenu(void)
 {
-    SetMainCallback2(sub_80A68CC);
+    SetMainCallback2(CB2_ChooseBerry);
 }
 
-void EventObjectInteractionPlantBerryTree(void)
+void ObjectEventInteractionPlantBerryTree(void)
 {
     u8 berry = ItemIdToBerryType(gSpecialVar_ItemId);
 
-    PlantBerryTree(EventObjectGetBerryTreeId(gSelectedEventObject), berry, 1, TRUE);
-    EventObjectInteractionGetBerryTreeData();
+    PlantBerryTree(ObjectEventGetBerryTreeId(gSelectedObjectEvent), berry, 1, TRUE);
+    ObjectEventInteractionGetBerryTreeData();
 }
 
-void EventObjectInteractionPickBerryTree(void)
+void ObjectEventInteractionPickBerryTree(void)
 {
-    u8 id = EventObjectGetBerryTreeId(gSelectedEventObject);
+    u8 id = ObjectEventGetBerryTreeId(gSelectedObjectEvent);
     u8 berry = GetBerryTypeByBerryTreeId(id);
 
     gSpecialVar_0x8004 = AddBagItem(BerryTypeToItemId(berry), GetBerryCountByBerryTreeId(id));
 }
 
-void EventObjectInteractionRemoveBerryTree(void)
+void ObjectEventInteractionRemoveBerryTree(void)
 {
-    RemoveBerryTree(EventObjectGetBerryTreeId(gSelectedEventObject));
+    RemoveBerryTree(ObjectEventGetBerryTreeId(gSelectedObjectEvent));
     sub_8060288(gSpecialVar_LastTalked, gSaveBlock1.location.mapNum, gSaveBlock1.location.mapGroup);
 }
 
@@ -1494,13 +1495,13 @@ static const u8 gUnknown_Debug_083F7FD3[] = _("");
 
 u8* DebugOpenBerryInfo(void)
 {
-    if (GetEventObjectScriptPointerPlayerFacing() != S_BerryTree)
+    if (GetObjectEventScriptPointerPlayerFacing() != S_BerryTree)
     {
         return NULL;
     }
     else
     {
-        u32 berryTreeId = EventObjectGetBerryTreeId(gSelectedEventObject);
+        u32 berryTreeId = ObjectEventGetBerryTreeId(gSelectedObjectEvent);
         struct BerryTree *berryTree = GetBerryTreeInfo(berryTreeId);
         s32 i;
 
@@ -1542,14 +1543,14 @@ void ResetBerryTreeSparkleFlags(void)
     top = cam_top + 3;
     right = cam_left + 14;
     bottom = top + 8;
-    for (i = 0; i < (u8)ARRAY_COUNT(gSaveBlock1.eventObjects); i++)
+    for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
     {
-        if (gEventObjects[i].active && gEventObjects[i].movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH)
+        if (gObjectEvents[i].active && gObjectEvents[i].movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH)
         {
-            cam_left = gEventObjects[i].currentCoords.x;
-            cam_top = gEventObjects[i].currentCoords.y;
+            cam_left = gObjectEvents[i].currentCoords.x;
+            cam_top = gObjectEvents[i].currentCoords.y;
             if (left <= cam_left && cam_left <= right && top <= cam_top && cam_top <= bottom)
-                ResetBerryTreeSparkleFlag(gEventObjects[i].trainerRange_berryTreeId);
+                ResetBerryTreeSparkleFlag(gObjectEvents[i].trainerRange_berryTreeId);
         }
     }
 }

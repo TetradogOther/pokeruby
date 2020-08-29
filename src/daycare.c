@@ -23,11 +23,11 @@
 #include "trade.h"
 
 // RAM buffers used to assist with BuildEggMoveset()
-IWRAM_DATA u16 gHatchedEggLevelUpMoves[52];
-IWRAM_DATA u16 gHatchedEggFatherMoves[4];
-IWRAM_DATA u16 gHatchedEggFinalMoves[4];
-IWRAM_DATA u16 gHatchedEggEggMoves[12];
-IWRAM_DATA u16 gHatchedEggMotherMoves[4];
+static u16 gHatchedEggLevelUpMoves[52];
+static u16 gHatchedEggFatherMoves[4];
+static u16 gHatchedEggFinalMoves[4];
+static u16 gHatchedEggEggMoves[12];
+static u16 gHatchedEggMotherMoves[4];
 
 extern u16 gMoveToLearn;
 
@@ -1071,5 +1071,5 @@ void ShowDaycareLevelMenu(void)
 void ChooseSendDaycareMon(void)
 {
     OpenPartyMenu(PARTY_MENU_TYPE_DAYCARE, 0);
-    gMain.savedCallback = c2_exit_to_overworld_2_switch;
+    gMain.savedCallback = CB2_ReturnToField;
 }

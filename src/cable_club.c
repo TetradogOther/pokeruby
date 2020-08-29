@@ -732,7 +732,7 @@ static void sub_80837EC(u8 taskId)
 
 void sub_8083820(void)
 {
-    ScrSpecial_DoSaveDialog();
+    SaveGame();
 }
 
 static void sub_808382C(u8 taskId)
@@ -784,7 +784,7 @@ static void sub_808382C(u8 taskId)
             break;
         }
 
-        SetMainCallback2(sub_800E7C4);
+        SetMainCallback2(CB2_InitBattle);
         gMain.savedCallback = sub_8083958;
         DestroyTask(taskId);
         break;
@@ -940,7 +940,7 @@ void unref_sub_8083BB0(void)
 
 void sub_8083BDC(void)
 {
-    TrainerCard_ShowLinkCard(gSpecialVar_0x8006, c2_exit_to_overworld_1_continue_scripts_restart_music);
+    TrainerCard_ShowLinkCard(gSpecialVar_0x8006, CB2_ReturnToFieldContinueScriptPlayMapMusic);
 }
 
 bool32 sub_8083BF4(u8 linkPlayerIndex)

@@ -1,6 +1,13 @@
 #ifndef GUARD_GRAPHICS_H
 #define GUARD_GRAPHICS_H
 
+struct BattleAnimBackground
+{
+    void *image;
+    void *palette;
+    void *tilemap;
+};
+
 // data/graphics.s
 extern const u8 gInterfaceGfx_PokeBall[];
 extern const u8 gInterfacePal_PokeBall[];
@@ -2623,10 +2630,10 @@ extern const u16 gMenuTrainerCard1Star_Pal[];
 extern const u16 gMenuTrainerCard2Star_Pal[];
 extern const u16 gMenuTrainerCard3Star_Pal[];
 extern const u16 gMenuTrainerCard4Star_Pal[];
-extern const u8 gUnknown_08E8CAC0[];
-extern const u8 gUnknown_08E8CFC0[];
-extern const u8 gUnknown_08E8D4C0[];
-extern const u8 gUnknown_08E8D9C0[];
+extern const u8 gMenuTrainerCardFront_Tilemap[];
+extern const u8 gMenuTrainerCardBack_Tilemap[];
+extern const u8 gMenuTrainerCardFront2_Tilemap[];
+extern const u8 gMenuTrainerCardBackground_Tilemap[];
 
 extern const u8 gUnknown_08EA1DEC[];
 extern const u16 gUnknown_08EA0328[];
@@ -3310,6 +3317,8 @@ extern struct BattleAnimBackground gBattleAnimBackgroundImage_16[];
 extern struct BattleAnimBackground gBattleAnimBackgroundImage_17[];
 extern struct BattleAnimBackground gBattleAnimBackgroundImage_20[];
 extern struct BattleAnimBackground gBattleAnimBackgroundImage_21[];
+extern struct BattleAnimBackground gBattleAnimBackgroundImage_Surf[];
+extern struct BattleAnimBackground gBattleAnimBackgroundImageMuddyWater_Pal[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_00[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_02[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_03[];
@@ -3324,6 +3333,7 @@ extern struct BattleAnimBackground gBattleAnimBackgroundPalette_17[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_18[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_20[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_21[];
+extern struct BattleAnimBackground gBattleAnimBackgroundPalette_Surf[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_22[];
 extern struct BattleAnimBackground gBattleAnimBackgroundPalette_24[];
 extern struct BattleAnimBackground gBattleAnimBackgroundTilemap_00[];
@@ -3421,5 +3431,21 @@ extern const u8 Tiles_D129AC[];
 
 extern const u8 gAreaUnknownTiles[];
 extern const u16 gAreaUnknownPalette[];
+
+extern const u8 gUnknown_08E70968[];
+extern const u8 gUnknown_08E70C38[];
+extern const u8 gUnknown_08E70F0C[];
+
+extern const u8 gUnknown_08E964B8[];
+
+extern const u8 gUnknown_08E8096C[];
+extern const u8 gRouletteWheelTiles[];
+extern const u8 gRouletteCenter_Gfx[];
+extern const u8 gRouletteHeadersTiles[];
+extern const u8 gRouletteCreditTiles[];
+extern const u8 gRouletteNumbersTiles[];
+extern const u8 gRouletteMultiplierTiles[];
+
+extern const u8 gDecoration10000_Gfx[];
 
 #endif  // GUARD_GRAPHICS_H

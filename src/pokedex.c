@@ -126,7 +126,7 @@ struct UnknownStruct4
     u8 unk9;
 };
 
-extern struct MusicPlayerInfo gMPlay_BGM;
+extern struct MusicPlayerInfo gMPlayInfo_BGM;
 extern u8 gReservedSpritePaletteCount;
 extern struct SpriteTemplate gUnknown_02024E8C;
 extern u8 gUnknown_03005E98;
@@ -1448,7 +1448,7 @@ void CB2_InitPokedex(void)
             SetVBlankCallback(sub_808C0B8);
             SetMainCallback2(MainCB);
             SortPokedex(gPokedexView->dexMode, gPokedexView->dexOrder);
-            m4aMPlayVolumeControl(&gMPlay_BGM, 0xFFFF, 0x80);
+            m4aMPlayVolumeControl(&gMPlayInfo_BGM, 0xFFFF, 0x80);
         }
         break;
     }
@@ -1679,7 +1679,7 @@ static void Task_ClosePokedex(u8 taskId)
         gSaveBlock2.pokedex.order = gPokedexView->dexOrder;
         DestroyTask(taskId);
         SetMainCallback2(c2_exit_to_overworld_1_sub_8080DEC);
-        m4aMPlayVolumeControl(&gMPlay_BGM, 0xFFFF, 0x100);
+        m4aMPlayVolumeControl(&gMPlayInfo_BGM, 0xFFFF, 0x100);
     }
 }
 
@@ -1961,8 +1961,8 @@ static void sub_808D640(void)
 
 static void SortPokedex(u8 dexMode, u8 sortMode)
 {
+    s16 i, r5, r10;
     u16 vars[3]; //I have no idea why three regular variables are stored in an array, but whatever.
-    s16 i;
 
     gPokedexView->pokemonListCount = 0;
 
@@ -2004,18 +2004,13 @@ static void SortPokedex(u8 dexMode, u8 sortMode)
         }
         else
         {
-            bool32 r10;
-            s16 r5;
-
-            r10 = r5 = i = 0;
-            for (i = 0; i < vars[0]; i++)
+            for (i = 0, r5= 0, r10 = 0; i < vars[0]; i++)
             {
                 vars[2] = i + 1;
                 if (GetSetPokedexFlag(vars[2], 0))
                     r10 = 1;
                 if (r10)
                 {
-                    asm("");    //Needed to match for some reason
                     gPokedexView->unk0[r5].dexNum = vars[2];
                     gPokedexView->unk0[r5].seen = GetSetPokedexFlag(vars[2], 0);
                     gPokedexView->unk0[r5].owned = GetSetPokedexFlag(vars[2], 1);
@@ -3150,7 +3145,7 @@ static void Task_InitCryScreenMultistep(u8 taskId)
     default:
         if (!gPaletteFade.active)
         {
-            m4aMPlayStop(&gMPlay_BGM);
+            m4aMPlayStop(&gMPlayInfo_BGM);
             gPokedexView->unk64A = 6;
             gUnknown_03005CEC = gMain.vblankCallback;
             SetVBlankCallback(NULL);
@@ -3260,7 +3255,7 @@ static void Task_CryScreenProcessInput(u8 taskId)
         if (gMain.newKeys & B_BUTTON)
         {
             BeginNormalPaletteFade(0xFFFFFFEB, 0, 0, 16, RGB(0, 0, 0));
-            m4aMPlayContinue(&gMPlay_BGM);
+            m4aMPlayContinue(&gMPlayInfo_BGM);
             gPokedexView->unk64F = 1;
             gTasks[taskId].func = sub_808FFBC;
             PlaySE(SE_PC_OFF);
@@ -3270,7 +3265,7 @@ static void Task_CryScreenProcessInput(u8 taskId)
          || ((gMain.newKeys & L_BUTTON) && gSaveBlock2.optionsButtonMode == OPTIONS_BUTTON_MODE_LR))
         {
             BeginNormalPaletteFade(0xFFFFFFEB, 0, 0, 16, RGB(0, 0, 0));
-            m4aMPlayContinue(&gMPlay_BGM);
+            m4aMPlayContinue(&gMPlayInfo_BGM);
             gPokedexView->unk64F = 2;
             gTasks[taskId].func = sub_808FFBC;
             PlaySE(SE_Z_PAGE);
@@ -3286,7 +3281,7 @@ static void Task_CryScreenProcessInput(u8 taskId)
             else
             {
                 BeginNormalPaletteFade(0xFFFFFFEB, 0, 0, 16, RGB(0, 0, 0));
-                m4aMPlayContinue(&gMPlay_BGM);
+                m4aMPlayContinue(&gMPlayInfo_BGM);
                 gPokedexView->unk64F = 3;
                 gTasks[taskId].func = sub_808FFBC;
                 PlaySE(SE_Z_PAGE);
@@ -3487,10 +3482,10 @@ static void sub_8090584(u8 a, u16 b)
             u32 r0 = b * 0x800 + (r7 + j) * 2;
             u8 *ptr;
 
-            ptr = VRAM;
-            *(u16 *)(ptr + r0) = *(u16 *)(ptr + r0) & 0xFFF | r6;
-            ptr = VRAM + 0x40;
-            *(u16 *)(ptr + r0) = *(u16 *)(ptr + r0) & 0xFFF | r6;
+            ptr = (void *)VRAM;
+            *(u16 *)(ptr + r0) = (*(u16 *)(ptr + r0) & 0xFFF) | r6;
+            ptr = (void *)VRAM + 0x40;
+            *(u16 *)(ptr + r0) = (*(u16 *)(ptr + r0) & 0xFFF) | r6;
         }
     }
     r6 = 0x4000;
@@ -3499,10 +3494,10 @@ static void sub_8090584(u8 a, u16 b)
         u32 r0 = b * 0x800 + j * 2;
         u8 *ptr;
 
-        ptr = VRAM + 0x32;
-        *(u16 *)(ptr + r0) = *(u16 *)(ptr + r0) & 0xFFF | r6;
-        ptr = VRAM + 0x72;
-        *(u16 *)(ptr + r0) = *(u16 *)(ptr + r0) & 0xFFF | r6;
+        ptr = (void *)VRAM + 0x32;
+        *(u16 *)(ptr + r0) = (*(u16 *)(ptr + r0) & 0xFFF) | r6;
+        ptr = (void *)VRAM + 0x72;
+        *(u16 *)(ptr + r0) = (*(u16 *)(ptr + r0) & 0xFFF) | r6;
     }
 }
 #else
@@ -3633,9 +3628,9 @@ static void sub_8090644(u8 a, u16 b)
             u16 (*vramData)[0x400];
 
             vramData = (u16 (*)[])VRAM;
-            vramData[b][r8 + j] = vramData[b][r8 + j] & 0xFFF | r5;
+            vramData[b][r8 + j] = (vramData[b][r8 + j] & 0xFFF) | r5;
             vramData = (u16 (*)[])(VRAM + 0x40);
-            vramData[b][r8 + j] = vramData[b][r8 + j] & 0xFFF | r5;
+            vramData[b][r8 + j] = (vramData[b][r8 + j] & 0xFFF) | r5;
         }
     }
 
@@ -3644,9 +3639,9 @@ static void sub_8090644(u8 a, u16 b)
         u16 (*vramData)[0x400];
 
         vramData = (u16 (*)[])(VRAM + 0x32);
-        vramData[b][j] = vramData[b][j] & 0xFFF | 0x4000;
+        vramData[b][j] = (vramData[b][j] & 0xFFF) | 0x4000;
         vramData = (u16 (*)[])(VRAM + 0x72);
-        vramData[b][j] = vramData[b][j] & 0xFFF | 0x4000;
+        vramData[b][j] = (vramData[b][j] & 0xFFF) | 0x4000;
     }
 }
 #else
